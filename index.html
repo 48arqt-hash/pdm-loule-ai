@@ -10,83 +10,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="style.css">
-  
-  <!-- Estilos extra necessários apenas para os novos campos de IA, agendamento e pagamento -->
-  <style>
-    .seccao-ia, .seccao-agendamento, .seccao-pagamento {
-        margin-top: 25px;
-        padding-top: 20px;
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
-        text-align: left;
-    }
-    input[type="file"], textarea {
-        width: 100%;
-        padding: 10px;
-        background: rgba(0, 0, 0, 0.2);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        color: inherit;
-        border-radius: 6px;
-        box-sizing: border-box;
-        font-family: inherit;
-        font-size: 0.9rem;
-        margin-top: 5px;
-        margin-bottom: 12px;
-    }
-    input[type="file"] { cursor: pointer; }
-    .btn-acao {
-        background-color: #38bdf8;
-        color: #0f172a;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 6px;
-        cursor: pointer;
-        font-weight: bold;
-        font-size: 0.9rem;
-        width: 100%;
-        transition: background 0.2s;
-    }
-    .btn-acao:hover { background-color: #7dd3fc; }
-    #loading { display: none; margin-top: 15px; color: #38bdf8; font-style: italic; font-size: 0.9rem; text-align: center; }
-    #resultado {
-        margin-top: 15px;
-        background: rgba(0, 0, 0, 0.3);
-        padding: 15px;
-        border-radius: 6px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        white-space: pre-wrap;
-        line-height: 1.5;
-        font-size: 0.85rem;
-        text-align: left;
-    }
-    .grid-agendamento, .grid-pagamentos {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 15px;
-        margin-top: 15px;
-    }
-    .card-agendamento, .card-pagamento {
-        background: rgba(0, 0, 0, 0.2);
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        padding: 15px;
-        border-radius: 6px;
-        text-align: left;
-    }
-    .preco { font-size: 1.1rem; font-weight: bold; color: #10b981; margin: 8px 0; }
-    .btn-agendar, .btn-pagar {
-        display: block;
-        margin-top: 10px;
-        padding: 8px 15px;
-        background-color: #38bdf8;
-        color: #0f172a;
-        text-decoration: none;
-        border-radius: 4px;
-        font-weight: bold;
-        text-align: center;
-        font-size: 0.85rem;
-    }
-    .btn-pagar { background-color: #10b981; color: #fff; }
-    .btn-transf { background-color: #64748b; color: #fff; }
-  </style>
 </head>
 <body>
 
@@ -104,62 +27,45 @@
       <img src="images/projeto.jpg" alt="Projeto" class="project-img">
     </div>
 
-    <!-- NOVA SECÇÃO: ANÁLISE DE PLANTAS COM IA -->
-    <div class="seccao-ia">
-        <h3>Análise de Planta por IA</h3>
-        <p style="font-size: 0.85rem; opacity: 0.8;">Carregue a planta do seu projeto para diagnóstico estratégico:</p>
-        
-        <label style="font-size: 0.85rem;"><strong>Ficheiro (Imagem/PDF):</strong></label>
-        <input type="file" id="fileInput" accept="image/*,application/pdf">
-
-        <label style="font-size: 0.85rem;"><strong>Notas Adicionais:</strong></label>
-        <textarea id="userInput" rows="2" placeholder="Descreva o que pretende analisar..."></textarea>
-        
-        <button class="btn-acao" onclick="executarAnalise()">Executar Análise</button>
-
-        <div id="loading">A processar a planta com IA...</div>
-        <div id="resultado"></div>
+    <!-- FERRAMENTA DE ANÁLISE DE PLANTA -->
+    <div style="margin: 20px 0; text-align: left;">
+        <h3 style="font-size: 1rem; margin-bottom: 8px;">Análise de Planta por IA</h3>
+        <input type="file" id="fileInput" accept="image/*,application/pdf" style="width: 100%; margin-bottom: 10px;">
+        <textarea id="userInput" rows="2" placeholder="Notas adicionais para a análise..." style="width: 100%; margin-bottom: 10px; padding: 8px; box-sizing: border-box;"></textarea>
+        <button onclick="executarAnalise()" style="width: 100%; padding: 10px; background: #2563eb; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Executar Análise</button>
+        <div id="loading" style="display:none; font-size: 0.9rem; margin-top: 10px;">A processar planta...</div>
+        <div id="resultado" style="font-size: 0.9rem; margin-top: 10px; white-space: pre-wrap; text-align: left;"></div>
     </div>
 
-    <!-- NOVA SECÇÃO: AGENDAMENTO (Valores atualizados) -->
-    <div class="seccao-agendamento">
-        <h3>Sessões Estratégicas</h3>
-        <div class="grid-agendamento">
-            <div class="card-agendamento">
-                <h4 style="margin: 0 0 5px 0; color: inherit;">Reunião Virtual</h4>
-                <p style="font-size: 0.80rem; margin: 0;">Sessão Zoom/Meet (60 min)</p>
-                <div class="preco">100€ + IVA</div>
-                <a href="URL_DO_SEU_CALENDARIO_VIRTUAL" target="_blank" class="btn-agendar">Agendar Virtual</a>
-            </div>
-            <div class="card-agendamento">
-                <h4 style="margin: 0 0 5px 0; color: inherit;">Reunião Presencial</h4>
-                <p style="font-size: 0.80rem; margin: 0;">Imersão executiva (60 min)</p>
-                <div class="preco">150€ + IVA</div>
-                <a href="URL_DO_SEU_CALENDARIO_PRESENCIAL" target="_blank" class="btn-agendar">Agendar Presencial</a>
-            </div>
+    <!-- SESSÕES ESTRATÉGICAS (Valores atualizados) -->
+    <div style="margin: 20px 0; text-align: left; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 15px;">
+        <h3 style="font-size: 1rem; margin-bottom: 8px;">Sessões Estratégicas</h3>
+        
+        <div style="margin-bottom: 12px;">
+            <p style="margin: 0; font-size: 0.9rem;"><strong>Reunião Virtual (60 min):</strong> 100€ + IVA</p>
+            <a href="URL_DO_SEU_CALENDARIO_VIRTUAL" target="_blank" style="display:inline-block; margin-top:4px; font-size:0.85rem; color:#2563eb;">Agendar Virtual</a>
+        </div>
+
+        <div style="margin-bottom: 12px;">
+            <p style="margin: 0; font-size: 0.9rem;"><strong>Reunião Presencial (60 min):</strong> 150€ + IVA</p>
+            <a href="URL_DO_SEU_CALENDARIO_PRESENCIAL" target="_blank" style="display:inline-block; margin-top:4px; font-size:0.85rem; color:#2563eb;">Agendar Presencial</a>
         </div>
     </div>
 
-    <!-- NOVA SECÇÃO: PAGAMENTOS (Com o IBAN correto) -->
-    <div class="seccao-pagamento">
-        <h3>Métodos de Pagamento</h3>
-        <div class="grid-pagamentos">
-            <div class="card-pagamento">
-                <h4 style="margin: 0 0 5px 0; color: inherit;">MB Way / Multibanco</h4>
-                <a href="URL_DO_SEU_LINK_MBWAY" target="_blank" class="btn-pagar">Pagar MB Way</a>
-            </div>
-            <div class="card-pagamento">
-                <h4 style="margin: 0 0 5px 0; color: inherit;">Cartão Bancário</h4>
-                <a href="URL_DO_SEU_LINK_STRIPE" target="_blank" class="btn-pagar">Pagar com Cartão</a>
-            </div>
-            <div class="card-pagamento">
-                <h4 style="margin: 0 0 5px 0; color: inherit;">Transferência</h4>
-                <a href="#transferencia" onclick="alert('IBAN: PT50017033210304005330955\nEnviar comprovativo para geral@leonelmendes.com'); return false;" class="btn-pagar btn-transf">Ver Dados IBAN</a>
-            </div>
-        </div>
+    <!-- PAGAMENTOS (Com o IBAN correto) -->
+    <div style="margin: 20px 0; text-align: left; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 15px;">
+        <h3 style="font-size: 1rem; margin-bottom: 8px;">Pagamentos</h3>
+        <p style="font-size: 0.85rem; margin-bottom: 8px;">
+            <a href="URL_DO_SEU_LINK_MBWAY" target="_blank">Pagar MB Way</a> | 
+            <a href="URL_DO_SEU_LINK_STRIPE" target="_blank">Pagar Cartão</a>
+        </p>
+        <p style="font-size: 0.8rem; margin: 0;">
+            <strong>IBAN:</strong> PT50017033210304005330955<br>
+            <span style="opacity: 0.8;">(Enviar comprovativo para geral@leonelmendes.com)</span>
+        </p>
     </div>
 
-    <div class="contact" style="margin-top: 30px;">
+    <div class="contact">
       <p>
         <a href="tel:+351960010870">+351 960 010 870</a><br>
         <a href="mailto:geral@leonelmendes.com">geral@leonelmendes.com</a>
@@ -191,7 +97,7 @@
 
   </main>
 
-  <!-- Script que liga o formulário à Netlify Function (analisar-planta) -->
+  <!-- Script que comunica com a Netlify Function -->
   <script>
     window.executarAnalise = async function() {
         const fileInput = document.getElementById('fileInput');
