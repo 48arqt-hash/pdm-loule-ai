@@ -7,115 +7,354 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css">
-  
-  <!-- Estilos complementares estritos que respeitam inteiramente o design original e classes do style.css -->
   <style>
-    .seccao-integrada {
-      margin-top: 25px;
-      padding-top: 20px;
-      border-top: 1px solid rgba(255, 255, 255, 0.15);
-      text-align: left;
-    }
-    .seccao-integrada h3 {
-      font-size: 1.1rem;
-      margin-bottom: 10px;
-    }
-    .seccao-integrada label {
-      display: block;
-      font-size: 0.85rem;
-      margin-bottom: 5px;
-      opacity: 0.9;
-    }
-    .seccao-integrada input[type="text"],
-    .sescao-integrada input[type="email"],
-    .seccao-integrada input[type="tel"],
-    .seccao-integrada input[type="file"],
-    .seccao-integrada textarea {
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 12px;
-      background: rgba(0, 0, 0, 0.25);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      color: inherit;
-      border-radius: 4px;
+    /* --- ESTILOS GERAIS DA PÁGINA --- */
+    * {
       box-sizing: border-box;
-      font-family: inherit;
-      font-size: 0.9rem;
+      margin: 0;
+      padding: 0;
     }
-    .seccao-integrada input[type="file"] {
-      cursor: pointer;
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f4f4f6;
+      color: #1a1a1a;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px 10px;
     }
-    .btn-executar {
+
+    .card {
+      background: #ffffff;
       width: 100%;
-      padding: 11px;
-      background-color: #2563eb;
-      color: #ffffff;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-weight: 500;
-      font-size: 0.95rem;
-      transition: background 0.2s;
-    }
-    .btn-executar:hover {
-      background-color: #1d4ed8;
-    }
-    #loading {
-      display: none;
-      margin-top: 12px;
-      font-size: 0.85rem;
-      font-style: italic;
+      max-width: 520px;
+      padding: 35px 25px;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.06);
       text-align: center;
     }
-    #resultado {
-      margin-top: 12px;
-      background: rgba(0, 0, 0, 0.35);
-      padding: 12px;
-      border-radius: 4px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      white-space: pre-wrap;
-      line-height: 1.5;
-      font-size: 0.85rem;
-      max-height: 350px;
-      overflow-y: auto;
+
+    .logo {
+      max-width: 140px;
+      height: auto;
+      margin-bottom: 20px;
     }
-    .grid-opcoes {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 12px;
-      margin-top: 10px;
+
+    h1 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #111;
+      margin-bottom: 4px;
     }
-    .card-opcao {
-      background: rgba(0, 0, 0, 0.2);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      padding: 12px;
-      border-radius: 4px;
+
+    h2 {
+      font-size: 14px;
+      font-weight: 400;
+      color: #666;
+      margin-bottom: 20px;
     }
-    .card-opcao p {
-      margin: 4px 0;
-      font-size: 0.85rem;
+
+    .divider {
+      height: 1px;
+      background-color: #eee;
+      margin: 25px 0;
     }
-    .preco-destaque {
-      font-weight: bold;
-      color: #10b981;
-      font-size: 1rem;
+
+    /* IMAGEM DO PROJETO */
+    .project-img {
+      width: 100%;
+      max-height: 280px;
+      object-fit: cover;
+      border-radius: 10px;
+      margin-bottom: 20px;
     }
-    .btn-acao-link {
-      display: inline-block;
-      margin-top: 8px;
-      padding: 6px 12px;
-      background-color: #2563eb;
-      color: #fff;
+
+    /* CONTATOS */
+    .contact {
+      font-size: 14px;
+      line-height: 1.6;
+      margin: 20px 0;
+    }
+
+    .contact a {
+      color: #111;
       text-decoration: none;
-      border-radius: 4px;
-      font-size: 0.8rem;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    .contact a:hover {
+      color: #0056b3;
+    }
+
+    .contact p {
+      margin-bottom: 12px;
+    }
+
+    /* REDES SOCIAIS E ÍCONES */
+    .social {
+      display: flex;
+      justify-content: center;
+      gap: 18px;
+      margin: 25px 0 15px 0;
+    }
+
+    .social a img {
+      width: 28px;
+      height: 28px;
+      object-fit: contain;
+      transition: transform 0.2s, opacity 0.2s;
+    }
+
+    .social a:hover img {
+      transform: translateY(-2px);
+      opacity: 0.8;
+    }
+
+    footer {
+      font-size: 12px;
+      color: #999;
+      margin-top: 20px;
+    }
+
+    /* --- ESTILOS DO AGENTE PDM (INTEGRADO) --- */
+    .pdm-section {
+      margin: 25px 0;
+      text-align: left;
+      background: #fafafa;
+      padding: 22px;
+      border-radius: 12px;
+      border: 1px solid #eaeaea;
+    }
+
+    .pdm-header h3 {
+      font-size: 16px;
+      color: #111;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .pdm-header p {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 18px;
+      line-height: 1.4;
+    }
+
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 5px;
+    }
+
+    .form-group input[type="text"],
+    .form-group input[type="email"],
+    .form-group input[type="tel"],
+    .form-group input[type="file"] {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: 'Inter', sans-serif;
+      box-sizing: border-box;
+      background: #fff;
+    }
+
+    .file-hint {
+      font-size: 11px;
+      color: #888;
+      display: block;
+      margin-top: 4px;
+    }
+
+    .checkbox-group {
+      display: flex;
+      gap: 10px;
+      margin: 16px 0;
+      align-items: flex-start;
+    }
+
+    .checkbox-group input {
+      margin-top: 3px;
+    }
+
+    .checkbox-group label {
+      font-size: 11px;
+      color: #666;
+      line-height: 1.4;
+    }
+
+    .btn-pdm {
+      width: 100%;
+      background-color: #111111;
+      color: #ffffff;
+      border: none;
+      padding: 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-pdm:hover {
+      background-color: #333333;
+    }
+
+    /* CHAT BOX */
+    .chat-box {
+      background: #fff;
+      border: 1px solid #e5e5e5;
+      border-radius: 8px;
+      padding: 15px;
+      max-height: 380px;
+      overflow-y: auto;
+      margin-bottom: 12px;
+      font-size: 13px;
+    }
+
+    .msg {
+      margin-bottom: 12px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+    }
+
+    .msg.user {
+      background: #f0f0f0;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-weight: 500;
+      color: #111;
+    }
+
+    .msg.ai {
+      background: #f7f9fb;
+      border: 1px solid #e2e8f0;
+      padding: 12px 14px;
+      border-radius: 8px;
+      color: #2d3748;
+    }
+
+    .input-chat-container {
+      display: flex;
+      gap: 8px;
+    }
+
+    .input-chat-container input {
+      flex: 1;
+      padding: 10px 12px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+
+    .btn-send {
+      padding: 10px 18px;
+      background: #111;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
       font-weight: 500;
     }
-    .btn-acao-link.pagar {
-      background-color: #10b981;
+
+    /* UPGRADES */
+    #upgrade-section {
+      margin-top: 25px;
+      padding-top: 20px;
+      border-top: 1px dashed #ccc;
+    }
+
+    #upgrade-section h4 {
+      font-size: 14px;
+      color: #111;
+      text-align: center;
+    }
+
+    .upgrade-sub {
+      font-size: 12px;
+      color: #666;
+      text-align: center;
+      margin-bottom: 15px;
+    }
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    @media (max-width: 480px) {
+      .cards-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .upgrade-card {
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 14px;
+      text-align: center;
+      background: #fff;
+    }
+
+    .upgrade-card.highlight {
+      border-color: #111;
+      background: #fafafa;
+    }
+
+    .upgrade-card h5 {
+      font-size: 13px;
+      color: #111;
+      margin-bottom: 4px;
+    }
+
+    .old-price {
+      font-size: 11px;
+      color: #999;
+    }
+
+    .new-price {
+      font-size: 18px;
+      font-weight: 700;
+      color: #111;
+      margin-bottom: 6px;
+    }
+
+    .upgrade-card .desc {
+      font-size: 11px;
+      color: #666;
+      margin-bottom: 12px;
+      min-height: 34px;
+    }
+
+    .btn-upgrade {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #111;
+      background: transparent;
+      color: #111;
+      font-size: 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .btn-upgrade.accent {
+      background: #111;
+      color: #fff;
     }
   </style>
 </head>
@@ -135,73 +374,82 @@
       <img src="images/projeto.jpg" alt="Projeto" class="project-img">
     </div>
 
-    <!-- NOVA SECÇÃO INTEGRADA: RECOLHA DE DADOS & ANÁLISE DA PLANTA DE IMPLANTAÇÃO -->
-    <div class="seccao-integrada">
-      <h3>Análise Inteligente de Planta</h3>
-      <p style="font-size: 0.85rem; margin-bottom: 12px; opacity: 0.85;">Preencha os seus dados, carregue a planta de implantação e submeta para diagnóstico técnico do agente:</p>
-
-      <label for="nomeCliente">Nome / Empresa:</label>
-      <input type="text" id="nomeCliente" placeholder="O seu nome completo">
-
-      <label for="emailCliente">E-mail de Contacto:</label>
-      <input type="email" id="emailCliente" placeholder="exemplo@dominio.com">
-
-      <label for="telCliente">Telemóvel:</label>
-      <input type="tel" id="telCliente" placeholder="+351 ...">
-
-      <label for="fileInput">Planta de Implantação (Imagem / PDF):</label>
-      <input type="file" id="fileInput" accept="image/*,application/pdf">
-
-      <label for="userInput">Notas ou Diretrizes Específicas:</label>
-      <textarea id="userInput" rows="3" placeholder="Descreva os objetivos do projeto, restrições urbanísticas ou aspetos a focar..."></textarea>
-
-      <button class="btn-executar" onclick="executarAnalise()">Executar Análise da Implantação</button>
-
-      <div id="loading">A processar a planta e a estruturar o relatório técnico...</div>
-      <div id="resultado"></div>
-    </div>
-
-    <!-- NOVA SECÇÃO INTEGRADA: MARCAÇÃO DE REUNIÕES (Valores Atualizados) -->
-    <div class="seccao-integrada">
-      <h3>Sessões Estratégicas</h3>
-      <div class="grid-opcoes">
-        
-        <div class="card-opcao">
-          <p><strong>Reunião Virtual</strong> (60 min)</p>
-          <p class="preco-destaque">100€ + IVA</p>
-          <a href="URL_DO_SEU_CALENDARIO_VIRTUAL" target="_blank" class="btn-acao-link">Agendar Virtual</a>
-        </div>
-
-        <div class="card-opcao">
-          <p><strong>Reunião Presencial</strong> (60 min)</p>
-          <p class="preco-destaque">150€ + IVA</p>
-          <a href="URL_DO_SEU_CALENDARIO_PRESENCIAL" target="_blank" class="btn-acao-link">Agendar Presencial</a>
-        </div>
-
+    <!-- FERRAMENTA DE ANÁLISE DE PDM -->
+    <section class="pdm-section">
+      <div class="pdm-header">
+        <h3>Análise Automática do PDM de Loulé</h3>
+        <p>Submeta a Planta de Localização do seu lote para obter a viabilidade preliminar emitida pela nossa IA técnica.</p>
       </div>
-    </div>
 
-    <!-- NOVA SECÇÃO INTEGRADA: PAGAMENTOS (Com IBAN Correto) -->
-    <div class="seccao-integrada">
-      <h3>Liquidação de Serviços</h3>
-      <div class="grid-opcoes">
-        <div class="card-opcao">
-          <p><strong>MB Way / Multibanco</strong></p>
-          <a href="URL_DO_SEU_LINK_MBWAY" target="_blank" class="btn-acao-link pagar">Pagar MB Way</a>
+      <!-- FORMULÁRIO DE REGISTO E UPLOAD -->
+      <form id="pdm-form">
+        <div class="form-group">
+          <label for="nome">Nome Completo</label>
+          <input type="text" id="nome" required placeholder="Ex: João Silva">
         </div>
-        <div class="card-opcao">
-          <p><strong>Cartão Bancário (Stripe)</strong></p>
-          <a href="URL_DO_SEU_LINK_STRIPE" target="_blank" class="btn-acao-link pagar">Pagar com Cartão</a>
+
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" required placeholder="Ex: joao@email.com">
         </div>
-        <div class="card-opcao">
-          <p><strong>Transferência Bancária (IBAN)</strong></p>
-          <p style="font-size: 0.75rem; word-break: break-all; margin-top: 6px;">PT50 0170 3321 0304 0053 30955</p>
-          <a href="#iban" onclick="alert('IBAN copiado ou consultado: PT50017033210304005330955\nEnvie o comprovativo para geral@leonelmendes.com'); return false;" class="btn-acao-link" style="background-color: #64748b;">Copiar Dados</a>
+
+        <div class="form-group">
+          <label for="telefone">Telemóvel</label>
+          <input type="tel" id="telefone" required placeholder="Ex: 912 345 678">
+        </div>
+
+        <div class="form-group">
+          <label for="planta">Planta de Localização da CM Loulé (PDF)</label>
+          <input type="file" id="planta" accept="application/pdf" required>
+          <span class="file-hint">Anexe o extrato oficial em PDF emitido pela Câmara de Loulé.</span>
+        </div>
+
+        <div class="checkbox-group">
+          <input type="checkbox" id="rgpd" required>
+          <label for="rgpd">Aceito o tratamento dos meus dados para a emissão do relatório e compreendo que o relatório de 10€ é uma análise informativa gerada por IA.</label>
+        </div>
+
+        <button type="submit" class="btn-pdm" id="btn-submit">Pagar 10€ e Gerar Relatório por IA</button>
+      </form>
+
+      <!-- ÁREA DE CHAT / EXIBIÇÃO DO RELATÓRIO -->
+      <div id="chat-section" style="display: none;">
+        <div class="chat-box" id="chat-box"></div>
+
+        <div class="input-chat-container">
+          <input type="text" id="user-input" placeholder="Tem alguma dúvida sobre este relatório em Loulé?">
+          <button onclick="enviarDuvida()" class="btn-send">Perguntar</button>
         </div>
       </div>
-    </div>
 
-    <div class="contact" style="margin-top: 30px;">
+      <!-- UPGRADES DE SERVIÇO (+40€ e +90€) -->
+      <div id="upgrade-section" style="display: none;">
+        <h4>Deseja validação técnica do Arquiteto?</h4>
+        <p class="upgrade-sub">Os 10€ iniciais são abatidos na consultoria do Arq. Leonel Mendes:</p>
+
+        <div class="cards-grid">
+          <div class="upgrade-card">
+            <h5>Parecer Explicativo</h5>
+            <p class="old-price"><s>50€</s></p>
+            <p class="new-price">+40€</p>
+            <p class="desc">Validação manual da planta e envio de parecer técnico explicativo por e-mail.</p>
+            <button class="btn-upgrade" onclick="solicitarUpgrade('Parecer Explicativo por Email (+40€)', 40)">Pedir Parecer (+40€)</button>
+          </div>
+
+          <div class="upgrade-card highlight">
+            <h5>Reunião Presencial</h5>
+            <p class="old-price"><s>100€</s></p>
+            <p class="new-price">+90€</p>
+            <p class="desc">Reunião dedicada no gabinete em Loulé para discussão de projeto e licenciamento.</p>
+            <button class="btn-upgrade accent" onclick="solicitarUpgrade('Reunião Presencial em Loulé (+90€)', 90)">Agendar Reunião (+90€)</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <div class="contact">
       <p>
         <a href="tel:+351960010870">+351 960 010 870</a><br>
         <a href="mailto:geral@leonelmendes.com">geral@leonelmendes.com</a>
@@ -233,69 +481,115 @@
 
   </main>
 
-  <!-- Script que integra a recolha de dados e a comunicação com a Netlify Function -->
   <script>
-    window.executarAnalise = async function() {
-        const nome = document.getElementById('nomeCliente').value.trim();
-        const email = document.getElementById('emailCliente').value.trim();
-        const telefone = document.getElementById('telCliente').value.trim();
-        const fileInput = document.getElementById('fileInput');
-        const notas = document.getElementById('userInput').value.trim();
-        const loadingDiv = document.getElementById('loading');
-        const resultadoDiv = document.getElementById('resultado');
+    let pdfBase64 = null;
+    let chatHistory = [];
+    let userData = {};
 
-        if (!nome || !email) {
-            alert("Por favor, preencha pelo menos o seu Nome e E-mail antes de submeter a planta.");
-            return;
-        }
-
-        if (fileInput.files.length === 0) {
-            alert("Por favor, carregue o ficheiro da planta de implantação.");
-            return;
-        }
-
-        loadingDiv.style.display = 'block';
-        resultadoDiv.innerHTML = '';
-
-        const file = fileInput.files[0];
+    document.getElementById('planta').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
         const reader = new FileReader();
-        reader.readAsDataURL(file);
-        
-        reader.onload = async function () {
-            try {
-                const base64Data = reader.result.split(',')[1];
-                const mimeType = file.type;
-
-                // Constrói o prompt enriquecido com os dados de contacto recolhidos do cliente
-                const promptCompleto = `Dados do Cliente:\n- Nome: ${nome}\n- E-mail: ${email}\n- Telemóvel: ${telefone || 'Não fornecido'}\n\nInstruções/Notas do Cliente: ${notas || 'Sem notas adicionais.'}\n\nPor favor, faça uma análise exaustiva e de nível executivo desta planta de implantação.`;
-
-                const resposta = await fetch('/.netlify/functions/analisar-planta', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        prompt: promptCompleto,
-                        fileData: base64Data,
-                        mimeType: mimeType
-                    })
-                });
-
-                const dados = await resposta.json();
-
-                if (resposta.ok) {
-                    resultadoDiv.innerHTML = dados.resultado;
-                } else {
-                    resultadoDiv.innerHTML = "Erro: " + (dados.error || "Falha na análise da planta.");
-                }
-
-            } catch (error) {
-                console.error(error);
-                resultadoDiv.innerHTML = "Ocorreu um erro técnico ao processar o ficheiro.";
-            } finally {
-                loadingDiv.style.display = 'none';
-            }
+        reader.onload = function(evt) {
+          pdfBase64 = evt.target.result.split(',')[1];
         };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    document.getElementById('pdm-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      userData = {
+        nome: document.getElementById('nome').value,
+        email: document.getElementById('email').value,
+        telefone: document.getElementById('telefone').value
+      };
+
+      if (!pdfBase64) {
+        alert("Por favor, selecione a planta de localização em PDF.");
+        return;
+      }
+
+      const pago = confirm("Simulação: Confirmar o pagamento de 10€ para iniciar a análise por IA?");
+      if (!pago) return;
+
+      document.getElementById('pdm-form').style.display = 'none';
+      document.getElementById('chat-section').style.display = 'block';
+
+      const chatBox = document.getElementById('chat-box');
+      chatBox.innerHTML = '<div class="msg ai">⏳ A analisar a planta de localização da CM Loulé... Aguarde uns segundos.</div>';
+
+      try {
+        const response = await fetch('/.netlify/functions/analisar-planta', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...userData,
+            pdfBase64: pdfBase64,
+            userMessage: "Análise inicial da planta do PDM de Loulé."
+          })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          chatBox.innerHTML = `<div class="msg ai"><strong>Relatório Preliminar (PDM Loulé):</strong><br><br>${data.reply}</div>`;
+          chatHistory.push({ role: 'user', text: 'Análise inicial da planta do PDM de Loulé.' });
+          chatHistory.push({ role: 'model', text: data.reply });
+          document.getElementById('upgrade-section').style.display = 'block';
+        } else {
+          chatBox.innerHTML = `<div class="msg ai">⚠️ Erro: ${data.error || 'Não foi possível analisar o ficheiro.'}</div>`;
+        }
+      } catch (err) {
+        chatBox.innerHTML = '<div class="msg ai">⚠️ Erro na ligação ao servidor.</div>';
+      }
+    });
+
+    async function enviarDuvida() {
+      const input = document.getElementById('user-input');
+      const texto = input.value.trim();
+      if (!texto) return;
+
+      const chatBox = document.getElementById('chat-box');
+      chatBox.innerHTML += `<div class="msg user">${texto}</div>`;
+      input.value = '';
+
+      chatBox.innerHTML += `<div class="msg ai" id="loading">⏳ A consultar regulamento...</div>`;
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      try {
+        const response = await fetch('/.netlify/functions/analisar-planta', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...userData,
+            userMessage: texto,
+            chatHistory: chatHistory
+          })
+        });
+
+        const data = await response.json();
+        document.getElementById('loading')?.remove();
+
+        if (response.ok) {
+          chatBox.innerHTML += `<div class="msg ai">${data.reply}</div>`;
+          chatHistory.push({ role: 'user', text: texto });
+          chatHistory.push({ role: 'model', text: data.reply });
+        } else {
+          chatBox.innerHTML += `<div class="msg ai">⚠️ Erro ao processar a dúvida.</div>`;
+        }
+      } catch (err) {
+        document.getElementById('loading')?.remove();
+        chatBox.innerHTML += `<div class="msg ai">⚠️ Erro de comunicação.</div>`;
+      }
+
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function solicitarUpgrade(servico, valor) {
+      alert(`Obrigado Sr.(a) ${userData.nome}.\n\nO seu pedido de "${servico}" por +${valor}€ foi registado. Entraremos em contacto para o email ${userData.email} para confirmar os detalhes de pagamento e agendamento.`);
     }
   </script>
-
 </body>
 </html>
