@@ -1,601 +1,265 @@
 <!DOCTYPE html>
 <html lang="pt">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Leonel Mendes — Arquitetura e Engenharia</title>
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
-  <style>
-    /* --- ESTILOS GERAIS DA PÁGINA --- */
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      font-family: 'Inter', sans-serif;
-      background-color: #f4f4f6;
-      color: #1a1a1a;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      padding: 20px 10px;
-    }
-
-    .card {
-      background: #ffffff;
-      width: 100%;
-      max-width: 520px;
-      padding: 35px 25px;
-      border-radius: 16px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.06);
-      text-align: center;
-    }
-
-    .logo {
-      max-width: 140px;
-      height: auto;
-      margin-bottom: 20px;
-    }
-
-    h1 {
-      font-size: 22px;
-      font-weight: 700;
-      color: #111;
-      margin-bottom: 4px;
-    }
-
-    h2 {
-      font-size: 14px;
-      font-weight: 400;
-      color: #666;
-      margin-bottom: 20px;
-    }
-
-    .divider {
-      height: 1px;
-      background-color: #eee;
-      margin: 25px 0;
-    }
-
-    /* IMAGEM DO PROJETO */
-    .project-img {
-      width: 100%;
-      max-height: 280px;
-      object-fit: cover;
-      border-radius: 10px;
-      margin-bottom: 20px;
-    }
-
-    /* CONTATOS */
-    .contact {
-      font-size: 14px;
-      line-height: 1.6;
-      margin: 20px 0;
-    }
-
-    .contact a {
-      color: #111;
-      text-decoration: none;
-      font-weight: 500;
-      transition: color 0.2s;
-    }
-
-    .contact a:hover {
-      color: #0056b3;
-    }
-
-    .contact p {
-      margin-bottom: 12px;
-    }
-
-    /* REDES SOCIAIS E ÍCONES */
-    .social {
-      display: flex;
-      justify-content: center;
-      gap: 18px;
-      margin: 25px 0 15px 0;
-    }
-
-    .social a img {
-      width: 28px;
-      height: 28px;
-      object-fit: contain;
-      transition: transform 0.2s, opacity 0.2s;
-    }
-
-    .social a:hover img {
-      transform: translateY(-2px);
-      opacity: 0.8;
-    }
-
-    footer {
-      font-size: 12px;
-      color: #999;
-      margin-top: 20px;
-    }
-
-    /* --- ESTILOS DO AGENTE PDM (INTEGRADO) --- */
-    .pdm-section {
-      margin: 25px 0;
-      text-align: left;
-      background: #fafafa;
-      padding: 22px;
-      border-radius: 12px;
-      border: 1px solid #eaeaea;
-    }
-
-    .pdm-header h3 {
-      font-size: 16px;
-      color: #111;
-      font-weight: 600;
-      margin-bottom: 6px;
-    }
-
-    .pdm-header p {
-      font-size: 13px;
-      color: #666;
-      margin-bottom: 18px;
-      line-height: 1.4;
-    }
-
-    .form-group {
-      margin-bottom: 14px;
-    }
-
-    .form-group label {
-      display: block;
-      font-size: 12px;
-      font-weight: 600;
-      color: #333;
-      margin-bottom: 5px;
-    }
-
-    .form-group input[type="text"],
-    .form-group input[type="email"],
-    .form-group input[type="tel"],
-    .form-group input[type="file"] {
-      width: 100%;
-      padding: 10px 12px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      font-size: 13px;
-      font-family: 'Inter', sans-serif;
-      box-sizing: border-box;
-      background: #fff;
-    }
-
-    .file-hint {
-      font-size: 11px;
-      color: #888;
-      display: block;
-      margin-top: 4px;
-    }
-
-    .checkbox-group {
-      display: flex;
-      gap: 10px;
-      margin: 16px 0;
-      align-items: flex-start;
-    }
-
-    .checkbox-group input {
-      margin-top: 3px;
-    }
-
-    .checkbox-group label {
-      font-size: 11px;
-      color: #666;
-      line-height: 1.4;
-    }
-
-    .btn-pdm {
-      width: 100%;
-      background-color: #111111;
-      color: #ffffff;
-      border: none;
-      padding: 14px;
-      border-radius: 6px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-
-    .btn-pdm:hover {
-      background-color: #333333;
-    }
-
-    /* CHAT BOX */
-    .chat-box {
-      background: #fff;
-      border: 1px solid #e5e5e5;
-      border-radius: 8px;
-      padding: 15px;
-      max-height: 380px;
-      overflow-y: auto;
-      margin-bottom: 12px;
-      font-size: 13px;
-    }
-
-    .msg {
-      margin-bottom: 12px;
-      line-height: 1.5;
-      white-space: pre-wrap;
-    }
-
-    .msg.user {
-      background: #f0f0f0;
-      padding: 10px 14px;
-      border-radius: 8px;
-      font-weight: 500;
-      color: #111;
-    }
-
-    .msg.ai {
-      background: #f7f9fb;
-      border: 1px solid #e2e8f0;
-      padding: 12px 14px;
-      border-radius: 8px;
-      color: #2d3748;
-    }
-
-    .input-chat-container {
-      display: flex;
-      gap: 8px;
-    }
-
-    .input-chat-container input {
-      flex: 1;
-      padding: 10px 12px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 13px;
-    }
-
-    .btn-send {
-      padding: 10px 18px;
-      background: #111;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 500;
-    }
-
-    /* UPGRADES */
-    #upgrade-section {
-      margin-top: 25px;
-      padding-top: 20px;
-      border-top: 1px dashed #ccc;
-    }
-
-    #upgrade-section h4 {
-      font-size: 14px;
-      color: #111;
-      text-align: center;
-    }
-
-    .upgrade-sub {
-      font-size: 12px;
-      color: #666;
-      text-align: center;
-      margin-bottom: 15px;
-    }
-
-    .cards-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-
-    @media (max-width: 480px) {
-      .cards-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .upgrade-card {
-      border: 1px solid #e0e0e0;
-      border-radius: 8px;
-      padding: 14px;
-      text-align: center;
-      background: #fff;
-    }
-
-    .upgrade-card.highlight {
-      border-color: #111;
-      background: #fafafa;
-    }
-
-    .upgrade-card h5 {
-      font-size: 13px;
-      color: #111;
-      margin-bottom: 4px;
-    }
-
-    .old-price {
-      font-size: 11px;
-      color: #999;
-    }
-
-    .new-price {
-      font-size: 18px;
-      font-weight: 700;
-      color: #111;
-      margin-bottom: 6px;
-    }
-
-    .upgrade-card .desc {
-      font-size: 11px;
-      color: #666;
-      margin-bottom: 12px;
-      min-height: 34px;
-    }
-
-    .btn-upgrade {
-      width: 100%;
-      padding: 8px;
-      border: 1px solid #111;
-      background: transparent;
-      color: #111;
-      font-size: 12px;
-      border-radius: 5px;
-      cursor: pointer;
-      font-weight: 500;
-    }
-
-    .btn-upgrade.accent {
-      background: #111;
-      color: #fff;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>leonelmendes.com - Agente Estratégico & Agendamento</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 30px auto;
+            background: #1e293b;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            border: 1px solid #334155;
+        }
+        h3, h4 {
+            color: #38bdf8;
+        }
+        p {
+            color: #94a3b8;
+        }
+        textarea {
+            width: 100%;
+            padding: 14px;
+            background: #0f172a;
+            border: 1px solid #475569;
+            color: #fff;
+            border-radius: 6px;
+            resize: vertical;
+            box-sizing: border-box;
+            font-family: inherit;
+            font-size: 1rem;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #38bdf8;
+        }
+        .btn-acao {
+            background-color: #38bdf8;
+            color: #0f172a;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            transition: background 0.2s;
+        }
+        .btn-acao:hover {
+            background-color: #7dd3fc;
+        }
+        #loading {
+            display: none;
+            margin-top: 20px;
+            color: #38bdf8;
+            font-style: italic;
+        }
+        #resultado {
+            margin-top: 25px;
+            background: #0f172a;
+            padding: 20px;
+            border-radius: 6px;
+            border: 1px solid #334155;
+            white-space: pre-wrap;
+            line-height: 1.6;
+            color: #e2e8f0;
+        }
+        .seccao-agendamento {
+            margin-top: 35px;
+            padding-top: 25px;
+            border-top: 1px solid #334155;
+        }
+        .grid-agendamento {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .card-agendamento {
+            background: #0f172a;
+            border: 1px solid #475569;
+            padding: 20px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .preco {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: #10b981;
+            margin: 10px 0;
+        }
+        .btn-agendar {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 10px 20px;
+            background-color: #38bdf8;
+            color: #0f172a;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        .btn-agendar:hover {
+            background-color: #7dd3fc;
+        }
+        .seccao-pagamento {
+            margin-top: 35px;
+            padding-top: 25px;
+            border-top: 1px solid #334155;
+        }
+        .grid-pagamentos {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .card-pagamento {
+            background: #0f172a;
+            border: 1px solid #475569;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .btn-pagar {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 10px 20px;
+            background-color: #10b981;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        .btn-pagar:hover {
+            background-color: #059669;
+        }
+        .btn-transf {
+            background-color: #64748b;
+        }
+        .btn-transf:hover {
+            background-color: #475569;
+        }
+    </style>
 </head>
 <body>
 
-  <main class="card">
+    <div class="container">
+        <h3>Agente de Inteligência Analítica e Estratégia</h3>
+        <p>Portal leonelmendes.com — Insira os dados, texto ou problema estratégico:</p>
+        
+        <textarea id="userInput" rows="5" placeholder="Escreva aqui o seu pedido de análise..."></textarea>
+        <br><br>
+        <button class="btn-acao" onclick="executarAnalise()">Executar Análise de Elite</button>
 
-    <img src="images/logo.png" alt="Leonel Mendes" class="logo">
+        <div id="loading">A processar análise profunda (com IA avançada)... por favor aguarde.</div>
+        <div id="resultado"></div>
 
-    <h1>Arq. Leonel Mendes</h1>
-    <h2>Arquitetura e Engenharia</h2>
+        <!-- 1. CAMPOS DE AGENDAMENTO -->
+        <div class="seccao-agendamento">
+            <h3>Marcar Sessão Estratégica com Leonel Mendes</h3>
+            <p>Após a análise, escolha o formato de acompanhamento que melhor se adapta às suas necessidades:</p>
+            
+            <div class="grid-agendamento">
+                <!-- Reunião Virtual -->
+                <div class="card-agendamento">
+                    <div>
+                        <h4>Reunião Virtual</h4>
+                        <p>Sessão via Zoom/Google Meet (60 min) com diagnóstico profundo e plano de ação direto.</p>
+                        <div class="preco">150€ + IVA</div>
+                    </div>
+                    <a href="URL_DO_SEU_CALENDARIO_VIRTUAL" target="_blank" class="btn-agendar">Agendar Virtual</a>
+                </div>
 
-    <div class="divider"></div>
+                <!-- Reunião Presencial -->
+                <div class="card-agendamento">
+                    <div>
+                        <h4>Reunião Presencial</h4>
+                        <p>Imersão executiva presencial (90 min) direcionada para reestruturação de negócios.</p>
+                        <div class="preco">300€ + IVA</div>
+                    </div>
+                    <a href="URL_DO_SEU_CALENDARIO_PRESENCIAL" target="_blank" class="btn-agendar">Agendar Presencial</a>
+                </div>
+            </div>
+        </div>
 
-    <!-- IMAGEM DO PROJETO -->
-    <div class="project">
-      <img src="images/projeto.jpg" alt="Projeto" class="project-img">
+        <!-- 2. SEÇÃO DE PAGAMENTO E CONTRATAÇÃO -->
+        <div class="seccao-pagamento">
+            <h3>Métodos de Pagamento</h3>
+            <p>Selecione o método preferido para liquidar o serviço selecionado:</p>
+            
+            <div class="grid-pagamentos">
+                <div class="card-pagamento">
+                    <h4>MB Way / Multibanco</h4>
+                    <p>Pagamento instantâneo e automatizado.</p>
+                    <a href="URL_DO_SEU_LINK_DE_PAGAMENTO_MBWAY" target="_blank" class="btn-pagar">Pagar com MB Way</a>
+                </div>
+
+                <div class="card-pagamento">
+                    <h4>Cartão Bancário</h4>
+                    <p>Processamento seguro via Stripe.</p>
+                    <a href="URL_DO_SEU_LINK_DE_STRIPE" target="_blank" class="btn-pagar">Pagar com Cartão</a>
+                </div>
+
+                <div class="card-pagamento">
+                    <h4>Transferência Bancária</h4>
+                    <p>Pagamento direto por IBAN.</p>
+                    <a href="#transferencia" onclick="alert('IBAN: PT50 0000 0000 0000 0000 000\nPor favor envie o comprovativo para geral@leonelmendes.com'); return false;" class="btn-pagar btn-transf">Ver Dados IBAN</a>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- FERRAMENTA DE ANÁLISE DE PDM -->
-    <section class="pdm-section">
-      <div class="pdm-header">
-        <h3>Análise Automática do PDM de Loulé</h3>
-        <p>Submeta a Planta de Localização do seu terreno para obter a viabilidade preliminar emitida pelo nosso Agente de IA especializado.</p>
-      </div>
+    <!-- Script de Comunicação Segura com o Servidor (Netlify Function) -->
+    <script>
+      window.executarAnalise = async function() {
+          const textoInput = document.getElementById('userInput').value;
+          const loadingDiv = document.getElementById('loading');
+          const resultadoDiv = document.getElementById('resultado');
 
-      <!-- FORMULÁRIO DE REGISTO E UPLOAD -->
-      <form id="pdm-form">
-        <div class="form-group">
-          <label for="nome">Nome Completo</label>
-          <input type="text" id="nome" required placeholder="Ex: João Silva">
-        </div>
+          if (!textoInput.trim()) {
+              alert("Por favor, insira conteúdo para o agente analisar.");
+              return;
+          }
 
-        <div class="form-group">
-          <label for="email">Email</label>
-          <input type="email" id="email" required placeholder="Ex: joao@email.com">
-        </div>
+          loadingDiv.style.display = 'block';
+          resultadoDiv.innerHTML = '';
 
-        <div class="form-group">
-          <label for="telefone">Telemóvel</label>
-          <input type="tel" id="telefone" required placeholder="Ex: 912 345 678">
-        </div>
+          try {
+              const resposta = await fetch('/.netlify/functions/agente', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ prompt: textoInput })
+              });
 
-        <div class="form-group">
-          <label for="nif">NIF (para emissão de fatura)</label>
-          <input type="text" id="nif" placeholder="Ex: 123456789">
-        </div>
+              const dados = await resposta.json();
 
-        <div class="form-group">
-          <label for="planta">Planta de Localização da CM Loulé (PDF)</label>
-          <input type="file" id="planta" accept="application/pdf" required>
-          <span class="file-hint">Anexe o extrato oficial em PDF emitido pela Câmara de Loulé.</span>
-        </div>
+              if (resposta.ok) {
+                  resultadoDiv.innerHTML = dados.resultado;
+              } else {
+                  resultadoDiv.innerHTML = "Erro: " + (dados.error || "Falha na comunicação.");
+              }
 
-        <div class="checkbox-group">
-          <input type="checkbox" id="rgpd" required>
-          <label for="rgpd">Aceito o tratamento dos meus dados para a emissão do relatório e fatura, e compreendo que o relatório de 10€ é uma análise informativa gerada por IA.</label>
-        </div>
-
-        <button type="submit" class="btn-pdm" id="btn-submit">Pagar 10€ e Gerar Relatório por IA</button>
-      </form>
-
-      <!-- ÁREA DE CHAT / EXIBIÇÃO DO RELATÓRIO -->
-      <div id="chat-section" style="display: none;">
-        <div class="chat-box" id="chat-box"></div>
-
-        <div class="input-chat-container">
-          <input type="text" id="user-input" placeholder="Tem alguma dúvida sobre este relatório em Loulé?">
-          <button onclick="enviarDuvida()" class="btn-send">Perguntar</button>
-        </div>
-      </div>
-
-      <!-- UPGRADES DE SERVIÇO (+40€ e +90€) -->
-      <div id="upgrade-section" style="display: none;">
-        <h4>Deseja validação técnica do Arquiteto?</h4>
-        <p class="upgrade-sub">Os 10€ iniciais são abatidos na consultoria do Arq. Leonel Mendes:</p>
-
-        <div class="cards-grid">
-          <div class="upgrade-card">
-            <h5>Parecer Explicativo</h5>
-            <p class="old-price"><s>50€</s></p>
-            <p class="new-price">+40€</p>
-            <p class="desc">Validação manual da planta e envio de parecer técnico explicativo por e-mail.</p>
-            <button class="btn-upgrade" onclick="solicitarUpgrade('Parecer Explicativo por Email (+40€)', 40)">Pedir Parecer (+40€)</button>
-          </div>
-
-          <div class="upgrade-card highlight">
-            <h5>Reunião Presencial</h5>
-            <p class="old-price"><s>100€</s></p>
-            <p class="new-price">+90€</p>
-            <p class="desc">Reunião dedicada no gabinete em Loulé para discussão de projeto e licenciamento.</p>
-            <button class="btn-upgrade accent" onclick="solicitarUpgrade('Reunião Presencial em Loulé (+90€)', 90)">Agendar Reunião (+90€)</button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <div class="divider"></div>
-
-    <div class="contact">
-      <p>
-        <a href="tel:+351960010870">+351 960 010 870</a><br>
-        <a href="mailto:geral@leonelmendes.com">geral@leonelmendes.com</a>
-      </p>
-
-      <p>
-        <a href="https://maps.google.com/?q=Av.+José+Costa+Mealha+133,+8100-500+Loulé" target="_blank">
-          Av. José Costa Mealha n.º 133<br>
-          8100-500 Loulé
-        </a>
-      </p>
-    </div>
-
-    <div class="social">
-      <a href="https://wa.me/351960010870" target="_blank">
-        <img src="images/whatsapp.svg" alt="WhatsApp">
-      </a>
-      <a href="https://www.facebook.com/leonel.mendes.arqt/" target="_blank">
-        <img src="images/facebook.svg" alt="Facebook">
-      </a>
-      <a href="https://www.instagram.com/by_arq_leonel_mendes" target="_blank">
-        <img src="images/instagram.svg" alt="Instagram">
-      </a>
-    </div>
-
-    <footer>
-      © 2026 feito por Leonel Mendes
-    </footer>
-
-  </main>
-
-  <script>
-    let pdfBase64 = null;
-    let chatHistory = [];
-    let userData = {};
-
-    document.getElementById('planta').addEventListener('change', function(e) {
-      const file = e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function(evt) {
-          pdfBase64 = evt.target.result.split(',')[1];
-        };
-        reader.readAsDataURL(file);
+          } catch (error) {
+              console.error(error);
+              resultadoDiv.innerHTML = "Ocorreu um erro ao comunicar com o servidor.";
+          } finally {
+              loadingDiv.style.display = 'none';
+          }
       }
-    });
+    </script>
 
-    document.getElementById('pdm-form').addEventListener('submit', async function(e) {
-      e.preventDefault();
-
-      userData = {
-        nome: document.getElementById('nome').value,
-        email: document.getElementById('email').value,
-        telefone: document.getElementById('telefone').value,
-        nif: document.getElementById('nif').value
-      };
-
-      if (!pdfBase64) {
-        alert("Por favor, selecione a planta de localização em PDF.");
-        return;
-      }
-
-      const pago = confirm("Simulação: Confirmar o pagamento de 10€ para iniciar a análise por IA?");
-      if (!pago) return;
-
-      document.getElementById('pdm-form').style.display = 'none';
-      document.getElementById('chat-section').style.display = 'block';
-
-      const chatBox = document.getElementById('chat-box');
-      chatBox.innerHTML = '<div class="msg ai">⏳ A analisar a planta de localização da CM Loulé... Aguarde uns segundos.</div>';
-
-      try {
-        const response = await fetch('/.netlify/functions/analisar-planta', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            ...userData,
-            pdfBase64: pdfBase64,
-            userMessage: "Análise inicial da planta do PDM de Loulé."
-          })
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-          chatBox.innerHTML = `<div class="msg ai"><strong>Relatório Preliminar (PDM Loulé):</strong><br><br>${data.reply}</div>`;
-          chatHistory.push({ role: 'user', text: 'Análise inicial da planta do PDM de Loulé.' });
-          chatHistory.push({ role: 'model', text: data.reply });
-          document.getElementById('upgrade-section').style.display = 'block';
-        } else {
-          chatBox.innerHTML = `<div class="msg ai">⚠️ Erro: ${data.error || 'Não foi possível analisar o ficheiro.'}</div>`;
-        }
-      } catch (err) {
-        chatBox.innerHTML = '<div class="msg ai">⚠️ Erro na ligação ao servidor.</div>';
-      }
-    });
-
-    async function enviarDuvida() {
-      const input = document.getElementById('user-input');
-      const texto = input.value.trim();
-      if (!texto) return;
-
-      const chatBox = document.getElementById('chat-box');
-      chatBox.innerHTML += `<div class="msg user">${texto}</div>`;
-      input.value = '';
-
-      chatBox.innerHTML += `<div class="msg ai" id="loading">⏳ A consultar regulamento...</div>`;
-      chatBox.scrollTop = chatBox.scrollHeight;
-
-      try {
-        const response = await fetch('/.netlify/functions/analisar-planta', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            ...userData,
-            userMessage: texto,
-            chatHistory: chatHistory
-          })
-        });
-
-        const data = await response.json();
-        document.getElementById('loading')?.remove();
-
-        if (response.ok) {
-          chatBox.innerHTML += `<div class="msg ai">${data.reply}</div>`;
-          chatHistory.push({ role: 'user', text: texto });
-          chatHistory.push({ role: 'model', text: data.reply });
-        } else {
-          chatBox.innerHTML += `<div class="msg ai">⚠️ Erro ao processar a dúvida.</div>`;
-        }
-      } catch (err) {
-        document.getElementById('loading')?.remove();
-        chatBox.innerHTML += `<div class="msg ai">⚠️ Erro de comunicação.</div>`;
-      }
-
-      chatBox.scrollTop = chatBox.scrollHeight;
-    }
-
-    function solicitarUpgrade(servico, valor) {
-      alert(`Obrigado Sr.(a) ${userData.nome}.\n\nO seu pedido de "${servico}" por +${valor}€ foi registado. Entraremos em contacto para o email ${userData.email} para confirmar os detalhes de pagamento e agendamento.`);
-    }
-  </script>
 </body>
 </html>
