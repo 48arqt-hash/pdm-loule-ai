@@ -10,6 +10,114 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="style.css">
+  
+  <!-- Estilos complementares estritos que respeitam inteiramente o design original e classes do style.css -->
+  <style>
+    .seccao-integrada {
+      margin-top: 25px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.15);
+      text-align: left;
+    }
+    .seccao-integrada h3 {
+      font-size: 1.1rem;
+      margin-bottom: 10px;
+    }
+    .seccao-integrada label {
+      display: block;
+      font-size: 0.85rem;
+      margin-bottom: 5px;
+      opacity: 0.9;
+    }
+    .seccao-integrada input[type="text"],
+    .sescao-integrada input[type="email"],
+    .seccao-integrada input[type="tel"],
+    .seccao-integrada input[type="file"],
+    .seccao-integrada textarea {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 12px;
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: inherit;
+      border-radius: 4px;
+      box-sizing: border-box;
+      font-family: inherit;
+      font-size: 0.9rem;
+    }
+    .seccao-integrada input[type="file"] {
+      cursor: pointer;
+    }
+    .btn-executar {
+      width: 100%;
+      padding: 11px;
+      background-color: #2563eb;
+      color: #ffffff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 0.95rem;
+      transition: background 0.2s;
+    }
+    .btn-executar:hover {
+      background-color: #1d4ed8;
+    }
+    #loading {
+      display: none;
+      margin-top: 12px;
+      font-size: 0.85rem;
+      font-style: italic;
+      text-align: center;
+    }
+    #resultado {
+      margin-top: 12px;
+      background: rgba(0, 0, 0, 0.35);
+      padding: 12px;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      white-space: pre-wrap;
+      line-height: 1.5;
+      font-size: 0.85rem;
+      max-height: 350px;
+      overflow-y: auto;
+    }
+    .grid-opcoes {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin-top: 10px;
+    }
+    .card-opcao {
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 12px;
+      border-radius: 4px;
+    }
+    .card-opcao p {
+      margin: 4px 0;
+      font-size: 0.85rem;
+    }
+    .preco-destaque {
+      font-weight: bold;
+      color: #10b981;
+      font-size: 1rem;
+    }
+    .btn-acao-link {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 6px 12px;
+      background-color: #2563eb;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+    .btn-acao-link.pagar {
+      background-color: #10b981;
+    }
+  </style>
 </head>
 <body>
 
@@ -27,45 +135,73 @@
       <img src="images/projeto.jpg" alt="Projeto" class="project-img">
     </div>
 
-    <!-- FERRAMENTA DE ANÁLISE DE PLANTA -->
-    <div style="margin: 20px 0; text-align: left;">
-        <h3 style="font-size: 1rem; margin-bottom: 8px;">Análise de Planta por IA</h3>
-        <input type="file" id="fileInput" accept="image/*,application/pdf" style="width: 100%; margin-bottom: 10px;">
-        <textarea id="userInput" rows="2" placeholder="Notas adicionais para a análise..." style="width: 100%; margin-bottom: 10px; padding: 8px; box-sizing: border-box;"></textarea>
-        <button onclick="executarAnalise()" style="width: 100%; padding: 10px; background: #2563eb; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Executar Análise</button>
-        <div id="loading" style="display:none; font-size: 0.9rem; margin-top: 10px;">A processar planta...</div>
-        <div id="resultado" style="font-size: 0.9rem; margin-top: 10px; white-space: pre-wrap; text-align: left;"></div>
+    <!-- NOVA SECÇÃO INTEGRADA: RECOLHA DE DADOS & ANÁLISE DA PLANTA DE IMPLANTAÇÃO -->
+    <div class="seccao-integrada">
+      <h3>Análise Inteligente de Planta</h3>
+      <p style="font-size: 0.85rem; margin-bottom: 12px; opacity: 0.85;">Preencha os seus dados, carregue a planta de implantação e submeta para diagnóstico técnico do agente:</p>
+
+      <label for="nomeCliente">Nome / Empresa:</label>
+      <input type="text" id="nomeCliente" placeholder="O seu nome completo">
+
+      <label for="emailCliente">E-mail de Contacto:</label>
+      <input type="email" id="emailCliente" placeholder="exemplo@dominio.com">
+
+      <label for="telCliente">Telemóvel:</label>
+      <input type="tel" id="telCliente" placeholder="+351 ...">
+
+      <label for="fileInput">Planta de Implantação (Imagem / PDF):</label>
+      <input type="file" id="fileInput" accept="image/*,application/pdf">
+
+      <label for="userInput">Notas ou Diretrizes Específicas:</label>
+      <textarea id="userInput" rows="3" placeholder="Descreva os objetivos do projeto, restrições urbanísticas ou aspetos a focar..."></textarea>
+
+      <button class="btn-executar" onclick="executarAnalise()">Executar Análise da Implantação</button>
+
+      <div id="loading">A processar a planta e a estruturar o relatório técnico...</div>
+      <div id="resultado"></div>
     </div>
 
-    <!-- SESSÕES ESTRATÉGICAS (Valores atualizados) -->
-    <div style="margin: 20px 0; text-align: left; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 15px;">
-        <h3 style="font-size: 1rem; margin-bottom: 8px;">Sessões Estratégicas</h3>
+    <!-- NOVA SECÇÃO INTEGRADA: MARCAÇÃO DE REUNIÕES (Valores Atualizados) -->
+    <div class="seccao-integrada">
+      <h3>Sessões Estratégicas</h3>
+      <div class="grid-opcoes">
         
-        <div style="margin-bottom: 12px;">
-            <p style="margin: 0; font-size: 0.9rem;"><strong>Reunião Virtual (60 min):</strong> 100€ + IVA</p>
-            <a href="URL_DO_SEU_CALENDARIO_VIRTUAL" target="_blank" style="display:inline-block; margin-top:4px; font-size:0.85rem; color:#2563eb;">Agendar Virtual</a>
+        <div class="card-opcao">
+          <p><strong>Reunião Virtual</strong> (60 min)</p>
+          <p class="preco-destaque">100€ + IVA</p>
+          <a href="URL_DO_SEU_CALENDARIO_VIRTUAL" target="_blank" class="btn-acao-link">Agendar Virtual</a>
         </div>
 
-        <div style="margin-bottom: 12px;">
-            <p style="margin: 0; font-size: 0.9rem;"><strong>Reunião Presencial (60 min):</strong> 150€ + IVA</p>
-            <a href="URL_DO_SEU_CALENDARIO_PRESENCIAL" target="_blank" style="display:inline-block; margin-top:4px; font-size:0.85rem; color:#2563eb;">Agendar Presencial</a>
+        <div class="card-opcao">
+          <p><strong>Reunião Presencial</strong> (60 min)</p>
+          <p class="preco-destaque">150€ + IVA</p>
+          <a href="URL_DO_SEU_CALENDARIO_PRESENCIAL" target="_blank" class="btn-acao-link">Agendar Presencial</a>
         </div>
+
+      </div>
     </div>
 
-    <!-- PAGAMENTOS (Com o IBAN correto) -->
-    <div style="margin: 20px 0; text-align: left; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 15px;">
-        <h3 style="font-size: 1rem; margin-bottom: 8px;">Pagamentos</h3>
-        <p style="font-size: 0.85rem; margin-bottom: 8px;">
-            <a href="URL_DO_SEU_LINK_MBWAY" target="_blank">Pagar MB Way</a> | 
-            <a href="URL_DO_SEU_LINK_STRIPE" target="_blank">Pagar Cartão</a>
-        </p>
-        <p style="font-size: 0.8rem; margin: 0;">
-            <strong>IBAN:</strong> PT50017033210304005330955<br>
-            <span style="opacity: 0.8;">(Enviar comprovativo para geral@leonelmendes.com)</span>
-        </p>
+    <!-- NOVA SECÇÃO INTEGRADA: PAGAMENTOS (Com IBAN Correto) -->
+    <div class="seccao-integrada">
+      <h3>Liquidação de Serviços</h3>
+      <div class="grid-opcoes">
+        <div class="card-opcao">
+          <p><strong>MB Way / Multibanco</strong></p>
+          <a href="URL_DO_SEU_LINK_MBWAY" target="_blank" class="btn-acao-link pagar">Pagar MB Way</a>
+        </div>
+        <div class="card-opcao">
+          <p><strong>Cartão Bancário (Stripe)</strong></p>
+          <a href="URL_DO_SEU_LINK_STRIPE" target="_blank" class="btn-acao-link pagar">Pagar com Cartão</a>
+        </div>
+        <div class="card-opcao">
+          <p><strong>Transferência Bancária (IBAN)</strong></p>
+          <p style="font-size: 0.75rem; word-break: break-all; margin-top: 6px;">PT50 0170 3321 0304 0053 30955</p>
+          <a href="#iban" onclick="alert('IBAN copiado ou consultado: PT50017033210304005330955\nEnvie o comprovativo para geral@leonelmendes.com'); return false;" class="btn-acao-link" style="background-color: #64748b;">Copiar Dados</a>
+        </div>
+      </div>
     </div>
 
-    <div class="contact">
+    <div class="contact" style="margin-top: 30px;">
       <p>
         <a href="tel:+351960010870">+351 960 010 870</a><br>
         <a href="mailto:geral@leonelmendes.com">geral@leonelmendes.com</a>
@@ -97,16 +233,24 @@
 
   </main>
 
-  <!-- Script que comunica com a Netlify Function -->
+  <!-- Script que integra a recolha de dados e a comunicação com a Netlify Function -->
   <script>
     window.executarAnalise = async function() {
+        const nome = document.getElementById('nomeCliente').value.trim();
+        const email = document.getElementById('emailCliente').value.trim();
+        const telefone = document.getElementById('telCliente').value.trim();
         const fileInput = document.getElementById('fileInput');
-        const textoInput = document.getElementById('userInput').value;
+        const notas = document.getElementById('userInput').value.trim();
         const loadingDiv = document.getElementById('loading');
         const resultadoDiv = document.getElementById('resultado');
 
+        if (!nome || !email) {
+            alert("Por favor, preencha pelo menos o seu Nome e E-mail antes de submeter a planta.");
+            return;
+        }
+
         if (fileInput.files.length === 0) {
-            alert("Por favor, carregue uma imagem ou documento da planta.");
+            alert("Por favor, carregue o ficheiro da planta de implantação.");
             return;
         }
 
@@ -122,11 +266,14 @@
                 const base64Data = reader.result.split(',')[1];
                 const mimeType = file.type;
 
+                // Constrói o prompt enriquecido com os dados de contacto recolhidos do cliente
+                const promptCompleto = `Dados do Cliente:\n- Nome: ${nome}\n- E-mail: ${email}\n- Telemóvel: ${telefone || 'Não fornecido'}\n\nInstruções/Notas do Cliente: ${notas || 'Sem notas adicionais.'}\n\nPor favor, faça uma análise exaustiva e de nível executivo desta planta de implantação.`;
+
                 const resposta = await fetch('/.netlify/functions/analisar-planta', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        prompt: textoInput || "Analise detalhadamente esta planta e forneça um diagnóstico técnico.",
+                        prompt: promptCompleto,
                         fileData: base64Data,
                         mimeType: mimeType
                     })
@@ -137,12 +284,12 @@
                 if (resposta.ok) {
                     resultadoDiv.innerHTML = dados.resultado;
                 } else {
-                    resultadoDiv.innerHTML = "Erro: " + (dados.error || "Falha na análise.");
+                    resultadoDiv.innerHTML = "Erro: " + (dados.error || "Falha na análise da planta.");
                 }
 
             } catch (error) {
                 console.error(error);
-                resultadoDiv.innerHTML = "Ocorreu um erro ao processar o ficheiro.";
+                resultadoDiv.innerHTML = "Ocorreu um erro técnico ao processar o ficheiro.";
             } finally {
                 loadingDiv.style.display = 'none';
             }
