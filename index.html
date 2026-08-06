@@ -623,8 +623,7 @@
     let pdfBase64 = null;
     let chatHistory = [];
     let userData = {};
-    
-    // Controlo do Pagamento / Upgrade Atual
+
     let itemAtual = {
       servico: 'Relatório IA PDM Loulé',
       valor: 10,
@@ -643,7 +642,6 @@
       }
     });
 
-    // Submissão do formulário inicial
     document.getElementById('pdm-form').addEventListener('submit', function(e) {
       e.preventDefault();
 
@@ -658,10 +656,8 @@
         return;
       }
 
-      // Pré-preencher o número MB WAY com o telemóvel do registo
       document.getElementById('mbway-phone').value = userData.telefone;
 
-      // Definir item e abrir modal para os 10€
       itemAtual = {
         servico: 'Relatório IA PDM Loulé',
         valor: 10,
@@ -671,7 +667,6 @@
       abrirModal();
     });
 
-    // Função de Abertura da Modal
     function abrirModal() {
       document.getElementById('modal-title').innerText = `Pagamento: ${itemAtual.servico} (${itemAtual.valor}€)`;
       document.getElementById('btn-confirm-pay').innerText = `Pagar ${itemAtual.valor}€`;
@@ -679,7 +674,6 @@
       const reuniaoSection = document.getElementById('reuniao-fields');
       if (itemAtual.requerAgendamento) {
         reuniaoSection.style.display = 'block';
-        // Define data mínima como amanhã
         const tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);
         document.getElementById('data-reuniao').min = tomorrow.toISOString().split('T')[0];
@@ -695,7 +689,6 @@
       document.getElementById('payment-modal').style.display = 'none';
     }
 
-    // Seleção visual dos botões de pagamento
     function selecionarMetodo(metodo) {
       metodoSelecionado = metodo;
       document.getElementById('btn-mbway').className = `pay-btn ${metodo === 'mbway' ? 'active' : ''}`;
@@ -716,7 +709,6 @@
       }
     }
 
-    // Confirmação do pagamento dentro da Modal
     async function confirmarPagamento() {
       let dadosAdicionais = '';
 
@@ -732,7 +724,6 @@
 
       fecharModal();
 
-      // Fluxo 1: Pagamento dos 10€ para gerar o Relatório Inicial por IA
       if (itemAtual.valor === 10) {
         document.getElementById('pdm-form').style.display = 'none';
         document.getElementById('chat-section').style.display = 'block';
@@ -764,9 +755,7 @@
         } catch (err) {
           chatBox.innerHTML = '<div class="msg ai">⚠️ Erro na ligação ao servidor.</div>';
         }
-      } 
-      // Fluxo 2: Pagamento de Upgrades (+40€, +90€ ou +140€)
-      else {
+      } else {
         alert(`Obrigado Sr.(a) ${userData.nome}.\n\nPagamento de +${itemAtual.valor}€ referente a "${itemAtual.servico}" processado com sucesso.${dadosAdicionais}\n\nEnviámos a confirmação para o e-mail ${userData.email}.`);
       }
     }
