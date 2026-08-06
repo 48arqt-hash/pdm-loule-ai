@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>leonelmendes.com - Análise de Plantas & Estratégia</title>
+    <title>leonelmendes.com - Agente Estratégico & Análise de Plantas</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -21,22 +21,32 @@
             box-shadow: 0 10px 25px rgba(0,0,0,0.3);
             border: 1px solid #334155;
         }
-        h3, h4 { color: #38bdf8; }
-        p { color: #94a3b8; }
+        h3, h4 {
+            color: #38bdf8;
+        }
+        p {
+            color: #94a3b8;
+        }
         input[type="file"], textarea {
             width: 100%;
-            padding: 12px;
+            padding: 14px;
             background: #0f172a;
             border: 1px solid #475569;
             color: #fff;
             border-radius: 6px;
             box-sizing: border-box;
             font-family: inherit;
+            font-size: 1rem;
             margin-top: 5px;
             margin-bottom: 15px;
         }
-        input[type="file"] { cursor: pointer; }
-        textarea:focus { outline: none; border-color: #38bdf8; }
+        input[type="file"] {
+            cursor: pointer;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #38bdf8;
+        }
         .btn-acao {
             background-color: #38bdf8;
             color: #0f172a;
@@ -48,8 +58,15 @@
             font-size: 1rem;
             transition: background 0.2s;
         }
-        .btn-acao:hover { background-color: #7dd3fc; }
-        #loading { display: none; margin-top: 20px; color: #38bdf8; font-style: italic; }
+        .btn-acao:hover {
+            background-color: #7dd3fc;
+        }
+        #loading {
+            display: none;
+            margin-top: 20px;
+            color: #38bdf8;
+            font-style: italic;
+        }
         #resultado {
             margin-top: 25px;
             background: #0f172a;
@@ -60,96 +77,160 @@
             line-height: 1.6;
             color: #e2e8f0;
         }
-        .seccao-agendamento, .seccao-pagamento {
+        .seccao-agendamento {
             margin-top: 35px;
             padding-top: 25px;
             border-top: 1px solid #334155;
         }
-        .grid-agendamento, .grid-pagamentos {
+        .grid-agendamento {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
             gap: 20px;
             margin-top: 20px;
         }
-        .card-agendamento, .card-pagamento {
+        .card-agendamento {
             background: #0f172a;
             border: 1px solid #475569;
             padding: 20px;
             border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
-        .preco { font-size: 1.25rem; font-weight: bold; color: #10b981; margin: 10px 0; }
-        .btn-agendar, .btn-pagar {
+        .preco {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: #10b981;
+            margin: 10px 0;
+        }
+        .btn-agendar {
             display: inline-block;
             margin-top: 15px;
             padding: 10px 20px;
             background-color: #38bdf8;
             color: #0f172a;
+            text-align: center;
             text-decoration: none;
             border-radius: 6px;
             font-weight: bold;
+            font-size: 0.9rem;
+        }
+        .btn-agendar:hover {
+            background-color: #7dd3fc;
+        }
+        .seccao-pagamento {
+            margin-top: 35px;
+            padding-top: 25px;
+            border-top: 1px solid #334155;
+        }
+        .grid-pagamentos {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .card-pagamento {
+            background: #0f172a;
+            border: 1px solid #475569;
+            padding: 20px;
+            border-radius: 8px;
             text-align: center;
         }
-        .btn-pagar { background-color: #10b981; color: #fff; }
-        .btn-transf { background-color: #64748b; color: #fff; }
+        .btn-pagar {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 10px 20px;
+            background-color: #10b981;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        .btn-pagar:hover {
+            background-color: #059669;
+        }
+        .btn-transf {
+            background-color: #64748b;
+        }
+        .btn-transf:hover {
+            background-color: #475569;
+        }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h3>Agente de Inteligência e Análise de Plantas</h3>
-        <p>Portal leonelmendes.com — Carregue a imagem da planta e adicione notas para análise executiva:</p>
+        <h3>Agente de Inteligência Analítica e Estratégia</h3>
+        <p>Portal leonelmendes.com — Carregue a planta e insira notas para análise:</p>
         
         <label><strong>Carregar Planta (Imagem / PDF):</strong></label>
         <input type="file" id="fileInput" accept="image/*,application/pdf">
 
         <label><strong>Notas ou Instruções Adicionais (Opcional):</strong></label>
-        <textarea id="userInput" rows="3" placeholder="Ex: Analise a distribuição espacial, fluxo de circulação e otimização de layout..."></textarea>
-        
-        <br>
-        <button class="btn-acao" onclick="executarAnalise()">Executar Análise da Planta</button>
+        <textarea id="userInput" rows="4" placeholder="Escreva aqui o seu pedido de análise..."></textarea>
+        <br><br>
+        <button class="btn-acao" onclick="executarAnalise()">Executar Análise de Elite</button>
 
-        <div id="loading">A processar a planta com IA avançada... por favor aguarde.</div>
+        <div id="loading">A processar análise profunda da planta (com IA avançada)... por favor aguarde.</div>
         <div id="resultado"></div>
 
-        <!-- 1. CAMPOS DE AGENDAMENTO -->
+        <!-- 1. CAMPOS DE AGENDAMENTO (Valores e tempos atualizados) -->
         <div class="seccao-agendamento">
             <h3>Marcar Sessão Estratégica com Leonel Mendes</h3>
+            <p>Após a análise, escolha o formato de acompanhamento:</p>
+            
             <div class="grid-agendamento">
+                <!-- Reunião Virtual -->
                 <div class="card-agendamento">
-                    <h4>Reunião Virtual</h4>
-                    <p>Sessão via Zoom/Google Meet (60 min).</p>
-                    <div class="preco">150€ + IVA</div>
+                    <div>
+                        <h4>Reunião Virtual</h4>
+                        <p>Sessão via Zoom/Google Meet (60 min) com diagnóstico profundo e plano de ação.</p>
+                        <div class="preco">100€ + IVA</div>
+                    </div>
                     <a href="URL_DO_SEU_CALENDARIO_VIRTUAL" target="_blank" class="btn-agendar">Agendar Virtual</a>
                 </div>
+
+                <!-- Reunião Presencial -->
                 <div class="card-agendamento">
-                    <h4>Reunião Presencial</h4>
-                    <p>Imersão executiva presencial (90 min).</p>
-                    <div class="preco">300€ + IVA</div>
+                    <div>
+                        <h4>Reunião Presencial</h4>
+                        <p>Imersão executiva presencial (60 min) direcionada para reestruturação de negócios.</p>
+                        <div class="preco">150€ + IVA</div>
+                    </div>
                     <a href="URL_DO_SEU_CALENDARIO_PRESENCIAL" target="_blank" class="btn-agendar">Agendar Presencial</a>
                 </div>
             </div>
         </div>
 
-        <!-- 2. SEÇÃO DE PAGAMENTO -->
+        <!-- 2. SEÇÃO DE PAGAMENTO (Com o IBAN correto) -->
         <div class="seccao-pagamento">
             <h3>Métodos de Pagamento</h3>
+            <p>Selecione o método preferido para liquidar o serviço selecionado:</p>
+            
             <div class="grid-pagamentos">
                 <div class="card-pagamento">
                     <h4>MB Way / Multibanco</h4>
-                    <a href="URL_DO_SEU_LINK_MBWAY" target="_blank" class="btn-pagar">Pagar MB Way</a>
+                    <p>Pagamento instantâneo e automatizado.</p>
+                    <a href="URL_DO_SEU_LINK_DE_PAGAMENTO_MBWAY" target="_blank" class="btn-pagar">Pagar com MB Way</a>
                 </div>
+
                 <div class="card-pagamento">
                     <h4>Cartão Bancário</h4>
-                    <a href="URL_DO_SEU_LINK_STRIPE" target="_blank" class="btn-pagar">Pagar com Cartão</a>
+                    <p>Processamento seguro via Stripe.</p>
+                    <a href="URL_DO_SEU_LINK_DE_STRIPE" target="_blank" class="btn-pagar">Pagar com Cartão</a>
                 </div>
+
                 <div class="card-pagamento">
-                    <h4>Transferência</h4>
-                    <a href="#transferencia" onclick="alert('IBAN: PT50 0000 0000 0000 0000 000\nEnviar comprovativo para geral@leonelmendes.com'); return false;" class="btn-pagar btn-transf">Ver IBAN</a>
+                    <h4>Transferência Bancária</h4>
+                    <p>Pagamento direto por IBAN.</p>
+                    <a href="#transferencia" onclick="alert('IBAN: PT50017033210304005330955\nPor favor envie o comprovativo para geral@leonelmendes.com'); return false;" class="btn-pagar btn-transf">Ver Dados IBAN</a>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Script de Comunicação Segura com a Netlify Function (analisar-planta) -->
     <script>
       window.executarAnalise = async function() {
           const fileInput = document.getElementById('fileInput');
@@ -166,8 +247,6 @@
           resultadoDiv.innerHTML = '';
 
           const file = fileInput.files[0];
-          
-          // Converter ficheiro para Base64 para enviar de forma segura para a Netlify Function
           const reader = new FileReader();
           reader.readAsDataURL(file);
           
@@ -180,7 +259,7 @@
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({
-                          prompt: textoInput || "Analise detalhadamente esta planta e forneça um diagnóstico técnico e estratégico.",
+                          prompt: textoInput || "Analise detalhadamente esta planta e forneça um diagnóstico técnico.",
                           fileData: base64Data,
                           mimeType: mimeType
                       })
@@ -203,5 +282,6 @@
           };
       }
     </script>
+
 </body>
 </html>
