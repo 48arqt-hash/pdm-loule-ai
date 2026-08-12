@@ -1,89 +1,83 @@
-import { GoogleGenAI } from "@google/genai";
+const { GoogleGenAI } = require('@google/genai');
 
-export async function handler(event) {
-  const headers = {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers": "Content-Type",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Content-Type": "application/json"
-  };
-
-  if (event.httpMethod === "OPTIONS") {
-    return { statusCode: 200, headers, body: "" };
-  }
-
-  if (event.httpMethod !== "POST") {
-    return { statusCode: 405, headers, body: JSON.stringify({ error: "Method Not Allowed" }) };
-  }
-
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    return { 
-      statusCode: 500, 
-      headers, 
-      body: JSON.stringify({ error: "Chave GEMINI_API_KEY não encontrada no Netlify." }) 
+exports.handler = async (event, context) => {
+  // Permitir apenas requisições POST
+  if (event.httpMethod !== 'POST') {
+    return {
+      statusCode: 405,
+      body: JSON.stringify({ error: 'Método não permitido.' })
     };
   }
 
   try {
-    const body = JSON.parse(event.body || "{}");
-    const textPrompt = body.prompt || body.duvida || "Analisa esta planta e indica a viabilidade preliminar do PDM de Loulé.";
-    let fileData = body.fileData || body.file || body.imagem || body.base64;
-    let mimeType = body.mimeType || body.type || "image/png";
-
-    const ai = new GoogleGenAI({ apiKey });
-    const contents = [{ text: textPrompt }];
-
-    // Tratamento e limpeza da string Base64 se um ficheiro for enviado
-    if (fileData) {
-      if (fileData.includes(";base64,")) {
-        const parts = fileData.split(";base64,");
-        mimeType = parts[0].replace("data:", "");
-        fileData = parts[1];
-      }
-
-      contents.push({
-        inlineData: {
-          data: fileData,
-          mimeType: mimeType
-        }
-      });
+    // 1. Verificar se a API Key está configurada nas variáveis de ambiente da Netlify
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      console.error("ERRO: GEMINI_API_KEY não configurada nas Environment Variables.");
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: 'Chave de API não configurada no servidor Netlify.' })
+      };
     }
 
+    // 2. Parse do corpo da requisição enviado pelo front-end
+    const { pdfBase64, userMessage, chatHistory } = JSON.parse(event.body || '{}');
+
+    const ai = new GoogleGenAI({ apiKey });
+    const model = 'gemini-2.5-flash'; // Modelo ideal para texto e análise multimodal de PDFs
+
+    // Prompt do sistema com instruções técnicas para o PDM de Loulé
+    const systemInstruction = `Você é um assistente técnico especializado em urbanismo e arquitetura do concelho de Loulé, Portugal.
+Sua função é analisar extratos do PDM (Plano Director Municipal) de Loulé fornecidos em formato PDF e emitir análises preliminares informativas.
+Responda sempre com clareza, em português europeu, destacando as condicionantes urbanísticas, classificação do solo e orientações preliminares.`;
+
+    let contents = [];
+
+    // 3. Se houver PDF em Base64 (primeira análise), incluir o ficheiro
+    if (pdfBase64) {
+      contents.push({
+        inlineData: {
+          mimeType: 'application/pdf',
+          data: pdfBase64
+        }
+      });
+      contents.push({ text: userMessage || "Analise este extrato do PDM de Loulé." });
+    } else if (chatHistory && chatHistory.length > 0) {
+      // Reconstruir o histórico de conversa para dúvidas subsequentes
+      chatHistory.forEach(msg => {
+        contents.push({
+          role: msg.role === 'user' ? 'user' : 'model',
+          parts: [{ text: msg.text }]
+        });
+      });
+      contents.push({ role: 'user', parts: [{ text: userMessage }] });
+    } else {
+      contents.push({ text: userMessage });
+    }
+
+    // 4. Chamada à API da Gemini
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: model,
       contents: contents,
       config: {
-        temperature: 0.7,
-        systemInstruction: `És o Arquiteto e Agente de Inteligência Estratégica Sénior do portal leonelmendes.com. O teu objetivo supremo é analisar plantas arquitetónicas, extratos de PDM ou layouts enviados pelos utilizadores, avaliando com rigor absoluto:
-1. Ergonomia e Fluxo de Circulação / Enquadramento de Solo PDM
-2. Aproveitamento de Espaço e Funcionalidade
-3. Conformidade com Boas Práticas de Design/Arquitetura
-4. Oportunidades de Otimização e Valorização
-
-Formata a resposta de forma altamente profissional, usando tópicos claros e recomendações acionáveis.`
+        systemInstruction: systemInstruction,
+        temperature: 0.2
       }
     });
 
-    const aiText = response.text || "Sem resposta gerada pelo modelo.";
-
     return {
       statusCode: 200,
-      headers,
-      body: JSON.stringify({ 
-        resultado: aiText, 
-        relatorio: aiText, 
-        resposta: aiText,
-        texto: aiText 
-      })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reply: response.text })
     };
 
   } catch (error) {
-    console.error("Erro na Function:", error);
+    console.error("Erro interno na Netlify Function:", error);
     return {
       statusCode: 500,
-      headers,
-      body: JSON.stringify({ error: "Erro ao processar a planta com a IA: " + error.message })
+      body: JSON.stringify({ 
+        error: error.message || 'Erro ao comunicar com o modelo Gemini.' 
+      })
     };
   }
-}
+};
