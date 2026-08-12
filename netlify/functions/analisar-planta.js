@@ -42,8 +42,8 @@ exports.handler = async (event) => {
 
 Formata a resposta de forma altamente profissional, usando tópicos claros e recomendações acionáveis.`;
 
-    // Chamada atualizada para o modelo gemini-1.5-flash
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+    // Utilizando o endpoint gemini-2.0-flash (versão atualizada e standard da v1beta)
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
