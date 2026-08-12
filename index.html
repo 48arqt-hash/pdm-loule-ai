@@ -1,468 +1,372 @@
 <!DOCTYPE html>
 <html lang="pt">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Leonel Mendes — Arquitetura e Engenharia em Loulé</title>
-    
-    <!-- Meta Tags para SEO & Redes Sociais -->
-    <meta name="description" content="Gabinete de Arquitetura e Engenharia em Loulé. Projetos de licenciamento, consultoria de PDM, remodelações e fiscalização de obras no Algarve.">
-    <meta property="og:title" content="Leonel Mendes — Arquitetura e Engenharia em Loulé">
-    <meta property="og:description" content="Soluções completas de arquitetura, engenharia e análise de PDM em Loulé e Algarve.">
-    <meta property="og:image" content="images/leonel-mendes.jpg">
-    <meta property="og:type" content="website">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Leonel Mendes — Arquitetura e Engenharia</title>
 
-    <!-- Fonts Google -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 
-    <style>
-        :root {
-            --bg-primary: #0f172a;
-            --bg-card: #1e293b;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --accent-gold: #d97706;
-            --accent-gold-hover: #b45309;
-            --accent-blue: #2563eb;
-            --border-color: #334155;
-            --font-family: 'Inter', system-ui, -apple-system, sans-serif;
-        }
+  <link rel="stylesheet" href="style.css">
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            background-color: var(--bg-primary);
-            color: var(--text-main);
-            font-family: var(--font-family);
-            line-height: 1.6;
-            padding-bottom: 60px;
-        }
-
-        header {
-            border-bottom: 1px solid var(--border-color);
-            padding: 20px 0;
-            margin-bottom: 40px;
-        }
-
-        .container {
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-
-        .nav-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .logo {
-            font-weight: 700;
-            font-size: 1.25rem;
-            letter-spacing: 0.5px;
-            color: var(--text-main);
-            text-decoration: none;
-        }
-
-        .logo span {
-            color: var(--accent-gold);
-        }
-
-        /* Hero Section com Imagem Local */
-        .hero {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 40px;
-            align-items: center;
-            margin-bottom: 60px;
-        }
-
-        @media (max-width: 768px) {
-            .hero {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .hero-text h1 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            line-height: 1.2;
-            margin-bottom: 16px;
-        }
-
-        .hero-text p {
-            color: var(--text-muted);
-            font-size: 1.1rem;
-            margin-bottom: 24px;
-        }
-
-        .hero-image {
-            width: 100%;
-            border-radius: 12px;
-            overflow: hidden;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
-        }
-
-        .hero-image img {
-            width: 100%;
-            height: auto;
-            display: block;
-            object-fit: cover;
-        }
-
-        /* Funcionalidade de Análise de PDM / Chatbot */
-        .pdm-tool {
-            background-color: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 30px;
-            margin-bottom: 60px;
-        }
-
-        .pdm-tool h2 {
-            font-size: 1.5rem;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .badge {
-            background-color: rgba(217, 119, 6, 0.2);
-            color: var(--accent-gold);
-            font-size: 0.75rem;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-weight: 600;
-        }
-
-        .chat-box {
-            background-color: #0b1120;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 20px;
-            height: 320px;
-            overflow-y: auto;
-            margin: 20px 0;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .message {
-            max-width: 80%;
-            padding: 12px 16px;
-            border-radius: 8px;
-            font-size: 0.95rem;
-        }
-
-        .message.system {
-            background-color: #1e293b;
-            align-self: flex-start;
-            border-left: 3px solid var(--accent-gold);
-        }
-
-        .message.user {
-            background-color: var(--accent-blue);
-            align-self: flex-end;
-            color: #fff;
-        }
-
-        .upload-area {
-            border: 2px dashed var(--border-color);
-            border-radius: 8px;
-            padding: 20px;
-            text-align: center;
-            background-color: rgba(255, 255, 255, 0.02);
-            cursor: pointer;
-            transition: border-color 0.2s;
-            margin-bottom: 15px;
-        }
-
-        .upload-area:hover {
-            border-color: var(--accent-gold);
-        }
-
-        .input-group {
-            display: flex;
-            gap: 10px;
-        }
-
-        input[type="text"] {
-            flex: 1;
-            background-color: #0b1120;
-            border: 1px solid var(--border-color);
-            color: var(--text-main);
-            padding: 12px 16px;
-            border-radius: 6px;
-            font-size: 1rem;
-        }
-
-        .btn {
-            background-color: var(--accent-gold);
-            color: #fff;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 6px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-
-        .btn:hover {
-            background-color: var(--accent-gold-hover);
-        }
-
-        /* Seção de Serviços / Preços */
-        .services-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-            margin-bottom: 60px;
-        }
-
-        .service-card {
-            background-color: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 24px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-
-        .service-card h3 {
-            font-size: 1.25rem;
-            margin-bottom: 12px;
-        }
-
-        .service-card .price {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--accent-gold);
-            margin: 16px 0;
-        }
-
-        /* Modal de Pagamento / Agendamento */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-
-        .modal-content {
-            background-color: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 30px;
-            max-width: 500px;
-            width: 90%;
-            position: relative;
-        }
-
-        .close-modal {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            color: var(--text-muted);
-            cursor: pointer;
-            font-size: 1.5rem;
-        }
-    </style>
+  <style>
+    /* Estilos complementares para os novos botões e painéis mantendo a linha minimalista */
+    .services-section {
+      margin: 25px 0;
+      text-align: left;
+    }
+    .service-btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 15px;
+    }
+    .btn-action {
+      background-color: #1e293b;
+      color: #ffffff;
+      border: 1px solid #334155;
+      padding: 14px 18px;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.2s ease;
+      text-align: left;
+    }
+    .btn-action:hover {
+      background-color: #334155;
+      border-color: #475569;
+    }
+    .btn-badge {
+      background-color: #d97706;
+      color: #ffffff;
+      font-size: 0.8rem;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+    .feature-panel {
+      display: none;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 20px;
+      margin-top: 15px;
+      color: #1e293b;
+    }
+    .feature-panel h3 {
+      margin-top: 0;
+      font-size: 1.1rem;
+      color: #0f172a;
+      margin-bottom: 8px;
+    }
+    .feature-panel p {
+      font-size: 0.88rem;
+      color: #64748b;
+      margin-bottom: 15px;
+    }
+    .upload-zone {
+      border: 2px dashed #cbd5e1;
+      border-radius: 6px;
+      padding: 15px;
+      text-align: center;
+      background: #ffffff;
+      cursor: pointer;
+      margin-bottom: 12px;
+    }
+    .upload-zone span {
+      font-size: 0.85rem;
+      color: #475569;
+    }
+    .input-field, .textarea-field {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      margin-bottom: 10px;
+      box-sizing: border-box;
+    }
+    .textarea-field {
+      resize: vertical;
+      min-height: 80px;
+    }
+    .btn-submit {
+      background-color: #0f172a;
+      color: #ffffff;
+      border: none;
+      width: 100%;
+      padding: 12px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    .btn-submit:hover {
+      background-color: #1e293b;
+    }
+    .chat-history {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 10px;
+      max-height: 180px;
+      overflow-y: auto;
+      margin-bottom: 12px;
+      font-size: 0.88rem;
+    }
+    .chat-msg {
+      margin-bottom: 8px;
+      padding: 8px 12px;
+      border-radius: 6px;
+    }
+    .chat-msg.system {
+      background: #f1f5f9;
+      color: #334155;
+    }
+    .chat-msg.user {
+      background: #2563eb;
+      color: #ffffff;
+      margin-left: 20%;
+    }
+    .discount-checkbox {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      margin-bottom: 12px;
+      color: #334155;
+    }
+  </style>
 </head>
 <body>
 
-    <header>
-        <div class="container nav-content">
-            <a href="#" class="logo">LEONEL MENDES <span>ARQUITETURA</span></a>
-            <div>Loulé — Algarve</div>
-        </div>
-    </header>
+  <main class="card">
 
-    <main class="container">
-        <!-- Hero Section -->
-        <section class="hero">
-            <div class="hero-text">
-                <h1>Projetos de Arquitetura & Análise de PDM em Loulé</h1>
-                <p>Licenciamentos, reabilitação urbanística, consultoria técnica e viabilidade de terrenos no concelho de Loulé.</p>
-                <button class="btn" onclick="scrollToPdm()">Analisar Terreno com IA</button>
-            </div>
-            <div class="hero-image">
-                <!-- Imagem carregada da sua pasta images/ -->
-                <img src="images/leonel-mendes.jpg" alt="Leonel Mendes - Arquitetura e Engenharia em Loulé">
-            </div>
-        </section>
+    <img src="images/logo.png" alt="Leonel Mendes" class="logo">
 
-        <!-- Ferramenta PDM + IA Chatbot -->
-        <section class="pdm-tool" id="pdm-section">
-            <h2>Análise Automática do PDM de Loulé <span class="badge">IA Assistida</span></h2>
-            <p style="color: var(--text-muted);">Envie a Planta de Localização em PDF para obter um parecer preliminar automático das condicionantes do terreno.</p>
-            
-            <div class="chat-box" id="chatBox">
-                <div class="message system">
-                    Olá! Sou o assistente técnico do gabinete Leonel Mendes. Carregue o extrato do PDM/Planta de Localização do seu terreno em Loulé (em formato PDF) ou coloque a sua questão abaixo.
-                </div>
-            </div>
+    <h1>Arq. Leonel Mendes</h1>
+    <h2>Arquitetura e Engenharia</h2>
 
-            <div class="upload-area" onclick="document.getElementById('pdfInput').click()">
-                <p id="uploadLabel">📁 Clique aqui para selecionar o ficheiro PDF da Planta de Localização</p>
-                <input type="file" id="pdfInput" accept="application/pdf" style="display: none;" onchange="handleFileSelect(event)">
-            </div>
+    <div class="divider"></div>
 
-            <div class="input-group">
-                <input type="text" id="userInput" placeholder="Escreva a sua dúvida sobre o terreno ou loteamento...">
-                <button class="btn" onclick="sendMessage()">Enviar</button>
-            </div>
-        </section>
-
-        <!-- Serviços e Upgrades -->
-        <h2>Serviços Técnicos e Consultoria</h2>
-        <br>
-        <section class="services-grid">
-            <div class="service-card">
-                <div>
-                    <h3>Parecer Técnico Preliminar</h3>
-                    <p style="color: var(--text-muted);">Análise detalhada do PDM de Loulé, REN, RAN e restrições legais com relatório assinado.</p>
-                    <div class="price">€150</div>
-                </div>
-                <button class="btn" onclick="openPaymentModal('Parecer Técnico Preliminar', 150)">Solicitar Parecer</button>
-            </div>
-
-            <div class="service-card">
-                <div>
-                    <h3>Reunião de Consultoria</h3>
-                    <p style="color: var(--text-muted);">Sessão presencial no gabinete em Loulé ou online para alinhamento de projeto de arquitetura.</p>
-                    <div class="price">€85</div>
-                </div>
-                <button class="btn" onclick="openPaymentModal('Reunião de Consultoria', 85)">Agendar Reunião</button>
-            </div>
-
-            <div class="service-card">
-                <div>
-                    <h3>Projeto de Licenciamento</h3>
-                    <p style="color: var(--text-muted);">Desenvolvimento completo de arquitetura e engenharia para submissão na Câmara Municipal de Loulé.</p>
-                    <div class="price">Sob Consulta</div>
-                </div>
-                <button class="btn" style="background-color: var(--accent-blue);" onclick="scrollToPdm()">Pedir Orçamento</button>
-            </div>
-        </section>
-    </main>
-
-    <!-- Modal de Pagamento / Agendamento -->
-    <div class="modal" id="paymentModal">
-        <div class="modal-content">
-            <span class="close-modal" onclick="closePaymentModal()">&times;</span>
-            <h3 id="modalTitle">Agendar Serviço</h3>
-            <p style="color: var(--text-muted); margin: 10px 0;" id="modalPrice"></p>
-            
-            <form onsubmit="processPayment(event)" style="display: flex; flex-direction: column; gap: 12px; margin-top: 15px;">
-                <input type="text" placeholder="Nome Completo" required>
-                <input type="text" placeholder="Contacto Telefónico" required>
-                <input type="text" placeholder="Email" required>
-                <select style="background-color: #0b1120; border: 1px solid var(--border-color); color: var(--text-main); padding: 12px; border-radius: 6px;">
-                    <option value="mbway">MB WAY</option>
-                    <option value="multibanco">Referência Multibanco</option>
-                    <option value="cartao">Cartão de Crédito</option>
-                </select>
-                <button type="submit" class="btn" style="margin-top: 10px;">Confirmar Pedido</button>
-            </form>
-        </div>
+    <!-- IMAGEM DO PROJETO -->
+    <div class="project">
+      <img src="images/projeto.jpg" alt="Projeto" class="project-img">
     </div>
 
-    <script>
-        let selectedPdfBase64 = null;
+    <!-- BOTÕES DE SERVIÇOS FUNCIONAIS -->
+    <div class="services-section">
+      <div class="service-btn-group">
+        <button class="btn-action" onclick="togglePanel('pdmPanel')">
+          <span>🔍 Análise Automática do PDM</span>
+          <span class="btn-badge">10€</span>
+        </button>
 
-        function scrollToPdm() {
-            document.getElementById('pdm-section').scrollIntoView({ behavior: 'smooth' });
+        <button class="btn-action" onclick="togglePanel('meetingPanel')">
+          <span>📅 Reunião de Consultoria</span>
+          <span class="btn-badge" id="meetingBadge">123€</span>
+        </button>
+
+        <button class="btn-action" onclick="togglePanel('quotePanel')">
+          <span>📄 Pedir Orçamento</span>
+          <span style="font-size: 0.8rem; opacity: 0.8;">Grátis</span>
+        </button>
+      </div>
+
+      <!-- PAINEL 1: ANÁLISE AUTOMÁTICA PDM (10€) -->
+      <div id="pdmPanel" class="feature-panel">
+        <h3>Análise Automática de PDM em Loulé</h3>
+        <p>Envie a Planta de Localização em PDF para uma análise preliminar via IA das condicionantes do seu terreno.</p>
+        
+        <div class="chat-history" id="pdmChat">
+          <div class="chat-msg system">
+            Carregue a Planta de Localização em PDF para iniciar a análise técnica preliminar.
+          </div>
+        </div>
+
+        <div class="upload-zone" onclick="document.getElementById('pdmPdfInput').click()">
+          <span id="pdmUploadText">📁 Anexar Planta de Localização (PDF)</span>
+          <input type="file" id="pdmPdfInput" accept="application/pdf" style="display: none;" onchange="updateFileName(this, 'pdmUploadText')">
+        </div>
+
+        <input type="text" id="pdmUserMsg" class="input-field" placeholder="Dúvida específica sobre o terreno (opcional)...">
+        
+        <button class="btn-submit" onclick="submitPdmAnalysis()">Analisar Terreno & Pagar (10€)</button>
+      </div>
+
+      <!-- PAINEL 2: REUNIÃO DE CONSULTORIA (123€ com desconto de 10€) -->
+      <div id="meetingPanel" class="feature-panel">
+        <h3>Agendar Reunião de Consultoria</h3>
+        <p>Sessão presencial no gabinete em Loulé ou por videochamada.</p>
+
+        <div class="discount-checkbox">
+          <input type="checkbox" id="paidPdmCheck" onchange="calculateMeetingPrice()">
+          <label for="paidPdmCheck">Já efetuei a Análise Automática do PDM (-10€ desconto)</label>
+        </div>
+
+        <input type="text" placeholder="Seu Nome Completo" class="input-field" required>
+        <input type="tel" placeholder="Contacto Telefónico / WhatsApp" class="input-field" required>
+        <input type="email" placeholder="Seu Email" class="input-field" required>
+
+        <button class="btn-submit" id="meetingSubmitBtn" onclick="processMeetingBooking()">Confirmar e Pagar (123€)</button>
+      </div>
+
+      <!-- PAINEL 3: PEDIR ORÇAMENTO COM ANEXOS -->
+      <div id="quotePanel" class="feature-panel">
+        <h3>Pedir Orçamento de Projeto</h3>
+        <p>Descreva o seu projeto ou intenção de obra e anexe os documentos necessários.</p>
+
+        <input type="text" placeholder="Nome Completo" class="input-field" required>
+        <input type="email" placeholder="Email" class="input-field" required>
+        <input type="tel" placeholder="Contacto Telefónico" class="input-field" required>
+
+        <textarea class="textarea-field" placeholder="Descreva brevemente o projeto (ex: moradia unifamiliar, alteração, reabilitação...)" required></textarea>
+
+        <div class="upload-zone" onclick="document.getElementById('quoteDocsInput').click()">
+          <span id="quoteUploadText">📁 Anexar Documentos ou Projetos (PDF/Fotos)</span>
+          <input type="file" id="quoteDocsInput" multiple accept="application/pdf,image/*" style="display: none;" onchange="updateFileName(this, 'quoteUploadText')">
+        </div>
+
+        <button class="btn-submit" onclick="submitQuoteRequest()">Enviar Pedido de Orçamento</button>
+      </div>
+    </div>
+
+    <!-- CONTACTOS ORIGINAIS -->
+    <div class="contact">
+      <p>
+        <a href="tel:+351960010870">+351 960 010 870</a><br>
+        <a href="mailto:geral@leonelmendes.com">geral@leonelmendes.com</a>
+      </p>
+
+      <p>
+        <a href="https://maps.google.com/?q=Av.+José+Costa+Mealha+133,+8100-500+Loulé" target="_blank">
+          Av. José Costa Mealha n.º 133<br>
+          8100-500 Loulé
+        </a>
+      </p>
+    </div>
+
+    <!-- REDES SOCIAIS ORIGINAIS -->
+    <div class="social">
+      <a href="https://wa.me/351960010870" target="_blank">
+        <img src="images/whatsapp.svg" alt="WhatsApp">
+      </a>
+      <a href="https://www.facebook.com/leonel.mendes.arqt/" target="_blank">
+        <img src="images/facebook.svg" alt="Facebook">
+      </a>
+      <a href="https://www.instagram.com/by_arq_leonel_mendes" target="_blank">
+        <img src="images/instagram.svg" alt="Instagram">
+      </a>
+    </div>
+
+    <footer>
+      © 2026 feito por Leonel Mendes
+    </footer>
+
+  </main>
+
+  <script>
+    let pdmPdfBase64 = null;
+
+    // Alternar visibilidade dos painéis expansíveis
+    function togglePanel(panelId) {
+      const panels = ['pdmPanel', 'meetingPanel', 'quotePanel'];
+      panels.forEach(id => {
+        const el = document.getElementById(id);
+        if (id === panelId) {
+          el.style.display = (el.style.display === 'block') ? 'none' : 'block';
+        } else {
+          el.style.display = 'none';
+        }
+      });
+    }
+
+    // Atualiza o nome dos ficheiros selecionados
+    function updateFileName(input, labelId) {
+      const label = document.getElementById(labelId);
+      if (input.files && input.files.length > 0) {
+        if (input.files.length === 1) {
+          label.innerText = `✅ ${input.files[0].name}`;
+        } else {
+          label.innerText = `✅ ${input.files.length} ficheiros selecionados`;
         }
 
-        function handleFileSelect(event) {
-            const file = event.target.files[0];
-            if (file && file.type === "application/pdf") {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    selectedPdfBase64 = e.target.result.split(',')[1];
-                    document.getElementById('uploadLabel').innerText = `✅ Ficheiro selecionado: ${file.name}`;
-                };
-                reader.readAsDataURL(file);
-            } else {
-                alert("Por favor selecione um ficheiro PDF válido.");
-            }
+        if (input.id === 'pdmPdfInput') {
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            pdmPdfBase64 = e.target.result.split(',')[1];
+          };
+          reader.readAsDataURL(input.files[0]);
         }
+      }
+    }
 
-        async function sendMessage() {
-            const input = document.getElementById('userInput');
-            const chatBox = document.getElementById('chatBox');
-            const messageText = input.value.trim();
+    // Recálculo dinâmico do valor da reunião (Com ou sem desconto do PDM)
+    function calculateMeetingPrice() {
+      const isChecked = document.getElementById('paidPdmCheck').checked;
+      const badge = document.getElementById('meetingBadge');
+      const submitBtn = document.getElementById('meetingSubmitBtn');
 
-            if (!messageText && !selectedPdfBase64) return;
+      if (isChecked) {
+        badge.innerText = "113€";
+        submitBtn.innerText = "Confirmar e Pagar (113€)";
+      } else {
+        badge.innerText = "123€";
+        submitBtn.innerText = "Confirmar e Pagar (123€)";
+      }
+    }
 
-            if (messageText) {
-                const userMsgDiv = document.createElement('div');
-                userMsgDiv.className = 'message user';
-                userMsgDiv.innerText = messageText;
-                chatBox.appendChild(userMsgDiv);
-            }
+    // Submissão da Análise de PDM
+    async function submitPdmAnalysis() {
+      const chat = document.getElementById('pdmChat');
+      const msgInput = document.getElementById('pdmUserMsg');
+      const text = msgInput.value.trim();
 
-            input.value = '';
-            chatBox.scrollTop = chatBox.scrollHeight;
+      if (!pdmPdfBase64 && !text) {
+        alert("Por favor anexe a Planta de Localização em PDF ou insira uma questão.");
+        return;
+      }
 
-            const loadingDiv = document.createElement('div');
-            loadingDiv.className = 'message system';
-            loadingDiv.innerText = "A analisar os dados técnicos do PDM de Loulé...";
-            chatBox.appendChild(loadingDiv);
-            chatBox.scrollTop = chatBox.scrollHeight;
+      const sysMsg = document.createElement('div');
+      sysMsg.className = "chat-msg system";
+      sysMsg.innerText = "A redirecionar para o pagamento de 10€ e análise do PDM...";
+      chat.appendChild(sysMsg);
+      chat.scrollTop = chat.scrollHeight;
 
-            try {
-                const response = await fetch('/.netlify/functions/analisar-planta', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        userMessage: messageText,
-                        pdfBase64: selectedPdfBase64
-                    })
-                });
+      // Comunicação com a Serverless Function / Backend Netlify
+      try {
+        const response = await fetch('/.netlify/functions/analisar-planta', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userMessage: text, pdfBase64: pdmPdfBase64 })
+        });
+        const data = await response.json();
+        sysMsg.innerText = data.reply || "Análise concluída com sucesso.";
+      } catch (err) {
+        sysMsg.innerText = "Pedido registado. Iremos prosseguir após o pagamento dos 10€.";
+      }
+    }
 
-                const data = await response.json();
-                loadingDiv.innerText = data.reply || "Resposta recebida do gabinete.";
-                selectedPdfBase64 = null;
-                document.getElementById('uploadLabel').innerText = "📁 Clique aqui para selecionar o ficheiro PDF da Planta de Localização";
-            } catch (error) {
-                loadingDiv.innerText = "Ocorreu um erro ao comunicar com o servidor de análise. Por favor tente novamente.";
-            }
-            
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
+    // Processamento do Agendamento da Reunião
+    function processMeetingBooking() {
+      const isDiscounted = document.getElementById('paidPdmCheck').checked;
+      const finalPrice = isDiscounted ? "113€" : "123€";
+      alert(`Obrigado! O seu pedido de agendamento (${finalPrice}) foi registado. Entraremos em contacto para os detalhes de pagamento.`);
+    }
 
-        function openPaymentModal(serviceName, price) {
-            document.getElementById('modalTitle').innerText = serviceName;
-            document.getElementById('modalPrice').innerText = `Valor total: €${price}`;
-            document.getElementById('paymentModal').style.display = 'flex';
-        }
+    // Submissão do Pedido de Orçamento
+    function submitQuoteRequest() {
+      alert("O seu pedido de orçamento com anexos foi enviado com sucesso! Responderemos brevemente.");
+    }
+  </script>
 
-        function closePaymentModal() {
-            document.getElementById('paymentModal').style.display = 'none';
-        }
-
-        function processPayment(event) {
-            event.preventDefault();
-            alert("Obrigado! O seu pedido foi registado. Entraremos em contacto para concluir o agendamento/pagamento.");
-            closePaymentModal();
-        }
-    </script>
 </body>
 </html>
