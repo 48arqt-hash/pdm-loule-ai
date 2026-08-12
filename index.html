@@ -20,11 +20,20 @@
       margin: 0 auto;
     }
 
+    /* IMAGEM PRINCIPAL LIGEIRAMENTE MAIS PEQUENA */
+    .project {
+      text-align: center;
+      margin: 15px 0;
+    }
+
     .project-img {
-      width: 100%;
+      max-width: 100%;
+      max-height: 280px; /* Tamanho reduzido e equilibrado */
+      width: auto;
       height: auto;
       border-radius: 8px;
-      display: block;
+      display: inline-block;
+      object-fit: cover;
     }
 
     .social img {
@@ -33,7 +42,7 @@
       object-fit: contain;
     }
 
-    /* TIPOGRAFIA MODERNA E CENTRADA (ARQUITETURA & ENGENHARIA) */
+    /* TIPOGRAFIA MODERNA E CENTRADA (MANDATÓRIA) */
     .header-branding {
       text-align: center;
       margin: 20px 0 15px 0;
@@ -59,7 +68,7 @@
       margin: 0;
     }
 
-    /* ESTILOS DOS BOTÕES (SEM VALORES VISÍVEIS NA PÁGINA INICIAL) */
+    /* SERVIÇOS E PAINÉIS */
     .services-section {
       margin: 25px 0;
       text-align: left;
@@ -118,6 +127,14 @@
       margin-bottom: 6px;
     }
 
+    .feature-panel h4 {
+      font-size: 0.88rem;
+      color: #1e293b;
+      margin: 14px 0 8px 0;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
     .feature-panel p {
       font-size: 0.85rem;
       color: #64748b;
@@ -151,6 +168,12 @@
       color: #475569;
     }
 
+    .input-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
     .input-field, .textarea-field {
       width: 100%;
       padding: 10px;
@@ -179,6 +202,7 @@
       font-weight: 600;
       cursor: pointer;
       font-size: 0.88rem;
+      margin-top: 5px;
     }
 
     .btn-submit:hover {
@@ -226,6 +250,33 @@
     .checkbox-container input {
       margin-top: 2px;
     }
+
+    /* ESTILIZAÇÃO DOS CONTACTOS COM O LETRING 'ARQUITETURA E ENGENHARIA' */
+    .contact {
+      text-align: center;
+      margin: 25px 0;
+    }
+
+    .contact p {
+      margin: 12px 0;
+      line-height: 1.6;
+    }
+
+    .contact a {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 0.78rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #475569;
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    .contact a:hover {
+      color: #0f172a;
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
@@ -242,7 +293,7 @@
 
     <div class="divider"></div>
 
-    <!-- IMAGEM DO PROJETO -->
+    <!-- IMAGEM DO PROJETO (MAIS PEQUENA) -->
     <div class="project">
       <img src="images/projeto.jpg" alt="Projeto" class="project-img">
     </div>
@@ -285,10 +336,17 @@
 
         <input type="text" id="pdmUserMsg" class="input-field" placeholder="Dúvida específica sobre o terreno (opcional)...">
         
+        <h4>Dados de Faturação</h4>
+        <div class="input-grid">
+          <input type="text" placeholder="NIF" class="input-field" required>
+          <input type="text" placeholder="Nome na Fatura" class="input-field" required>
+        </div>
+        <input type="text" placeholder="Morada de Faturação" class="input-field" required>
+
         <button class="btn-submit" onclick="submitPdmAnalysis()">Analisar Terreno & Pagar (10€)</button>
       </div>
 
-      <!-- PAINEL 2: REUNIÃO DE CONSULTORIA -->
+      <!-- PAINEL 2: REUNIÃO DE CONSULTORIA COM CALENDÁRIO E FATURAÇÃO -->
       <div id="meetingPanel" class="feature-panel">
         <h3>Agendar Reunião de Consultoria</h3>
         <div class="price-tag" id="meetingPriceTag">Valor base: 123€</div>
@@ -299,11 +357,33 @@
           <label for="paidPdmCheck">Já efetuei a Análise Automática do PDM (-10€ de desconto)</label>
         </div>
 
-        <input type="text" placeholder="Seu Nome Completo" class="input-field" required>
-        <input type="tel" placeholder="Contacto Telefónico / WhatsApp" class="input-field" required>
-        <input type="email" placeholder="Seu Email" class="input-field" required>
+        <h4>1. Seleção de Data e Hora</h4>
+        <div class="input-grid">
+          <div>
+            <label style="font-size: 0.75rem; color: #64748b;">Data da Reunião:</label>
+            <input type="date" id="meetingDate" class="input-field" required>
+          </div>
+          <div>
+            <label style="font-size: 0.75rem; color: #64748b;">Hora Pretendida:</label>
+            <input type="time" id="meetingTime" class="input-field" required>
+          </div>
+        </div>
 
-        <button class="btn-submit" id="meetingSubmitBtn" onclick="processMeetingBooking()">Confirmar e Pagar (123€)</button>
+        <h4>2. Dados de Contacto</h4>
+        <input type="text" placeholder="Seu Nome Completo" class="input-field" required>
+        <div class="input-grid">
+          <input type="tel" placeholder="Contacto Telefónico" class="input-field" required>
+          <input type="email" placeholder="Seu Email" class="input-field" required>
+        </div>
+
+        <h4>3. Dados de Faturação</h4>
+        <div class="input-grid">
+          <input type="text" placeholder="NIF para Fatura" class="input-field" required>
+          <input type="text" placeholder="Nome na Fatura" class="input-field" required>
+        </div>
+        <input type="text" placeholder="Morada Completa de Faturação" class="input-field" required>
+
+        <button class="btn-submit" id="meetingSubmitBtn" onclick="processMeetingBooking()">Confirmar Agendamento & Pagar (123€)</button>
       </div>
 
       <!-- PAINEL 3: PEDIR ORÇAMENTO COM ANÁLISE DE VIABILIDADE (50€) -->
@@ -317,9 +397,16 @@
           <label for="viabilityCheck">Incluir Análise Técnica de Viabilidade Obrigatória (50€)</label>
         </div>
 
+        <h4>Contacto & Faturação</h4>
         <input type="text" placeholder="Nome Completo" class="input-field" required>
-        <input type="email" placeholder="Email" class="input-field" required>
-        <input type="tel" placeholder="Contacto Telefónico" class="input-field" required>
+        <div class="input-grid">
+          <input type="email" placeholder="Email" class="input-field" required>
+          <input type="tel" placeholder="Contacto Telefónico" class="input-field" required>
+        </div>
+        <div class="input-grid">
+          <input type="text" placeholder="NIF" class="input-field">
+          <input type="text" placeholder="Morada de Faturação" class="input-field">
+        </div>
 
         <textarea class="textarea-field" placeholder="Descreva o projeto (ex: moradia unifamiliar, reabilitação, ampliação...)" required></textarea>
 
@@ -332,7 +419,7 @@
       </div>
     </div>
 
-    <!-- CONTACTOS ORIGINAIS -->
+    <!-- CONTACTOS FORMATADOS COM O NOVO LETRING 'ARQUITETURA E ENGENHARIA' -->
     <div class="contact">
       <p>
         <a href="tel:+351960010870">+351 960 010 870</a><br>
@@ -407,10 +494,10 @@
 
       if (isChecked) {
         priceTag.innerText = "Valor com Desconto: 113€";
-        submitBtn.innerText = "Confirmar e Pagar (113€)";
+        submitBtn.innerText = "Confirmar Agendamento & Pagar (113€)";
       } else {
         priceTag.innerText = "Valor base: 123€";
-        submitBtn.innerText = "Confirmar e Pagar (123€)";
+        submitBtn.innerText = "Confirmar Agendamento & Pagar (123€)";
       }
     }
 
@@ -444,9 +531,17 @@
     }
 
     function processMeetingBooking() {
+      const date = document.getElementById('meetingDate').value;
+      const time = document.getElementById('meetingTime').value;
+
+      if (!date || !time) {
+        alert("Por favor selecione a Data e a Hora para a reunião.");
+        return;
+      }
+
       const isDiscounted = document.getElementById('paidPdmCheck').checked;
       const finalPrice = isDiscounted ? "113€" : "123€";
-      alert(`Obrigado! O seu pedido de agendamento (${finalPrice}) foi registado. Entraremos em contacto para os detalhes de pagamento.`);
+      alert(`Obrigado! A sua reunião para o dia ${date} às ${time} (${finalPrice}) foi registada. Iremos enviar os dados de pagamento.`);
     }
 
     function submitQuoteRequest() {
