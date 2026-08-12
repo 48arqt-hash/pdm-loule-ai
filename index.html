@@ -7,7 +7,7 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="style.css">
 
@@ -33,6 +33,32 @@
       object-fit: contain;
     }
 
+    /* TIPOGRAFIA MODERNA E CENTRADA (ARQUITETURA & ENGENHARIA) */
+    .header-branding {
+      text-align: center;
+      margin: 20px 0 15px 0;
+    }
+
+    .header-branding h1 {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 1.35rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #0f172a;
+      margin: 0 0 6px 0;
+    }
+
+    .header-branding h2 {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 0.78rem;
+      font-weight: 500;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: #64748b;
+      margin: 0;
+    }
+
     /* ESTILOS DOS BOTÕES (SEM VALORES VISÍVEIS NA PÁGINA INICIAL) */
     .services-section {
       margin: 25px 0;
@@ -53,7 +79,7 @@
       padding: 14px 18px;
       border-radius: 8px;
       font-family: inherit;
-      font-size: 0.95rem;
+      font-size: 0.92rem;
       font-weight: 500;
       cursor: pointer;
       display: flex;
@@ -71,7 +97,7 @@
     }
 
     .btn-arrow {
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       opacity: 0.7;
     }
 
@@ -96,7 +122,7 @@
       font-size: 0.85rem;
       color: #64748b;
       margin-bottom: 12px;
-      line-height: 1.4;
+      line-height: 1.45;
     }
 
     .price-tag {
@@ -187,13 +213,18 @@
       margin-left: 20%;
     }
 
-    .discount-checkbox {
+    .checkbox-container {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       gap: 8px;
       font-size: 0.82rem;
       margin-bottom: 12px;
       color: #334155;
+      line-height: 1.35;
+    }
+
+    .checkbox-container input {
+      margin-top: 2px;
     }
   </style>
 </head>
@@ -203,8 +234,11 @@
 
     <img src="images/logo.png" alt="Leonel Mendes" class="logo">
 
-    <h1>Arq. Leonel Mendes</h1>
-    <h2>Arquitetura e Engenharia</h2>
+    <!-- BRANDING TIPOGRÁFICO MODERNO E CENTRADO -->
+    <div class="header-branding">
+      <h1>Arq. Leonel Mendes</h1>
+      <h2>Arquitetura e Engenharia</h2>
+    </div>
 
     <div class="divider"></div>
 
@@ -213,7 +247,7 @@
       <img src="images/projeto.jpg" alt="Projeto" class="project-img">
     </div>
 
-    <!-- BOTÕES DE SERVIÇOS (SEM VALORES VISÍVEIS) -->
+    <!-- BOTÕES DE SERVIÇOS FUNCIONAIS -->
     <div class="services-section">
       <div class="service-btn-group">
         <button class="btn-action" onclick="togglePanel('pdmPanel')">
@@ -227,7 +261,7 @@
         </button>
 
         <button class="btn-action" onclick="togglePanel('quotePanel')">
-          <span>📄 Pedir Orçamento</span>
+          <span>📄 Pedir Orçamento de Projeto</span>
           <span class="btn-arrow">▼</span>
         </button>
       </div>
@@ -260,7 +294,7 @@
         <div class="price-tag" id="meetingPriceTag">Valor base: 123€</div>
         <p>Sessão presencial no gabinete em Loulé ou por videochamada.</p>
 
-        <div class="discount-checkbox">
+        <div class="checkbox-container">
           <input type="checkbox" id="paidPdmCheck" onchange="calculateMeetingPrice()">
           <label for="paidPdmCheck">Já efetuei a Análise Automática do PDM (-10€ de desconto)</label>
         </div>
@@ -272,24 +306,29 @@
         <button class="btn-submit" id="meetingSubmitBtn" onclick="processMeetingBooking()">Confirmar e Pagar (123€)</button>
       </div>
 
-      <!-- PAINEL 3: PEDIR ORÇAMENTO COM ANEXOS -->
+      <!-- PAINEL 3: PEDIR ORÇAMENTO COM ANÁLISE DE VIABILIDADE (50€) -->
       <div id="quotePanel" class="feature-panel">
         <h3>Pedir Orçamento de Projeto</h3>
-        <div class="price-tag">Serviço Gratuito</div>
-        <p>Descreva o seu projeto ou intenção de obra e anexe os documentos necessários.</p>
+        <div class="price-tag">Elaboração do Orçamento: Grátis</div>
+        <p>A elaboração da proposta orçamental é gratuita. Contudo, para elaboração rigorosa da proposta é necessária uma **Análise de Viabilidade Técnica prévia (50€)**.</p>
+
+        <div class="checkbox-container">
+          <input type="checkbox" id="viabilityCheck" checked>
+          <label for="viabilityCheck">Incluir Análise Técnica de Viabilidade Obrigatória (50€)</label>
+        </div>
 
         <input type="text" placeholder="Nome Completo" class="input-field" required>
         <input type="email" placeholder="Email" class="input-field" required>
         <input type="tel" placeholder="Contacto Telefónico" class="input-field" required>
 
-        <textarea class="textarea-field" placeholder="Descreva brevemente o projeto (ex: moradia unifamiliar, alteração, reabilitação...)" required></textarea>
+        <textarea class="textarea-field" placeholder="Descreva o projeto (ex: moradia unifamiliar, reabilitação, ampliação...)" required></textarea>
 
         <div class="upload-zone" onclick="document.getElementById('quoteDocsInput').click()">
           <span id="quoteUploadText">📁 Anexar Documentos ou Projetos (PDF/Fotos)</span>
           <input type="file" id="quoteDocsInput" multiple accept="application/pdf,image/*" style="display: none;" onchange="updateFileName(this, 'quoteUploadText')">
         </div>
 
-        <button class="btn-submit" onclick="submitQuoteRequest()">Enviar Pedido de Orçamento</button>
+        <button class="btn-submit" onclick="submitQuoteRequest()">Solicitar Análise & Orçamento (50€)</button>
       </div>
     </div>
 
@@ -411,7 +450,12 @@
     }
 
     function submitQuoteRequest() {
-      alert("O seu pedido de orçamento com anexos foi enviado com sucesso! Responderemos brevemente.");
+      const hasViability = document.getElementById('viabilityCheck').checked;
+      if (hasViability) {
+        alert("Pedido de Análise de Viabilidade (50€) e Orçamento registado com sucesso! Entraremos em contacto para o pagamento.");
+      } else {
+        alert("Pedido de orçamento enviado com sucesso!");
+      }
     }
   </script>
 
