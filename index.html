@@ -1,112 +1,407 @@
-<form id="pdm-form">
-  <!-- 1. SELEÇÃO DO SERVIÇO -->
-  <div class="form-section">
-    <h3>Selecione o Serviço Pretendido</h3>
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Análise PDM Loulé & Agendamento | Arq. Leonel Mendes</title>
+  
+  <style>
+    /* ESTILOS DE BASE E GRAFISMO DO SITE */
+    :root {
+      --primary-color: #0056b3;
+      --secondary-color: #2c3e50;
+      --bg-color: #f8f9fa;
+      --card-bg: #ffffff;
+      --text-color: #333333;
+      --border-color: #cccccc;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      margin: 0;
+      padding: 0;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 700px;
+      margin: 40px auto;
+      background: var(--card-bg);
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    }
+
+    .header-logo {
+      text-align: center;
+      margin-bottom: 25px;
+      border-bottom: 2px solid #eee;
+      padding-bottom: 15px;
+    }
+
+    .header-logo h1 {
+      margin: 0;
+      font-size: 1.8rem;
+      color: var(--secondary-color);
+    }
+
+    .header-logo p {
+      margin: 5px 0 0 0;
+      color: #666;
+      font-size: 0.95rem;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+      color: var(--secondary-color);
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 5px;
+      font-size: 1rem;
+      box-sizing: border-box;
+      transition: border-color 0.2s;
+    }
+
+    .form-control:focus {
+      border-color: var(--primary-color);
+      outline: none;
+    }
+
+    textarea.form-control {
+      resize: vertical;
+    }
+
+    /* BOTOES DE OPCAO DO SERVICO */
+    .service-options {
+      display: flex;
+      gap: 15px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+
+    .service-card {
+      flex: 1;
+      min-width: 220px;
+      padding: 15px;
+      border: 2px solid var(--border-color);
+      border-radius: 6px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s ease;
+      background: #fafafa;
+    }
+
+    .service-card:hover {
+      border-color: var(--primary-color);
+      background: #f0f7ff;
+    }
+
+    .service-card input[type="radio"] {
+      margin-bottom: 8px;
+    }
+
+    /* CAIXAS DE INFORMAÇÃO */
+    .info-box {
+      padding: 15px;
+      border-radius: 5px;
+      background-color: rgba(0, 86, 179, 0.05);
+      border-left: 4px solid var(--primary-color);
+      margin-bottom: 20px;
+    }
+
+    .info-box-reuniao {
+      background-color: #fff9e6;
+      border-left: 4px solid #ffb800;
+      padding: 15px;
+      border-radius: 5px;
+      margin-top: 15px;
+      font-size: 0.9em;
+    }
+
+    .info-box-reuniao ul {
+      margin: 8px 0 0 0;
+      padding-left: 20px;
+    }
+
+    /* BOTÕES */
+    .btn {
+      display: inline-block;
+      padding: 12px 20px;
+      font-size: 1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .btn-primary {
+      background-color: var(--primary-color);
+      color: #ffffff;
+    }
+
+    .btn-primary:hover {
+      background-color: #004085;
+    }
+
+    .btn-secondary {
+      background-color: #6c757d;
+      color: #ffffff;
+    }
+
+    .btn-secondary:hover {
+      background-color: #5a6268;
+    }
+
+    #loading-spinner {
+      display: none;
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    #resultado-analise {
+      margin-top: 30px;
+      padding: 20px;
+      background: #eef9f2;
+      border: 1px solid #c3e6cb;
+      border-radius: 6px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
     
-    <div class="service-options" style="display: flex; gap: 15px; margin-bottom: 20px;">
-      <label class="service-card" style="border: 2px solid #ccc; padding: 15px; border-radius: 8px; cursor: pointer; flex: 1;">
-        <input type="radio" name="servico" value="analise_automatica" checked onchange="toggleServicoOptions()">
-        <strong>Análise Automática do PDM (IA)</strong>
-        <p style="font-size: 0.85em; margin-top: 5px; color: #555;">Relatório técnico imediato com base na planta submetida.</p>
-      </label>
-
-      <label class="service-card" style="border: 2px solid #ccc; padding: 15px; border-radius: 8px; cursor: pointer; flex: 1;">
-        <input type="radio" name="servico" value="reuniao_presencial" onchange="toggleServicoOptions()">
-        <strong>Reunião Presencial c/ Arq. Leonel Mendes</strong>
-        <p style="font-size: 0.85em; margin-top: 5px; color: #555;">Análise técnica personalizada e consulta de viabilidade no gabinete.</p>
-      </label>
-    </div>
-  </div>
-
-  <!-- CAIXA DE INFORMAÇÃO DE CUSTO DO SERVIÇO (Dinamizada por JS) -->
-  <div id="custo-info-box" style="background-color: #e9ecef; border-left: 4px solid #0d6efd; padding: 15px; margin-bottom: 20px;">
-    <h4 style="margin: 0 0 5px 0;">Custo do Serviço: <span id="valor-servico" style="color: #0d6efd;">Gratuito / Incluído</span></h4>
-    <p id="descricao-custo" style="margin: 0; font-size: 0.9em;">O relatório de análise automática do PDM é gerado sem custo de consulta presencial.</p>
-  </div>
-
-  <!-- DADOS PESSOAIS -->
-  <div class="form-group">
-    <label for="nome">Nome Completo *</label>
-    <input type="text" id="nome" name="nome" required>
-  </div>
-
-  <div class="form-group">
-    <label for="email">E-mail de Contacto *</label>
-    <input type="email" id="email" name="email" required>
-  </div>
-
-  <div class="form-group">
-    <label for="telefone">Contacto Telefónico *</label>
-    <input type="tel" id="telefone" name="telefone" required>
-  </div>
-
-  <!-- DADOS DE FATURAÇÃO -->
-  <div class="form-section">
-    <h3>Dados para Faturação</h3>
-    <div class="form-group">
-      <label for="nif">NIF (Número de Contribuinte) *</label>
-      <input type="text" id="nif" name="nif" pattern="[0-9]{9}" placeholder="123456789" required>
+    <!-- CABEÇALHO DO SITE -->
+    <div class="header-logo">
+      <h1>Arq. Leonel Mendes</h1>
+      <p>Consultoria Urbanística & Análise do PDM de Loulé</p>
     </div>
 
-    <div class="form-group">
-      <label for="morada_faturacao">Morada Completa de Faturação *</label>
-      <textarea id="morada_faturacao" name="morada_faturacao" rows="2" placeholder="Rua, N.º, Código Postal, Localidade" required></textarea>
-    </div>
-  </div>
-
-  <!-- CAMPOS ESPECÍFICOS PARA A REUNIÃO (Ocultos por padrão) -->
-  <div id="seccao-reuniao" style="display: none;" class="form-section">
-    <h3>Agendamento da Reunião Presencial</h3>
-    <div class="form-group">
-      <label for="data-agendamento">Data e Hora Pretendida *</label>
-      <input type="datetime-local" id="data-agendamento" name="dataAgendamento">
-    </div>
-
-    <div class="reuniao-info-box" style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 15px 0;">
-      <h4>📍 Local da Reunião Presencial:</h4>
-      <p><strong>Av. José da Costa Mealha n.º133, 8100-500 Loulé</strong></p>
+    <form id="pdm-form">
       
-      <h4>📄 Documentação a Trazer para a Reunião:</h4>
-      <ul>
-        <li>Certidão Permanente / Caderneta Predial da propriedade.</li>
-        <li>Registos da Conservatória e plantas topográficas (se disponíveis).</li>
-        <li>Desenhos, projetos anteriores, fotografias ou esquemas do terreno/imóvel.</li>
-      </ul>
+      <!-- ================= PASSO 1: ESCOLHA DO SERVIÇO E PLANTA ================= -->
+      <div id="passo-1">
+        
+        <div class="form-group">
+          <label>Selecione o Serviço Pretendido *</label>
+          <div class="service-options">
+            
+            <label class="service-card">
+              <input type="radio" name="servico" value="analise_automatica" checked>
+              <div><strong>Análise Automática do PDM (IA)</strong></div>
+              <small style="color: #666;">Relatório técnico direto</small>
+            </label>
+
+            <label class="service-card">
+              <input type="radio" name="servico" value="reuniao_presencial">
+              <div><strong>Reunião Presencial</strong></div>
+              <small style="color: #666;">c/ Arq. Leonel Mendes</small>
+            </label>
+
+          </div>
+        </div>
+
+        <!-- ANEXO DA PLANTA DE LOCALIZAÇÃO -->
+        <div class="form-group" style="margin-top: 25px;">
+          <label for="planta">Planta de Localização PDM (PDF) *</label>
+          <input type="file" id="planta" name="planta" accept="application/pdf" class="form-control" required>
+        </div>
+
+        <button type="button" id="btn-avancar" class="btn btn-primary" style="width: 100%; margin-top: 15px;" onclick="irParaPasso2()">Continuar ➔</button>
+      </div>
+
+
+      <!-- ================= PASSO 2: RECOLHA DE DADOS, FATURAÇÃO E AGENDAMENTO ================= -->
+      <div id="passo-2" style="display: none;">
+        
+        <!-- CAIXA INFORMATIVA DE CUSTO -->
+        <div id="caixa-custo-servico" class="info-box">
+          <small id="texto-custo-servico"></small>
+        </div>
+
+        <!-- DADOS PESSOAIS DE CONTACTO -->
+        <div class="form-group">
+          <label for="nome">Nome Completo *</label>
+          <input type="text" id="nome" name="nome" class="form-control">
+        </div>
+
+        <div class="form-group">
+          <label for="email">E-mail de Contacto *</label>
+          <input type="email" id="email" name="email" class="form-control">
+        </div>
+
+        <div class="form-group">
+          <label for="telefone">Contacto Telefónico *</label>
+          <input type="tel" id="telefone" name="telefone" class="form-control">
+        </div>
+
+        <!-- DADOS DE FATURAÇÃO -->
+        <div class="form-group">
+          <label for="nif">NIF (Número de Contribuinte) *</label>
+          <input type="text" id="nif" name="nif" class="form-control" pattern="[0-9]{9}" placeholder="123456789">
+        </div>
+
+        <div class="form-group">
+          <label for="morada_faturacao">Morada de Faturação *</label>
+          <textarea id="morada_faturacao" name="morada_faturacao" class="form-control" rows="2" placeholder="Rua, N.º, Código Postal, Localidade"></textarea>
+        </div>
+
+        <!-- BLOCO DE AGENDAMENTO (VISÍVEL APENAS NA REUNIÃO) -->
+        <div id="campo-agendamento-reuniao" class="form-group" style="display: none;">
+          <label for="dataAgendamento">Data e Hora pretendida para Reunião Presencial *</label>
+          <input type="datetime-local" id="dataAgendamento" name="dataAgendamento" class="form-control">
+          
+          <div class="info-box-reuniao">
+            <p style="margin:0 0 8px 0;">📍 <strong>Local da Reunião:</strong> Av. José da Costa Mealha n.º133, 8100-500 Loulé</p>
+            <p style="margin:0;">📄 <strong>Documentação a Trazer para a Reunião:</strong></p>
+            <ul>
+              <li>Certidão Permanente e Caderneta Predial</li>
+              <li>Planta do terreno e/ou levantamento topográfico</li>
+              <li>Projetos e/ou desenhos anteriores, fotografias da propriedade e etc</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- BOTÕES DE NAVEGAÇÃO FINAL -->
+        <div style="display: flex; gap: 10px; margin-top: 25px;">
+          <button type="button" class="btn btn-secondary" onclick="voltarParaPasso1()">← Voltar</button>
+          <button type="submit" id="btn-submit" class="btn btn-primary" style="flex: 1;">Submeter Pedido</button>
+        </div>
+
+      </div>
+
+    </form>
+
+    <!-- ESTADO DE CARREGAMENTO -->
+    <div id="loading-spinner">
+      <p>🔄 A processar o pedido e a analisar a planta... Por favor aguarde.</p>
     </div>
+
+    <!-- RECEPTÁCULO DA RESPOSTA DA ANÁLISE -->
+    <div id="resultado-analise">
+      <h3>Resultado da Análise PDM:</h3>
+      <div id="conteudo-resposta" style="white-space: pre-wrap;"></div>
+    </div>
+
   </div>
 
-  <!-- ANEXO DA PLANTA PDF -->
-  <div class="form-group">
-    <label for="planta">Planta de Localização PDM (PDF máx 4MB) *</label>
-    <input type="file" id="planta" accept="application/pdf" required>
-  </div>
+  <script>
+    function irParaPasso2() {
+      const ficheiroPlanta = document.getElementById('planta');
+      if (!ficheiroPlanta.files.length) {
+        alert('Por favor selecione a Planta de Localização PDM (PDF) antes de continuar.');
+        return;
+      }
 
-  <button type="submit" id="btn-submit">Submeter e Prosseguir para Pagamento</button>
-</form>
+      const servico = document.querySelector('input[name="servico"]:checked').value;
+      const campoAgendamento = document.getElementById('campo-agendamento-reuniao');
+      const inputData = document.getElementById('dataAgendamento');
+      const textoCusto = document.getElementById('texto-custo-servico');
 
-<script>
-// Função para alterar dinamicamente os valores e campos visíveis
-function toggleServicoOptions() {
-  const servicoSelecionado = document.querySelector('input[name="servico"]:checked').value;
-  const seccaoReuniao = document.getElementById('seccao-reuniao');
-  const valorServico = document.getElementById('valor-servico');
-  const descricaoCusto = document.getElementById('descricao-custo');
-  const inputData = document.getElementById('data-agendamento');
+      // Ativar a obrigatoriedade dos campos no Passo 2
+      document.getElementById('nome').required = true;
+      document.getElementById('email').required = true;
+      document.getElementById('telefone').required = true;
+      document.getElementById('nif').required = true;
+      document.getElementById('morada_faturacao').required = true;
 
-  // AJUSTE AQUI OS VALORES DOS SEUS HONORÁRIOS
-  const CUSTO_REUNIAO = "100,00 € + IVA"; 
-  const CUSTO_ANALISE = "Gratuito / Incluído";
+      const VALOR_REUNIAO = "100,00 € + IVA";
 
-  if (servicoSelecionado === 'reuniao_presencial') {
-    seccaoReuniao.style.display = 'block';
-    inputData.required = true;
-    valorServico.innerText = CUSTO_REUNIAO;
-    descricaoCusto.innerHTML = "O valor da reunião presencial de consulta técnica com o <strong>Arq. Leonel Mendes</strong> inclui a análise prévia da documentação e enquadramento no PDM de Loulé. Os dados de pagamento serão enviados após verificação de disponibilidade do horário.";
-  } else {
-    seccaoReuniao.style.display = 'none';
-    inputData.required = false;
-    valorServico.innerText = CUSTO_ANALISE;
-    descricaoCusto.innerText = "O relatório de análise automática do PDM é gerado sem custo de consulta presencial.";
-  }
-}
-</script>
+      if (servico === 'reuniao_presencial') {
+        campoAgendamento.style.display = 'block';
+        inputData.required = true;
+        textoCusto.innerHTML = `<strong>Custo da Reunião Presencial:</strong> ${VALOR_REUNIAO}. O agendamento ficará pendente de aprovação e os dados para pagamento serão enviados para o seu e-mail.`;
+      } else {
+        campoAgendamento.style.display = 'none';
+        inputData.required = false;
+        textoCusto.innerHTML = `<strong>Custo:</strong> Incluído na Análise Automática. O relatório do PDM é gerado imediatamente após a submissão.`;
+      }
+
+      // Alternar vista de ecrãs
+      document.getElementById('passo-1').style.display = 'none';
+      document.getElementById('passo-2').style.display = 'block';
+    }
+
+    function voltarParaPasso1() {
+      document.getElementById('passo-2').style.display = 'none';
+      document.getElementById('passo-1').style.display = 'block';
+    }
+
+    // LÓGICA DE SUBMISSÃO DO FORMULÁRIO PARA A FUNCTION NETLIFY
+    document.getElementById('pdm-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const btnSubmit = document.getElementById('btn-submit');
+      const spinner = document.getElementById('loading-spinner');
+      const resultadoDiv = document.getElementById('resultado-analise');
+      const conteudoDiv = document.getElementById('conteudo-resposta');
+
+      btnSubmit.disabled = true;
+      spinner.style.display = 'block';
+      resultadoDiv.style.display = 'none';
+
+      try {
+        const fileInput = document.getElementById('planta');
+        const file = fileInput.files[0];
+        
+        // Converter PDF para Base64
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        
+        reader.onload = async function() {
+          const base64Data = reader.result.split(',')[1];
+
+          const payload = {
+            servico: document.querySelector('input[name="servico"]:checked').value,
+            nome: document.getElementById('nome').value,
+            email: document.getElementById('email').value,
+            telefone: document.getElementById('telefone').value,
+            nif: document.getElementById('nif').value,
+            morada_faturacao: document.getElementById('morada_faturacao').value,
+            dataAgendamento: document.getElementById('dataAgendamento').value,
+            pdfBase64: base64Data
+          };
+
+          const response = await fetch('/.netlify/functions/agendar-e-analisar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+
+          const data = await response.json();
+
+          spinner.style.display = 'none';
+          btnSubmit.disabled = false;
+
+          if (response.ok) {
+            resultadoDiv.style.display = 'block';
+            conteudoDiv.innerText = data.reply || data.message;
+          } else {
+            alert('Erro: ' + (data.error || 'Não foi possível processar o pedido.'));
+          }
+        };
+
+      } catch (err) {
+        console.error(err);
+        spinner.style.display = 'none';
+        btnSubmit.disabled = false;
+        alert('Ocorreu um erro inesperado.');
+      }
+    });
+  </script>
+</body>
+</html>
