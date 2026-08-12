@@ -1,857 +1,112 @@
-<!DOCTYPE html>
-<html lang="pt">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
-  <!-- SEO & Meta Tags -->
-  <title>Leonel Mendes — Arquitetura e Engenharia em Loulé</title>
-  <meta name="description" content="Gabinete de Arquitetura e Engenharia em Loulé. Obtenha a análise preliminar automática da viabilidade do seu lote no PDM de Loulé via IA e acompanhamento técnico especializado.">
-  <meta name="keywords" content="Arquitetura Loulé, PDM Loulé, Engenharia, Licenciamento, Projetos de Arquitetura, Viabilidade Loulé">
-  <meta name="author" content="Leonel Mendes">
-
-  <!-- Open Graph / WhatsApp / Facebook / LinkedIn -->
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://leonelmendes.com/">
-  <meta property="og:title" content="Leonel Mendes — Arquitetura e Engenharia">
-  <meta property="og:description" content="Análise preliminar de viabilidade do PDM de Loulé com Inteligência Artificial e validação técnica de arquitetura.">
-  <meta property="og:image" content="https://leonelmendes.com/images/projeto.jpg">
-
-  <!-- Twitter Cards -->
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Leonel Mendes — Arquitetura e Engenharia">
-  <meta name="twitter:description" content="Análise preliminar de viabilidade do PDM de Loulé com Inteligência Artificial.">
-  <meta name="twitter:image" content="https://leonelmendes.com/images/projeto.jpg">
-
-  <!-- Fontes Google & Marked (Markdown Parser) -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-
-  <style>
-    /* --- ESTILOS GERAIS DA PÁGINA --- */
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      font-family: 'Inter', sans-serif;
-      background-color: #f4f4f6;
-      color: #1a1a1a;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      padding: 20px 10px;
-    }
-
-    .card {
-      background: #ffffff;
-      width: 100%;
-      max-width: 560px;
-      padding: 35px 25px;
-      border-radius: 16px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.06);
-      text-align: center;
-    }
-
-    .logo {
-      max-width: 140px;
-      height: auto;
-      margin-bottom: 20px;
-    }
-
-    h1 {
-      font-size: 22px;
-      font-weight: 700;
-      color: #111;
-      margin-bottom: 4px;
-    }
-
-    h2 {
-      font-size: 14px;
-      font-weight: 400;
-      color: #666;
-      margin-bottom: 20px;
-    }
-
-    .divider {
-      height: 1px;
-      background-color: #eee;
-      margin: 25px 0;
-    }
-
-    /* IMAGEM DO PROJETO */
-    .project-img {
-      width: 100%;
-      max-height: 280px;
-      object-fit: cover;
-      border-radius: 10px;
-      margin-bottom: 20px;
-    }
-
-    /* CONTATOS */
-    .contact {
-      font-size: 14px;
-      line-height: 1.6;
-      margin: 20px 0;
-    }
-
-    .contact a {
-      color: #111;
-      text-decoration: none;
-      font-weight: 500;
-      transition: color 0.2s;
-    }
-
-    .contact a:hover {
-      color: #0056b3;
-    }
-
-    .contact p {
-      margin-bottom: 12px;
-    }
-
-    /* REDES SOCIAIS E ÍCONES */
-    .social {
-      display: flex;
-      justify-content: center;
-      gap: 18px;
-      margin: 25px 0 15px 0;
-    }
-
-    .social a img {
-      width: 28px;
-      height: 28px;
-      object-fit: contain;
-      transition: transform 0.2s, opacity 0.2s;
-    }
-
-    .social a:hover img {
-      transform: translateY(-2px);
-      opacity: 0.8;
-    }
-
-    footer {
-      font-size: 12px;
-      color: #999;
-      margin-top: 20px;
-    }
-
-    /* --- ESTILOS DO AGENTE PDM (INTEGRADO) --- */
-    .pdm-section {
-      margin: 25px 0;
-      text-align: left;
-      background: #fafafa;
-      padding: 22px;
-      border-radius: 12px;
-      border: 1px solid #eaeaea;
-    }
-
-    .pdm-header h3 {
-      font-size: 16px;
-      color: #111;
-      font-weight: 600;
-      margin-bottom: 6px;
-    }
-
-    .pdm-header p {
-      font-size: 13px;
-      color: #666;
-      margin-bottom: 18px;
-      line-height: 1.4;
-    }
-
-    .form-group {
-      margin-bottom: 14px;
-    }
-
-    .form-group label {
-      display: block;
-      font-size: 12px;
-      font-weight: 600;
-      color: #333;
-      margin-bottom: 5px;
-    }
-
-    .form-group input[type="text"],
-    .form-group input[type="email"],
-    .form-group input[type="tel"],
-    .form-group input[type="file"],
-    .form-group input[type="date"],
-    .form-group select {
-      width: 100%;
-      padding: 10px 12px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      font-size: 13px;
-      font-family: 'Inter', sans-serif;
-      box-sizing: border-box;
-      background: #fff;
-    }
-
-    .file-hint {
-      font-size: 11px;
-      color: #888;
-      display: block;
-      margin-top: 4px;
-    }
-
-    .checkbox-group {
-      display: flex;
-      gap: 10px;
-      margin: 16px 0;
-      align-items: flex-start;
-    }
-
-    .checkbox-group input {
-      margin-top: 3px;
-    }
-
-    .checkbox-group label {
-      font-size: 11px;
-      color: #666;
-      line-height: 1.4;
-    }
-
-    .btn-pdm {
-      width: 100%;
-      background-color: #111111;
-      color: #ffffff;
-      border: none;
-      padding: 14px;
-      border-radius: 6px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-
-    .btn-pdm:hover {
-      background-color: #333333;
-    }
-
-    /* CHAT BOX */
-    .chat-box {
-      background: #fff;
-      border: 1px solid #e5e5e5;
-      border-radius: 8px;
-      padding: 15px;
-      max-height: 380px;
-      overflow-y: auto;
-      margin-bottom: 12px;
-      font-size: 13px;
-    }
-
-    .msg {
-      margin-bottom: 12px;
-      line-height: 1.5;
-    }
-
-    .msg p {
-      margin-bottom: 8px;
-    }
-
-    .msg p:last-child {
-      margin-bottom: 0;
-    }
-
-    .msg.user {
-      background: #f0f0f0;
-      padding: 10px 14px;
-      border-radius: 8px;
-      font-weight: 500;
-      color: #111;
-    }
-
-    .msg.ai {
-      background: #f7f9fb;
-      border: 1px solid #e2e8f0;
-      padding: 12px 14px;
-      border-radius: 8px;
-      color: #2d3748;
-    }
-
-    .input-chat-container {
-      display: flex;
-      gap: 8px;
-    }
-
-    .input-chat-container input {
-      flex: 1;
-      padding: 10px 12px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 13px;
-    }
-
-    .btn-send {
-      padding: 10px 18px;
-      background: #111;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 500;
-    }
-
-    /* UPGRADES */
-    #upgrade-section {
-      margin-top: 25px;
-      padding-top: 20px;
-      border-top: 1px dashed #ccc;
-    }
-
-    #upgrade-section h4 {
-      font-size: 14px;
-      color: #111;
-      text-align: center;
-    }
-
-    .upgrade-sub {
-      font-size: 12px;
-      color: #666;
-      text-align: center;
-      margin-bottom: 15px;
-    }
-
-    .cards-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 10px;
-    }
-
-    @media (max-width: 540px) {
-      .cards-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .upgrade-card {
-      border: 1px solid #e0e0e0;
-      border-radius: 8px;
-      padding: 12px;
-      text-align: center;
-      background: #fff;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-
-    .upgrade-card.highlight {
-      border-color: #111;
-      background: #fafafa;
-    }
-
-    .upgrade-card h5 {
-      font-size: 12px;
-      color: #111;
-      margin-bottom: 4px;
-    }
-
-    .old-price {
-      font-size: 10px;
-      color: #999;
-    }
-
-    .new-price {
-      font-size: 16px;
-      font-weight: 700;
-      color: #111;
-      margin-bottom: 6px;
-    }
-
-    .upgrade-card .desc {
-      font-size: 11px;
-      color: #666;
-      margin-bottom: 12px;
-      min-height: 48px;
-      line-height: 1.3;
-    }
-
-    .btn-upgrade {
-      width: 100%;
-      padding: 8px 4px;
-      border: 1px solid #111;
-      background: transparent;
-      color: #111;
-      font-size: 11px;
-      border-radius: 5px;
-      cursor: pointer;
-      font-weight: 500;
-    }
-
-    .btn-upgrade.accent {
-      background: #111;
-      color: #fff;
-    }
-
-    /* --- MODAL DE PAGAMENTO E REUNIÃO --- */
-    .modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(0,0,0,0.5);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-      padding: 15px;
-    }
-
-    .modal-content {
-      background: #fff;
-      padding: 24px;
-      border-radius: 12px;
-      width: 100%;
-      max-width: 420px;
-      text-align: left;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-      position: relative;
-    }
-
-    .modal-content h3 {
-      font-size: 16px;
-      margin-bottom: 4px;
-      color: #111;
-    }
-
-    .modal-content p.subtitle {
-      font-size: 12px;
-      color: #666;
-      margin-bottom: 16px;
-    }
-
-    .payment-methods {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 16px;
-    }
-
-    .pay-btn {
-      flex: 1;
-      padding: 10px 8px;
-      border: 1px solid #ddd;
-      background: #f9f9f9;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      text-align: center;
-    }
-
-    .pay-btn.active {
-      border-color: #111;
-      background: #111;
-      color: #fff;
-    }
-
-    .btn-close {
-      position: absolute;
-      top: 15px;
-      right: 15px;
-      background: transparent;
-      border: none;
-      font-size: 18px;
-      cursor: pointer;
-      color: #888;
-    }
-  </style>
-</head>
-<body>
-
-  <main class="card">
-
-    <img src="images/logo.png" alt="Leonel Mendes Arquitetura e Engenharia" class="logo">
-
-    <h1>Arq. Leonel Mendes</h1>
-    <h2>Arquitetura e Engenharia</h2>
-
-    <div class="divider"></div>
-
-    <!-- IMAGEM DO PROJETO -->
-    <div class="project">
-      <img src="images/projeto.jpg" alt="Projeto de Arquitetura Leonel Mendes" class="project-img">
-    </div>
-
-    <!-- FERRAMENTA DE ANÁLISE DE PDM -->
-    <section class="pdm-section">
-      <div class="pdm-header">
-        <h3>Análise Automática do PDM de Loulé</h3>
-        <p>Submeta a Planta de Localização do seu lote para obter a viabilidade preliminar emitida pela nossa IA técnica.</p>
-      </div>
-
-      <!-- FORMULÁRIO DE REGISTO E UPLOAD -->
-      <form id="pdm-form">
-        <div class="form-group">
-          <label for="nome">Nome Completo</label>
-          <input type="text" id="nome" required placeholder="Ex: João Silva">
-        </div>
-
-        <div class="form-group">
-          <label for="email">Email</label>
-          <input type="email" id="email" required placeholder="Ex: joao@email.com">
-        </div>
-
-        <div class="form-group">
-          <label for="telefone">Telemóvel</label>
-          <input type="tel" id="telefone" required placeholder="Ex: 912 345 678">
-        </div>
-
-        <div class="form-group">
-          <label for="planta">Planta de Localização da CM Loulé (PDF)</label>
-          <input type="file" id="planta" accept="application/pdf" required>
-          <span class="file-hint">Anexe o extrato oficial em PDF emitido pela Câmara de Loulé (máx. 10MB).</span>
-        </div>
-
-        <div class="checkbox-group">
-          <input type="checkbox" id="rgpd" required>
-          <label for="rgpd">Aceito o tratamento dos meus dados para a emissão do relatório e compreendo que o relatório de 10€ é uma análise informativa gerada por IA.</label>
-        </div>
-
-        <button type="submit" class="btn-pdm" id="btn-submit">Pagar 10€ e Gerar Relatório por IA</button>
-      </form>
-
-      <!-- ÁREA DE CHAT / EXIBIÇÃO DO RELATÓRIO -->
-      <div id="chat-section" style="display: none;">
-        <div class="chat-box" id="chat-box"></div>
-
-        <div class="input-chat-container">
-          <input type="text" id="user-input" placeholder="Tem alguma dúvida sobre este relatório em Loulé?">
-          <button onclick="enviarDuvida()" class="btn-send">Perguntar</button>
-        </div>
-      </div>
-
-      <!-- UPGRADES DE SERVIÇO (+40€, +90€ e +140€) -->
-      <div id="upgrade-section" style="display: none;">
-        <h4>Deseja validação técnica do Arquiteto?</h4>
-        <p class="upgrade-sub">Os 10€ iniciais são abatidos no serviço escolhido:</p>
-
-        <div class="cards-grid">
-          <div class="upgrade-card">
-            <div>
-              <h5>Parecer Explicativo</h5>
-              <p class="old-price"><s>50€</s></p>
-              <p class="new-price">+40€</p>
-              <p class="desc">Validação manual da planta e envio de parecer técnico explicativo por e-mail.</p>
-            </div>
-            <button class="btn-upgrade" onclick="solicitarUpgrade('Parecer Explicativo por Email', 40)">Pedir Parecer (+40€)</button>
-          </div>
-
-          <div class="upgrade-card">
-            <div>
-              <h5>Reunião Virtual</h5>
-              <p class="old-price"><s>100€</s></p>
-              <p class="new-price">+90€</p>
-              <p class="desc">Videochamada dedicada (até 1h) para esclarecimento de dúvidas do projeto.</p>
-            </div>
-            <button class="btn-upgrade" onclick="solicitarUpgrade('Reunião Virtual (até 1h)', 90, true)">Agendar Virtual (+90€)</button>
-          </div>
-
-          <div class="upgrade-card highlight">
-            <div>
-              <h5>Reunião Presencial</h5>
-              <p class="old-price"><s>150€</s></p>
-              <p class="new-price">+140€</p>
-              <p class="desc">Reunião presencial no gabinete em Loulé (até 1h30) para estudo do lote.</p>
-            </div>
-            <button class="btn-upgrade accent" onclick="solicitarUpgrade('Reunião Presencial em Loulé (até 1h30)', 140, true)">Agendar Presencial (+140€)</button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <div class="divider"></div>
-
-    <div class="contact">
-      <p>
-        <a href="tel:+351960010870">+351 960 010 870</a><br>
-        <a href="mailto:geral@leonelmendes.com">geral@leonelmendes.com</a>
-      </p>
-
-      <p>
-        <a href="https://maps.google.com/?q=Av.+José+Costa+Mealha+133,+8100-500+Loulé" target="_blank" rel="noopener">
-          Av. José Costa Mealha n.º 133<br>
-          8100-500 Loulé
-        </a>
-      </p>
-    </div>
-
-    <div class="social">
-      <a href="https://wa.me/351960010870" target="_blank" rel="noopener" aria-label="WhatsApp">
-        <img src="images/whatsapp.svg" alt="WhatsApp">
-      </a>
-      <a href="https://www.facebook.com/leonel.mendes.arqt/" target="_blank" rel="noopener" aria-label="Facebook">
-        <img src="images/facebook.svg" alt="Facebook">
-      </a>
-      <a href="https://www.instagram.com/by_arq_leonel_mendes" target="_blank" rel="noopener" aria-label="Instagram">
-        <img src="images/instagram.svg" alt="Instagram">
-      </a>
-    </div>
-
-    <footer>
-      © 2026 feito por Leonel Mendes
-    </footer>
-
-  </main>
-
-  <!-- MODAL DE PAGAMENTO & REUNIÃO -->
-  <div id="payment-modal" class="modal-overlay" style="display: none;">
-    <div class="modal-content">
-      <button class="btn-close" onclick="fecharModal()">✕</button>
-      <h3 id="modal-title">Confirmar Pagamento</h3>
-      <p class="subtitle" id="modal-subtitle">Selecione o método para concluir o pagamento.</p>
-
-      <!-- SEÇÃO AGENDAMENTO DE REUNIÃO -->
-      <div id="reuniao-fields" style="display: none;">
-        <div class="form-group">
-          <label for="data-reuniao">Data Pretendida</label>
-          <input type="date" id="data-reuniao">
-        </div>
-        <div class="form-group">
-          <label for="hora-reuniao">Horário</label>
-          <select id="hora-reuniao">
-            <option value="10:00">10:00</option>
-            <option value="11:30">11:30</option>
-            <option value="14:30">14:30</option>
-            <option value="16:00">16:00</option>
-            <option value="17:30">17:30</option>
-          </select>
-        </div>
-        <div class="divider" style="margin: 15px 0;"></div>
-      </div>
-
-      <!-- MÉTODOS DE PAGAMENTO -->
-      <div class="payment-methods">
-        <button class="pay-btn active" id="btn-mbway" onclick="selecionarMetodo('mbway')">MB WAY</button>
-        <button class="pay-btn" id="btn-mb" onclick="selecionarMetodo('mb')">Multibanco</button>
-        <button class="pay-btn" id="btn-card" onclick="selecionarMetodo('card')">Cartão</button>
-      </div>
-
-      <!-- CAMPOS DINÂMICOS CONFORME O MÉTODO -->
-      <div id="pay-details">
-        <div class="form-group" id="group-mbway-phone">
-          <label for="mbway-phone">Número MB WAY</label>
-          <input type="tel" id="mbway-phone" placeholder="9xxxxxxxx">
-        </div>
-      </div>
-
-      <button class="btn-pdm" id="btn-confirm-pay" onclick="confirmarPagamento()">Pagar Agora</button>
+<form id="pdm-form">
+  <!-- 1. SELEÇÃO DO SERVIÇO -->
+  <div class="form-section">
+    <h3>Selecione o Serviço Pretendido</h3>
+    
+    <div class="service-options" style="display: flex; gap: 15px; margin-bottom: 20px;">
+      <label class="service-card" style="border: 2px solid #ccc; padding: 15px; border-radius: 8px; cursor: pointer; flex: 1;">
+        <input type="radio" name="servico" value="analise_automatica" checked onchange="toggleServicoOptions()">
+        <strong>Análise Automática do PDM (IA)</strong>
+        <p style="font-size: 0.85em; margin-top: 5px; color: #555;">Relatório técnico imediato com base na planta submetida.</p>
+      </label>
+
+      <label class="service-card" style="border: 2px solid #ccc; padding: 15px; border-radius: 8px; cursor: pointer; flex: 1;">
+        <input type="radio" name="servico" value="reuniao_presencial" onchange="toggleServicoOptions()">
+        <strong>Reunião Presencial c/ Arq. Leonel Mendes</strong>
+        <p style="font-size: 0.85em; margin-top: 5px; color: #555;">Análise técnica personalizada e consulta de viabilidade no gabinete.</p>
+      </label>
     </div>
   </div>
 
-  <script>
-    let pdfBase64 = null;
-    let chatHistory = [];
-    let userData = {};
+  <!-- CAIXA DE INFORMAÇÃO DE CUSTO DO SERVIÇO (Dinamizada por JS) -->
+  <div id="custo-info-box" style="background-color: #e9ecef; border-left: 4px solid #0d6efd; padding: 15px; margin-bottom: 20px;">
+    <h4 style="margin: 0 0 5px 0;">Custo do Serviço: <span id="valor-servico" style="color: #0d6efd;">Gratuito / Incluído</span></h4>
+    <p id="descricao-custo" style="margin: 0; font-size: 0.9em;">O relatório de análise automática do PDM é gerado sem custo de consulta presencial.</p>
+  </div>
 
-    let itemAtual = {
-      servico: 'Relatório IA PDM Loulé',
-      valor: 10,
-      requerAgendamento: false
-    };
-    let metodoSelecionado = 'mbway';
+  <!-- DADOS PESSOAIS -->
+  <div class="form-group">
+    <label for="nome">Nome Completo *</label>
+    <input type="text" id="nome" name="nome" required>
+  </div>
 
-    // Suporte para Tecla Enter no Chat
-    document.getElementById('user-input').addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') {
-        enviarDuvida();
-      }
-    });
+  <div class="form-group">
+    <label for="email">E-mail de Contacto *</label>
+    <input type="email" id="email" name="email" required>
+  </div>
 
-    // Leitura e validação de tamanho do PDF
-    document.getElementById('planta').addEventListener('change', function(e) {
-      const file = e.target.files[0];
-      if (file) {
-        if (file.size > 10 * 1024 * 1024) { // Limite de 10 MB
-          alert("O ficheiro PDF é demasiado grande. Por favor selecione um ficheiro até 10 MB.");
-          e.target.value = '';
-          pdfBase64 = null;
-          return;
-        }
-        const reader = new FileReader();
-        reader.onload = function(evt) {
-          pdfBase64 = evt.target.result.split(',')[1];
-        };
-        reader.readAsDataURL(file);
-      }
-    });
+  <div class="form-group">
+    <label for="telefone">Contacto Telefónico *</label>
+    <input type="tel" id="telefone" name="telefone" required>
+  </div>
 
-    document.getElementById('pdm-form').addEventListener('submit', function(e) {
-      e.preventDefault();
+  <!-- DADOS DE FATURAÇÃO -->
+  <div class="form-section">
+    <h3>Dados para Faturação</h3>
+    <div class="form-group">
+      <label for="nif">NIF (Número de Contribuinte) *</label>
+      <input type="text" id="nif" name="nif" pattern="[0-9]{9}" placeholder="123456789" required>
+    </div>
 
-      userData = {
-        nome: document.getElementById('nome').value,
-        email: document.getElementById('email').value,
-        telefone: document.getElementById('telefone').value
-      };
+    <div class="form-group">
+      <label for="morada_faturacao">Morada Completa de Faturação *</label>
+      <textarea id="morada_faturacao" name="morada_faturacao" rows="2" placeholder="Rua, N.º, Código Postal, Localidade" required></textarea>
+    </div>
+  </div>
 
-      if (!pdfBase64) {
-        alert("Por favor, selecione a planta de localização em PDF.");
-        return;
-      }
+  <!-- CAMPOS ESPECÍFICOS PARA A REUNIÃO (Ocultos por padrão) -->
+  <div id="seccao-reuniao" style="display: none;" class="form-section">
+    <h3>Agendamento da Reunião Presencial</h3>
+    <div class="form-group">
+      <label for="data-agendamento">Data e Hora Pretendida *</label>
+      <input type="datetime-local" id="data-agendamento" name="dataAgendamento">
+    </div>
 
-      document.getElementById('mbway-phone').value = userData.telefone;
+    <div class="reuniao-info-box" style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 15px 0;">
+      <h4>📍 Local da Reunião Presencial:</h4>
+      <p><strong>Av. José da Costa Mealha n.º133, 8100-500 Loulé</strong></p>
+      
+      <h4>📄 Documentação a Trazer para a Reunião:</h4>
+      <ul>
+        <li>Certidão Permanente / Caderneta Predial da propriedade.</li>
+        <li>Registos da Conservatória e plantas topográficas (se disponíveis).</li>
+        <li>Desenhos, projetos anteriores, fotografias ou esquemas do terreno/imóvel.</li>
+      </ul>
+    </div>
+  </div>
 
-      itemAtual = {
-        servico: 'Relatório IA PDM Loulé',
-        valor: 10,
-        requerAgendamento: false
-      };
+  <!-- ANEXO DA PLANTA PDF -->
+  <div class="form-group">
+    <label for="planta">Planta de Localização PDM (PDF máx 4MB) *</label>
+    <input type="file" id="planta" accept="application/pdf" required>
+  </div>
 
-      abrirModal();
-    });
+  <button type="submit" id="btn-submit">Submeter e Prosseguir para Pagamento</button>
+</form>
 
-    function abrirModal() {
-      document.getElementById('modal-title').innerText = `Pagamento: ${itemAtual.servico} (${itemAtual.valor}€)`;
-      document.getElementById('btn-confirm-pay').innerText = `Pagar ${itemAtual.valor}€`;
+<script>
+// Função para alterar dinamicamente os valores e campos visíveis
+function toggleServicoOptions() {
+  const servicoSelecionado = document.querySelector('input[name="servico"]:checked').value;
+  const seccaoReuniao = document.getElementById('seccao-reuniao');
+  const valorServico = document.getElementById('valor-servico');
+  const descricaoCusto = document.getElementById('descricao-custo');
+  const inputData = document.getElementById('data-agendamento');
 
-      const reuniaoSection = document.getElementById('reuniao-fields');
-      if (itemAtual.requerAgendamento) {
-        reuniaoSection.style.display = 'block';
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        document.getElementById('data-reuniao').min = tomorrow.toISOString().split('T')[0];
-        document.getElementById('data-reuniao').value = tomorrow.toISOString().split('T')[0];
-      } else {
-        reuniaoSection.style.display = 'none';
-      }
+  // AJUSTE AQUI OS VALORES DOS SEUS HONORÁRIOS
+  const CUSTO_REUNIAO = "100,00 € + IVA"; 
+  const CUSTO_ANALISE = "Gratuito / Incluído";
 
-      document.getElementById('payment-modal').style.display = 'flex';
-    }
-
-    function fecharModal() {
-      document.getElementById('payment-modal').style.display = 'none';
-    }
-
-    function selecionarMetodo(metodo) {
-      metodoSelecionado = metodo;
-      document.getElementById('btn-mbway').className = `pay-btn ${metodo === 'mbway' ? 'active' : ''}`;
-      document.getElementById('btn-mb').className = `pay-btn ${metodo === 'mb' ? 'active' : ''}`;
-      document.getElementById('btn-card').className = `pay-btn ${metodo === 'card' ? 'active' : ''}`;
-
-      const details = document.getElementById('pay-details');
-      if (metodo === 'mbway') {
-        details.innerHTML = `
-          <div class="form-group">
-            <label for="mbway-phone">Número MB WAY</label>
-            <input type="tel" id="mbway-phone" value="${userData.telefone || ''}" placeholder="9xxxxxxxx">
-          </div>`;
-      } else if (metodo === 'mb') {
-        details.innerHTML = `<p style="font-size:12px; color:#555; margin-bottom:12px;">Serão geradas referências Multibanco para pagamento na sua App bancária ou caixa MB.</p>`;
-      } else if (metodo === 'card') {
-        details.innerHTML = `<p style="font-size:12px; color:#555; margin-bottom:12px;">Será redirecionado para a plataforma segura de pagamento com Cartão de Crédito/Débito.</p>`;
-      }
-    }
-
-    async function confirmarPagamento() {
-      let dadosAdicionais = '';
-
-      if (itemAtual.requerAgendamento) {
-        const dataReuniao = document.getElementById('data-reuniao').value;
-        const horaReuniao = document.getElementById('hora-reuniao').value;
-        if (!dataReuniao) {
-          alert('Por favor, selecione uma data para a reunião.');
-          return;
-        }
-        dadosAdicionais = `\nData da Reunião: ${dataReuniao} às ${horaReuniao}`;
-      }
-
-      fecharModal();
-
-      if (itemAtual.valor === 10) {
-        document.getElementById('pdm-form').style.display = 'none';
-        document.getElementById('chat-section').style.display = 'block';
-
-        const chatBox = document.getElementById('chat-box');
-        chatBox.innerHTML = '<div class="msg ai">⏳ Pagamento confirmado! A analisar a planta de localização da CM Loulé... Aguarde uns segundos.</div>';
-
-        try {
-          const response = await fetch('/.netlify/functions/analisar-planta', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              ...userData,
-              pdfBase64: pdfBase64,
-              userMessage: "Análise inicial da planta do PDM de Loulé."
-            })
-          });
-
-          const data = await response.json();
-
-          if (response.ok) {
-            const htmlReply = window.marked ? marked.parse(data.reply) : data.reply;
-            chatBox.innerHTML = `<div class="msg ai"><strong>Relatório Preliminar (PDM Loulé):</strong><br><br>${htmlReply}</div>`;
-            chatHistory.push({ role: 'user', text: 'Análise inicial da planta do PDM de Loulé.' });
-            chatHistory.push({ role: 'model', text: data.reply });
-            document.getElementById('upgrade-section').style.display = 'block';
-          } else {
-            chatBox.innerHTML = `<div class="msg ai">⚠️ Erro: ${data.error || 'Não foi possível analisar o ficheiro.'}</div>`;
-          }
-        } catch (err) {
-          chatBox.innerHTML = '<div class="msg ai">⚠️ Erro na ligação ao servidor.</div>';
-        }
-      } else {
-        alert(`Obrigado Sr.(a) ${userData.nome}.\n\nPagamento de +${itemAtual.valor}€ referente a "${itemAtual.servico}" processado com sucesso.${dadosAdicionais}\n\nEnviámos a confirmação para o e-mail ${userData.email}.`);
-      }
-    }
-
-    async function enviarDuvida() {
-      const input = document.getElementById('user-input');
-      const texto = input.value.trim();
-      if (!texto) return;
-
-      const chatBox = document.getElementById('chat-box');
-      chatBox.innerHTML += `<div class="msg user">${texto}</div>`;
-      input.value = '';
-
-      chatBox.innerHTML += `<div class="msg ai" id="loading">⏳ A consultar regulamento...</div>`;
-      chatBox.scrollTop = chatBox.scrollHeight;
-
-      try {
-        const response = await fetch('/.netlify/functions/analisar-planta', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            ...userData,
-            userMessage: texto,
-            chatHistory: chatHistory
-          })
-        });
-
-        const data = await response.json();
-        document.getElementById('loading')?.remove();
-
-        if (response.ok) {
-          const htmlReply = window.marked ? marked.parse(data.reply) : data.reply;
-          chatBox.innerHTML += `<div class="msg ai">${htmlReply}</div>`;
-          chatHistory.push({ role: 'user', text: texto });
-          chatHistory.push({ role: 'model', text: data.reply });
-        } else {
-          chatBox.innerHTML += `<div class="msg ai">⚠️ Erro ao processar a dúvida.</div>`;
-        }
-      } catch (err) {
-        document.getElementById('loading')?.remove();
-        chatBox.innerHTML += `<div class="msg ai">⚠️ Erro de comunicação.</div>`;
-      }
-
-      chatBox.scrollTop = chatBox.scrollHeight;
-    }
-
-    function solicitarUpgrade(servico, valor, requerAgendamento = false) {
-      itemAtual = {
-        servico: servico,
-        valor: valor,
-        requerAgendamento: requerAgendamento
-      };
-      abrirModal();
-    }
-  </script>
-</body>
-</html>
+  if (servicoSelecionado === 'reuniao_presencial') {
+    seccaoReuniao.style.display = 'block';
+    inputData.required = true;
+    valorServico.innerText = CUSTO_REUNIAO;
+    descricaoCusto.innerHTML = "O valor da reunião presencial de consulta técnica com o <strong>Arq. Leonel Mendes</strong> inclui a análise prévia da documentação e enquadramento no PDM de Loulé. Os dados de pagamento serão enviados após verificação de disponibilidade do horário.";
+  } else {
+    seccaoReuniao.style.display = 'none';
+    inputData.required = false;
+    valorServico.innerText = CUSTO_ANALISE;
+    descricaoCusto.innerText = "O relatório de análise automática do PDM é gerado sem custo de consulta presencial.";
+  }
+}
+</script>
