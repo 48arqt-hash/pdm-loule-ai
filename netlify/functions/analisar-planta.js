@@ -40,10 +40,10 @@ exports.handler = async (event) => {
 3. Conformidade com Boas Práticas de Design/Arquitetura
 4. Oportunidades de Otimização e Valorização
 
-Formata a resposta de forma altamente profissional, usando tópicos claros e recomendações acionáveis.`;
+Formata a resposta de forma highly profissional, usando tópicos claros e recomendações acionáveis.`;
 
-    // Utilizando o endpoint gemini-2.0-flash (versão atualizada e standard da v1beta)
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+    // Chamada à API com o modelo ativo gemini-2.5-flash
+    let response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -57,7 +57,21 @@ Formata a resposta de forma altamente profissional, usando tópicos claros e rec
       })
     });
 
-    const data = await response.json();
+    let data = await response.json();
+
+    // Fallback automatico para o alias 'gemini-flash' caso o modelo especifico falhe
+    if (data.error && data.error.message.includes("not available")) {
+      response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash:generateContent?key=${apiKey}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: systemInstructionText }] },
+          contents: [{ parts }],
+          generationConfig: { temperature: 0.7 }
+        })
+      });
+      data = await response.json();
+    }
 
     if (data.error) {
       throw new Error(data.error.message || "Erro na API da Google");
