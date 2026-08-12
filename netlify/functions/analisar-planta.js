@@ -16,24 +16,32 @@ exports.handler = async (event) => {
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    return { statusCode: 500, headers, body: JSON.stringify({ error: "Chave GEMINI_API_KEY não configurada no Netlify." }) };
+    return { 
+      statusCode: 500, 
+      headers, 
+      body: JSON.stringify({ error: "Chave GEMINI_API_KEY não encontrada no Netlify." }) 
+    };
   }
 
   try {
-    const { prompt, fileData, mimeType, duvida } = JSON.parse(event.body || "{}");
-    const textPrompt = prompt || duvida || "Analisa esta planta e indica a viabilidade preliminar do PDM de Loulé.";
+    const body = JSON.parse(event.body || "{}");
+    const textPrompt = body.prompt || body.duvida || "Analisa esta planta e indica a viabilidade preliminar do PDM de Loulé.";
+    const fileData = body.fileData;
+    const mimeType = body.mimeType;
 
-    // Monta os conteúdos para o formato suportado
-    const inputContents = [];
-    
+    // Monta a estrutura de parts esperada pela API
+    const parts = [{ text: textPrompt }];
+
     if (fileData && mimeType) {
-      inputContents.push({
-        inlineData: { mimeType, data: fileData }
+      parts.push({
+        inlineData: {
+          mimeType: mimeType,
+          data: fileData
+        }
       });
     }
-    inputContents.push({ text: textPrompt });
 
-    const systemInstruction = `És o Arquiteto e Agente de Inteligência Estratégica Sénior do portal leonelmendes.com. O teu objetivo supremo é analisar plantas arquitetónicas, extratos de PDM ou layouts enviados pelos utilizadores, avaliando com rigor absoluto:
+    const systemInstructionText = `És o Arquiteto e Agente de Inteligência Estratégica Sénior do portal leonelmendes.com. O teu objetivo supremo é analisar plantas arquitetónicas, extratos de PDM ou layouts enviados pelos utilizadores, avaliando com rigor absoluto:
 1. Ergonomia e Fluxo de Circulação / Enquadramento de Solo PDM
 2. Aproveitamento de Espaço e Funcionalidade
 3. Conformidade com Boas Práticas de Design/Arquitetura
@@ -41,50 +49,47 @@ exports.handler = async (event) => {
 
 Formata a resposta de forma altamente profissional, usando tópicos claros e recomendações acionáveis.`;
 
-    // Chamada à nova Interactions API do Gemini
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1alpha/interactions:generate?key=${apiKey}`, {
+    // Chamada REST limpa e compatível
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "models/gemini-2.5-flash",
-        systemInstruction: { parts: [{ text: systemInstruction }] },
-        input: {
-          parts: inputContents
+        systemInstruction: {
+          parts: [{ text: systemInstructionText }]
+        },
+        contents: [{ parts }],
+        generationConfig: {
+          temperature: 0.7
         }
       })
     });
 
-    const data = await response.json();
-
-    if (data.error) {
-      // Tenta fallback para o modelo padrão se a Interactions API requerer estrutura simplificada
-      const fallbackResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: textPrompt }] }]
-        })
-      });
-      const fallbackData = await fallbackResponse.json();
-      if (fallbackData.error) throw new Error(data.error.message || fallbackData.error.message);
-      
-      const text = fallbackData.candidates?.[0]?.content?.parts?.[0]?.text || "Sem resposta.";
-      return { statusCode: 200, headers, body: JSON.stringify({ resultado: text, relatorio: text, resposta: text }) };
+    const responseText = await response.text();
+    
+    if (!responseText) {
+      throw new Error("A API da Google devolveu uma resposta vazia.");
     }
 
-    // Extrai o texto da resposta da Interactions API
-    const aiText = data.output?.flatMap(o => o.parts || []).map(p => p.text).join('') 
-                || data.candidates?.[0]?.content?.parts?.[0]?.text 
-                || "Análise concluída sem texto gerado.";
+    const data = JSON.parse(responseText);
+
+    if (data.error) {
+      throw new Error(data.error.message || "Erro retornado pela API Gemini.");
+    }
+
+    const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Sem resposta gerada pelo modelo.";
 
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify({ resultado: aiText, relatorio: aiText, resposta: aiText })
+      body: JSON.stringify({ 
+        resultado: aiText, 
+        relatorio: aiText, 
+        resposta: aiText 
+      })
     };
 
   } catch (error) {
-    console.error(error);
+    console.error("Erro na Function:", error);
     return {
       statusCode: 500,
       headers,
