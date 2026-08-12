@@ -1,48 +1,63 @@
-import { GoogleGenAI } from "@google/genai";
+exports.handler = async (event) => {
+  // Configuração dos cabeçalhos CORS
+  const headers = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Content-Type": "application/json"
+  };
 
-export async function handler(event) {
-    if (event.httpMethod !== "POST") {
-        return { statusCode: 405, body: "Method Not Allowed" };
+  if (event.httpMethod === "OPTIONS") {
+    return { statusCode: 200, headers, body: "" };
+  }
+
+  if (event.httpMethod !== "POST") {
+    return { statusCode: 405, headers, body: JSON.stringify({ error: "Método não permitido." }) };
+  }
+
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    return { 
+      statusCode: 500, 
+      headers, 
+      body: JSON.stringify({ error: "Variável GEMINI_API_KEY não configurada no Netlify." }) 
+    };
+  }
+
+  try {
+    const body = JSON.parse(event.body || "{}");
+    const promptText = body.prompt || body.duvida || "Analise a viabilidade preliminar do PDM de Loulé para esta submissão.";
+
+    // Chamada direta à API do Gemini via fetch nativo
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{ text: promptText }]
+        }]
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.error) {
+      throw new Error(data.error.message || "Erro de resposta da API Google");
     }
 
-    try {
-        const { prompt, fileData, mimeType } = JSON.parse(event.body);
-        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Sem resposta gerada.";
 
-        // Prepara o objeto da imagem/ficheiro para o Gemini processar visualmente
-        const imagePart = {
-            inlineData: {
-                data: fileData,
-                mimeType: mimeType
-            },
-        };
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({ relatorio: aiText, resposta: aiText })
+    };
 
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash', // Modelo multimodal excelente para análise de imagens/plantas
-            contents: [prompt, imagePart],
-            config: {
-                temperature: 0.7,
-                systemInstruction: `És o Arquiteto e Agente de Inteligência Estratégica Sénior do portal leonelmendes.com. O teu objetivo supremo é analisar plantas arquitetónicas ou layouts enviados pelos utilizadores, avaliando com rigor absoluto:
-1. Ergonomia e Fluxo de Circulação
-2. Aproveitamento de Espaço e Funcionalidade
-3. Conformidade com Boas Práticas de Design/Arquitetura
-4. Oportunidades de Otimização e Valorização
-
-Formata a resposta de forma altamente profissional, usando tópicos claros e recomendações acionáveis.`
-            }
-        });
-
-        return {
-            statusCode: 200,
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ resultado: response.text })
-        };
-
-    } catch (error) {
-        console.error(error);
-        return {
-            statusCode: 500,
-            body: JSON.stringify({ error: "Erro ao processar a planta com a IA." })
-        };
-    }
+  } catch (error) {
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ error: error.message })
+    };
+  }
 };
