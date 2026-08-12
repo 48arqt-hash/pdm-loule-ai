@@ -6,7 +6,7 @@
   <title>Análise PDM Loulé & Agendamento | Arq. Leonel Mendes</title>
   
   <style>
-    /* ESTILOS ORIGINAIS DO SITE */
+    /* GRAFISMO E ESTILOS ORIGINAIS DO SITE */
     :root {
       --primary-color: #0056b3;
       --secondary-color: #1a252f;
@@ -32,23 +32,36 @@
       padding: 35px;
       border-radius: 8px;
       box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      overflow: hidden;
     }
 
+    /* APRESENTAÇÃO E IMAGEM DE CAPA INICIAL */
     .hero-section {
       text-align: center;
       margin-bottom: 30px;
     }
 
+    .hero-cover-container {
+      width: 100%;
+      height: 280px;
+      margin-bottom: 25px;
+      border-radius: 8px;
+      overflow: hidden;
+      background-color: #e9ecef;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
     .hero-image {
       width: 100%;
-      max-height: 320px;
+      height: 100%;
       object-fit: cover;
-      border-radius: 6px;
-      margin-bottom: 20px;
+      display: block;
     }
 
     .hero-title {
-      font-size: 2rem;
+      font-size: 2.1rem;
       color: var(--secondary-color);
       margin: 0 0 10px 0;
     }
@@ -59,6 +72,7 @@
       margin-bottom: 20px;
     }
 
+    /* BOTÕES DE ESCOLHA NO ECRÃ INICIAL */
     .choice-buttons-container {
       display: flex;
       gap: 20px;
@@ -68,8 +82,8 @@
 
     .btn-choice {
       flex: 1;
-      min-width: 250px;
-      padding: 20px;
+      min-width: 260px;
+      padding: 22px 18px;
       border: 2px solid var(--primary-color);
       background-color: #ffffff;
       color: var(--primary-color);
@@ -86,6 +100,18 @@
       box-shadow: 0 5px 15px rgba(0,86,179,0.2);
     }
 
+    .btn-choice h3 {
+      margin: 0 0 8px 0;
+      font-size: 1.25rem;
+    }
+
+    .btn-choice p {
+      margin: 0;
+      font-size: 0.9rem;
+      opacity: 0.85;
+    }
+
+    /* FORMULÁRIO E CAMPOS */
     .form-group {
       margin-bottom: 20px;
     }
@@ -106,12 +132,28 @@
       box-sizing: border-box;
     }
 
+    .form-control:focus {
+      border-color: var(--primary-color);
+      outline: none;
+    }
+
+    /* CAIXAS DE ALERTA E DESCONTO */
     .info-box {
       padding: 15px;
       border-radius: 5px;
       background-color: #f0f7ff;
       border-left: 4px solid var(--primary-color);
       margin-bottom: 25px;
+    }
+
+    .discount-badge {
+      background-color: #e3f2fd;
+      border: 1px dashed var(--primary-color);
+      padding: 10px 12px;
+      border-radius: 5px;
+      margin-top: 10px;
+      font-size: 0.9em;
+      color: #0d47a1;
     }
 
     .info-box-reuniao {
@@ -128,6 +170,21 @@
       padding-left: 20px;
     }
 
+    /* MÉTODOS DE PAGAMENTO */
+    .payment-option-card {
+      border: 1px solid #ddd;
+      padding: 15px;
+      border-radius: 6px;
+      margin-bottom: 12px;
+      background: #fafafa;
+      transition: border-color 0.2s;
+    }
+
+    .payment-option-card:hover {
+      border-color: var(--primary-color);
+    }
+
+    /* BOTÕES */
     .btn {
       padding: 12px 24px;
       font-size: 1rem;
@@ -142,17 +199,13 @@
       color: #ffffff;
     }
 
+    .btn-primary:hover {
+      background-color: #004085;
+    }
+
     .btn-secondary {
       background-color: #6c757d;
       color: #ffffff;
-    }
-
-    .payment-option-card {
-      border: 1px solid #ddd;
-      padding: 15px;
-      border-radius: 6px;
-      margin-bottom: 10px;
-      background: #fafafa;
     }
 
     #loading-spinner {
@@ -175,33 +228,38 @@
 
   <div class="container">
     
-    <!-- APRESENTAÇÃO E IMAGEM -->
+    <!-- APRESENTAÇÃO E IMAGEM DE CAPA INICIAL -->
     <div class="hero-section">
-      <img src="hero-pdm.jpg" alt="Análise PDM Loulé" class="hero-image" onerror="this.style.display='none'">
+      <div class="hero-cover-container">
+        <!-- Coloque a imagem da capa no mesmo diretório com o nome 'capa-pdm.jpg' -->
+        <img src="capa-pdm.jpg" alt="Análise PDM Loulé" class="hero-image" onerror="this.src='https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=1000&q=80'">
+      </div>
       <h1 class="hero-title">Análise do PDM de Loulé</h1>
       <p class="hero-subtitle">Consultoria técnica e verificação de viabilidade construtiva para a sua propriedade com o Arq. Leonel Mendes.</p>
     </div>
 
-    <!-- PASSO 1: BOTÕES DE ESCOLHA -->
+    <!-- PASSO 1: OS 2 BOTÕES DE ESCOLHA INICIAIS -->
     <div id="ecra-escolha">
-      <h3 style="text-align: center; color: #555; margin-bottom: 15px;">Como deseja prosseguir?</h3>
+      <h3 style="text-align: center; color: #555; margin-bottom: 15px;">Selecione o serviço pretendido:</h3>
       
       <div class="choice-buttons-container">
         
         <button type="button" class="btn-choice" onclick="selecionarServico('analise_automatica')">
           <h3>⚡ Análise Automática</h3>
-          <p>Envio da planta de localização e emissão de relatório técnico por IA.</p>
+          <p style="font-weight: bold; margin-bottom: 6px; color: #0056b3;">10,00 € (c/ IVA)</p>
+          <p>Relatório técnico imediato sobre viabilidade do terreno no PDM.</p>
         </button>
 
         <button type="button" class="btn-choice" onclick="selecionarServico('reuniao_presencial')">
           <h3>📅 Reunião Presencial</h3>
-          <p>Consulta técnica com o Arq. Leonel Mendes no gabinete em Loulé.</p>
+          <p style="font-weight: bold; margin-bottom: 6px; color: #0056b3;">123,00 € (c/ IVA)</p>
+          <p>Atendimento técnico presencial com o Arq. Leonel Mendes em Loulé.</p>
         </button>
 
       </div>
     </div>
 
-    <!-- PASSO 2: FORMULÁRIO DE DADOS E PLANTA -->
+    <!-- PASSO 2: FORMULÁRIO DE DADOS E PLANTA DE LOCALIZAÇÃO -->
     <form id="pdm-form" style="display: none; margin-top: 20px;">
       
       <input type="hidden" id="servico-selecionado" name="servico">
@@ -235,11 +293,13 @@
         <textarea id="morada_faturacao" name="morada_faturacao" class="form-control" rows="2" placeholder="Rua, N.º, Código Postal, Localidade" required></textarea>
       </div>
 
+      <!-- PLANTA DE LOCALIZAÇÃO (PDF) -->
       <div class="form-group">
         <label for="planta">Planta de Localização PDM (PDF) *</label>
         <input type="file" id="planta" name="planta" accept="application/pdf" class="form-control" required>
       </div>
 
+      <!-- CAMPOS ESPECÍFICOS DA REUNIÃO PRESENCIAL -->
       <div id="campo-agendamento-reuniao" class="form-group" style="display: none;">
         <label for="dataAgendamento">Data e Hora pretendida para a Reunião *</label>
         <input type="datetime-local" id="dataAgendamento" name="dataAgendamento" class="form-control">
@@ -250,7 +310,7 @@
           <ul>
             <li>Certidão Permanente e Caderneta Predial</li>
             <li>Planta do terreno e/ou levantamento topográfico</li>
-            <li>Projetos e/ou desenhos anteriores, fotografias da propriedade e etc</li>
+            <li>Projetos e/ou desenhos anteriores, fotografias da propriedade e etc.</li>
           </ul>
         </div>
       </div>
@@ -272,13 +332,13 @@
         <h4 id="resumo-valor" style="margin: 10px 0 0 0; color: #0056b3;"></h4>
       </div>
 
-      <h3>Selecione o Método de Pagamento</h3>
+      <h3>Escolha o Método de Pagamento</h3>
       
       <div class="payment-option-card">
         <label style="cursor: pointer; display: block;">
           <input type="radio" name="metodo_pagamento" value="mbway" checked>
           <strong>MB WAY</strong>
-          <p style="margin: 5px 0 0 0; font-size: 0.85em; color: #666;">Notificação direta na app do telemóvel.</p>
+          <p style="margin: 4px 0 0 0; font-size: 0.85em; color: #666;">Notificação instantânea para aprovação no telemóvel.</p>
         </label>
       </div>
 
@@ -286,7 +346,7 @@
         <label style="cursor: pointer; display: block;">
           <input type="radio" name="metodo_pagamento" value="multibanco">
           <strong>Referência Multibanco</strong>
-          <p style="margin: 5px 0 0 0; font-size: 0.85em; color: #666;">Entidade e Referência enviadas por e-mail.</p>
+          <p style="margin: 4px 0 0 0; font-size: 0.85em; color: #666;">Emissão de Entidade, Referência e Valor para homebanking ou caixa MB.</p>
         </label>
       </div>
 
@@ -294,7 +354,7 @@
         <label style="cursor: pointer; display: block;">
           <input type="radio" name="metodo_pagamento" value="cartao">
           <strong>Cartão de Crédito / Débito</strong>
-          <p style="margin: 5px 0 0 0; font-size: 0.85em; color: #666;">Processado em ambiente seguro.</p>
+          <p style="margin: 4px 0 0 0; font-size: 0.85em; color: #666;">Visa, Mastercard ou American Express via gateway seguro.</p>
         </label>
       </div>
 
@@ -307,18 +367,21 @@
 
     <!-- ESTADO DE CARREGAMENTO -->
     <div id="loading-spinner">
-      <p>⏳ A gerar os dados de pagamento e a enviar documentação... Por favor aguarde.</p>
+      <p>⏳ A processar o pedido e o pagamento... Por favor aguarde.</p>
     </div>
 
     <!-- RESULTADO -->
     <div id="resultado-analise">
-      <h3 id="titulo-resultado">Confirmação / Relatório:</h3>
+      <h3 id="titulo-resultado">Resultado / Confirmação:</h3>
       <div id="conteudo-resposta" style="white-space: pre-wrap;"></div>
     </div>
 
   </div>
 
   <script>
+    const VALOR_ANALISE = "10,00 €";
+    const VALOR_REUNIAO = "123,00 €";
+
     function selecionarServico(tipo) {
       document.getElementById('servico-selecionado').value = tipo;
       
@@ -328,17 +391,19 @@
       const inputData = document.getElementById('dataAgendamento');
       const textoCusto = document.getElementById('texto-custo-servico');
 
-      const VALOR_REUNIAO = "100,00 € + IVA";
-      const VALOR_ANALISE = "50,00 € + IVA"; // AJUSTE O VALOR DA ANÁLISE AUTOMÁTICA AQUI
-
       if (tipo === 'reuniao_presencial') {
         campoAgendamento.style.display = 'block';
         inputData.required = true;
-        textoCusto.innerHTML = `<strong>Custo da Reunião Presencial:</strong> ${VALOR_REUNIAO}. Inclui a verificação prévia do PDM e consulta no gabinete.`;
+        textoCusto.innerHTML = `<strong>Reunião de Atendimento Técnico:</strong> ${VALOR_REUNIAO} (IVA incluído). Inclui análise prévia da planta e consulta no gabinete em Loulé.`;
       } else {
         campoAgendamento.style.display = 'none';
         inputData.required = false;
-        textoCusto.innerHTML = `<strong>Custo da Análise Automática:</strong> ${VALOR_ANALISE}. Relatório gerado imediatamente após a confirmação do pagamento.`;
+        textoCusto.innerHTML = `
+          <strong>Análise Automática do PDM:</strong> ${VALOR_ANALISE} (IVA incluído).
+          <div class="discount-badge">
+            💡 <strong>Nota Importante:</strong> Se posteriormente optar por agendar a Reunião de Atendimento Técnico, o valor pago nesta análise (10 €) será <strong>totalmente descontado</strong> no valor da reunião.
+          </div>
+        `;
       }
 
       ecraEscolha.style.display = 'none';
@@ -351,7 +416,6 @@
     }
 
     function irParaPagamento() {
-      // Validar se os campos obrigatórios estão preenchidos
       const form = document.getElementById('pdm-form');
       if (!form.checkValidity()) {
         form.reportValidity();
@@ -361,13 +425,10 @@
       const tipo = document.getElementById('servico-selecionado').value;
       const nome = document.getElementById('nome').value;
       const nif = document.getElementById('nif').value;
-      
-      const VALOR_REUNIAO = "123,00 € (100€ + IVA)";
-      const VALOR_ANALISE = "61,50 € (50€ + IVA)";
 
-      document.getElementById('resumo-servico').innerHTML = `<strong>Serviço:</strong> ${tipo === 'reuniao_presencial' ? 'Reunião Presencial c/ Arq. Leonel Mendes' : 'Análise Automática do PDM (IA)'}`;
+      document.getElementById('resumo-servico').innerHTML = `<strong>Serviço:</strong> ${tipo === 'reuniao_presencial' ? 'Reunião de Atendimento Técnico' : 'Análise Automática do PDM (IA)'}`;
       document.getElementById('resumo-faturacao').innerHTML = `<strong>Faturação:</strong> ${nome} | NIF: ${nif}`;
-      document.getElementById('resumo-valor').innerText = `Total a Pagar: ${tipo === 'reuniao_presencial' ? VALOR_REUNIAO : VALOR_ANALISE}`;
+      document.getElementById('resumo-valor').innerText = `Total a Pagar (c/ IVA): ${tipo === 'reuniao_presencial' ? VALOR_REUNIAO : VALOR_ANALISE}`;
 
       document.getElementById('pdm-form').style.display = 'none';
       document.getElementById('ecra-pagamento').style.display = 'block';
@@ -428,7 +489,7 @@
             resultadoDiv.style.display = 'block';
             conteudoDiv.innerText = data.reply || data.message;
           } else {
-            alert('Erro: ' + (data.error || 'Não foi possível concluir o pedido.'));
+            alert('Erro: ' + (data.error || 'Não foi possível concluir a operação.'));
             document.getElementById('ecra-pagamento').style.display = 'block';
           }
         };
@@ -437,7 +498,7 @@
         console.error(err);
         spinner.style.display = 'none';
         btnPay.disabled = false;
-        alert('Ocorreu um erro ao processar o pagamento.');
+        alert('Ocorreu um erro ao submeter o pedido.');
       }
     }
   </script>
