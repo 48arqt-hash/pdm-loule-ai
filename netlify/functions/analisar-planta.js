@@ -26,14 +26,22 @@ export async function handler(event) {
   }
 
   try {
-    const { prompt, fileData, mimeType, duvida } = JSON.parse(event.body || "{}");
-    const textPrompt = prompt || duvida || "Analisa esta planta e indica a viabilidade preliminar do PDM de Loulé.";
+    const body = JSON.parse(event.body || "{}");
+    const textPrompt = body.prompt || body.duvida || "Analisa esta planta e indica a viabilidade preliminar do PDM de Loulé.";
+    let fileData = body.fileData || body.file || body.imagem || body.base64;
+    let mimeType = body.mimeType || body.type || "image/png";
 
     const ai = new GoogleGenAI({ apiKey });
-
     const contents = [{ text: textPrompt }];
 
-    if (fileData && mimeType) {
+    // Tratamento e limpeza da string Base64 se um ficheiro for enviado
+    if (fileData) {
+      if (fileData.includes(";base64,")) {
+        const parts = fileData.split(";base64,");
+        mimeType = parts[0].replace("data:", "");
+        fileData = parts[1];
+      }
+
       contents.push({
         inlineData: {
           data: fileData,
@@ -65,7 +73,8 @@ Formata a resposta de forma altamente profissional, usando tópicos claros e rec
       body: JSON.stringify({ 
         resultado: aiText, 
         relatorio: aiText, 
-        resposta: aiText 
+        resposta: aiText,
+        texto: aiText 
       })
     };
 
