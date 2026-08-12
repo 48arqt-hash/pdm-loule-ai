@@ -12,15 +12,15 @@
   <link rel="stylesheet" href="style.css">
 
   <style>
-    /* PRESERVAÇÃO RIGOROSA DAS IMAGENS E SÍMBOLOS ORIGINAIS */
+    /* LOGÓTIPO/SÍMBOLO MAIS PEQUENO E CENTRADO */
     .logo {
-      max-width: 100%;
+      max-width: 140px; /* Tamanho reduzido e equilibrado */
       height: auto;
       display: block;
       margin: 0 auto;
     }
 
-    /* IMAGEM PRINCIPAL LIGEIRAMENTE MAIS PEQUENA */
+    /* IMAGEM PRINCIPAL */
     .project {
       text-align: center;
       margin: 15px 0;
@@ -28,12 +28,27 @@
 
     .project-img {
       max-width: 100%;
-      max-height: 280px; /* Tamanho reduzido e equilibrado */
+      max-height: 280px;
       width: auto;
       height: auto;
       border-radius: 8px;
       display: inline-block;
       object-fit: cover;
+    }
+
+    /* REDES SOCIAIS PERFEITAMENTE CENTRADAS NA PÁGINA */
+    .social {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 16px;
+      margin: 20px 0 10px 0;
+    }
+
+    .social a {
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
     }
 
     .social img {
@@ -42,7 +57,7 @@
       object-fit: contain;
     }
 
-    /* TIPOGRAFIA MODERNA E CENTRADA (MANDATÓRIA) */
+    /* TIPOGRAFIA MODERNA E CENTRADA */
     .header-branding {
       text-align: center;
       margin: 20px 0 15px 0;
@@ -277,12 +292,20 @@
       color: #0f172a;
       text-decoration: underline;
     }
+
+    footer {
+      text-align: center;
+      font-size: 0.75rem;
+      color: #94a3b8;
+      margin-top: 15px;
+    }
   </style>
 </head>
 <body>
 
   <main class="card">
 
+    <!-- SÍMBOLO DO LOGO (REDUZIDO) -->
     <img src="images/logo.png" alt="Leonel Mendes" class="logo">
 
     <!-- BRANDING TIPOGRÁFICO MODERNO E CENTRADO -->
@@ -293,7 +316,7 @@
 
     <div class="divider"></div>
 
-    <!-- IMAGEM DO PROJETO (MAIS PEQUENA) -->
+    <!-- IMAGEM DO PROJETO -->
     <div class="project">
       <img src="images/projeto.jpg" alt="Projeto" class="project-img">
     </div>
@@ -419,7 +442,7 @@
       </div>
     </div>
 
-    <!-- CONTACTOS FORMATADOS COM O NOVO LETRING 'ARQUITETURA E ENGENHARIA' -->
+    <!-- CONTACTOS COM LETRING ESPECIAL -->
     <div class="contact">
       <p>
         <a href="tel:+351960010870">+351 960 010 870</a><br>
@@ -434,7 +457,7 @@
       </p>
     </div>
 
-    <!-- REDES SOCIAIS ORIGINAIS -->
+    <!-- REDES SOCIAIS CENTRADAS -->
     <div class="social">
       <a href="https://wa.me/351960010870" target="_blank">
         <img src="images/whatsapp.svg" alt="WhatsApp">
