@@ -12,17 +12,40 @@
   <link rel="stylesheet" href="style.css">
 
   <style>
-    /* Estilos complementares para os novos botões e painéis mantendo a linha minimalista */
+    /* PRESERVAÇÃO RIGOROSA DAS IMAGENS E SÍMBOLOS ORIGINAIS */
+    .logo {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin: 0 auto;
+    }
+
+    .project-img {
+      width: 100%;
+      height: auto;
+      border-radius: 8px;
+      display: block;
+    }
+
+    .social img {
+      width: 24px;
+      height: 24px;
+      object-fit: contain;
+    }
+
+    /* ESTILOS DOS BOTÕES (SEM VALORES VISÍVEIS NA PÁGINA INICIAL) */
     .services-section {
       margin: 25px 0;
       text-align: left;
     }
+
     .service-btn-group {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
       margin-bottom: 15px;
     }
+
     .btn-action {
       background-color: #1e293b;
       color: #ffffff;
@@ -38,66 +61,88 @@
       align-items: center;
       transition: all 0.2s ease;
       text-align: left;
+      width: 100%;
+      box-sizing: border-box;
     }
+
     .btn-action:hover {
       background-color: #334155;
       border-color: #475569;
     }
-    .btn-badge {
-      background-color: #d97706;
-      color: #ffffff;
-      font-size: 0.8rem;
-      padding: 3px 8px;
-      border-radius: 4px;
-      font-weight: 600;
+
+    .btn-arrow {
+      font-size: 0.85rem;
+      opacity: 0.7;
     }
+
     .feature-panel {
       display: none;
       background: #f8fafc;
       border: 1px solid #e2e8f0;
       border-radius: 8px;
-      padding: 20px;
+      padding: 18px;
       margin-top: 15px;
       color: #1e293b;
     }
+
     .feature-panel h3 {
       margin-top: 0;
-      font-size: 1.1rem;
+      font-size: 1.05rem;
       color: #0f172a;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
+
     .feature-panel p {
-      font-size: 0.88rem;
+      font-size: 0.85rem;
       color: #64748b;
-      margin-bottom: 15px;
+      margin-bottom: 12px;
+      line-height: 1.4;
     }
+
+    .price-tag {
+      display: inline-block;
+      background-color: #e2e8f0;
+      color: #0f172a;
+      font-weight: 600;
+      font-size: 0.85rem;
+      padding: 4px 8px;
+      border-radius: 4px;
+      margin-bottom: 12px;
+    }
+
     .upload-zone {
       border: 2px dashed #cbd5e1;
       border-radius: 6px;
-      padding: 15px;
+      padding: 12px;
       text-align: center;
       background: #ffffff;
       cursor: pointer;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
+
     .upload-zone span {
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       color: #475569;
     }
+
     .input-field, .textarea-field {
       width: 100%;
       padding: 10px;
       border: 1px solid #cbd5e1;
       border-radius: 6px;
       font-family: inherit;
-      font-size: 0.9rem;
-      margin-bottom: 10px;
+      font-size: 0.85rem;
+      margin-bottom: 8px;
       box-sizing: border-box;
+      background: #ffffff;
+      color: #0f172a;
     }
+
     .textarea-field {
       resize: vertical;
-      min-height: 80px;
+      min-height: 70px;
     }
+
     .btn-submit {
       background-color: #0f172a;
       color: #ffffff;
@@ -107,40 +152,46 @@
       border-radius: 6px;
       font-weight: 600;
       cursor: pointer;
-      font-size: 0.9rem;
+      font-size: 0.88rem;
     }
+
     .btn-submit:hover {
       background-color: #1e293b;
     }
+
     .chat-history {
       background: #ffffff;
       border: 1px solid #e2e8f0;
       border-radius: 6px;
       padding: 10px;
-      max-height: 180px;
+      max-height: 160px;
       overflow-y: auto;
-      margin-bottom: 12px;
-      font-size: 0.88rem;
+      margin-bottom: 10px;
+      font-size: 0.82rem;
     }
+
     .chat-msg {
-      margin-bottom: 8px;
-      padding: 8px 12px;
+      margin-bottom: 6px;
+      padding: 8px 10px;
       border-radius: 6px;
     }
+
     .chat-msg.system {
       background: #f1f5f9;
       color: #334155;
     }
+
     .chat-msg.user {
       background: #2563eb;
       color: #ffffff;
       margin-left: 20%;
     }
+
     .discount-checkbox {
       display: flex;
       align-items: center;
       gap: 8px;
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       margin-bottom: 12px;
       color: #334155;
     }
@@ -162,28 +213,29 @@
       <img src="images/projeto.jpg" alt="Projeto" class="project-img">
     </div>
 
-    <!-- BOTÕES DE SERVIÇOS FUNCIONAIS -->
+    <!-- BOTÕES DE SERVIÇOS (SEM VALORES VISÍVEIS) -->
     <div class="services-section">
       <div class="service-btn-group">
         <button class="btn-action" onclick="togglePanel('pdmPanel')">
           <span>🔍 Análise Automática do PDM</span>
-          <span class="btn-badge">10€</span>
+          <span class="btn-arrow">▼</span>
         </button>
 
         <button class="btn-action" onclick="togglePanel('meetingPanel')">
           <span>📅 Reunião de Consultoria</span>
-          <span class="btn-badge" id="meetingBadge">123€</span>
+          <span class="btn-arrow">▼</span>
         </button>
 
         <button class="btn-action" onclick="togglePanel('quotePanel')">
           <span>📄 Pedir Orçamento</span>
-          <span style="font-size: 0.8rem; opacity: 0.8;">Grátis</span>
+          <span class="btn-arrow">▼</span>
         </button>
       </div>
 
-      <!-- PAINEL 1: ANÁLISE AUTOMÁTICA PDM (10€) -->
+      <!-- PAINEL 1: ANÁLISE AUTOMÁTICA PDM -->
       <div id="pdmPanel" class="feature-panel">
         <h3>Análise Automática de PDM em Loulé</h3>
+        <div class="price-tag">Custo do Serviço: 10€</div>
         <p>Envie a Planta de Localização em PDF para uma análise preliminar via IA das condicionantes do seu terreno.</p>
         
         <div class="chat-history" id="pdmChat">
@@ -202,14 +254,15 @@
         <button class="btn-submit" onclick="submitPdmAnalysis()">Analisar Terreno & Pagar (10€)</button>
       </div>
 
-      <!-- PAINEL 2: REUNIÃO DE CONSULTORIA (123€ com desconto de 10€) -->
+      <!-- PAINEL 2: REUNIÃO DE CONSULTORIA -->
       <div id="meetingPanel" class="feature-panel">
         <h3>Agendar Reunião de Consultoria</h3>
+        <div class="price-tag" id="meetingPriceTag">Valor base: 123€</div>
         <p>Sessão presencial no gabinete em Loulé ou por videochamada.</p>
 
         <div class="discount-checkbox">
           <input type="checkbox" id="paidPdmCheck" onchange="calculateMeetingPrice()">
-          <label for="paidPdmCheck">Já efetuei a Análise Automática do PDM (-10€ desconto)</label>
+          <label for="paidPdmCheck">Já efetuei a Análise Automática do PDM (-10€ de desconto)</label>
         </div>
 
         <input type="text" placeholder="Seu Nome Completo" class="input-field" required>
@@ -222,6 +275,7 @@
       <!-- PAINEL 3: PEDIR ORÇAMENTO COM ANEXOS -->
       <div id="quotePanel" class="feature-panel">
         <h3>Pedir Orçamento de Projeto</h3>
+        <div class="price-tag">Serviço Gratuito</div>
         <p>Descreva o seu projeto ou intenção de obra e anexe os documentos necessários.</p>
 
         <input type="text" placeholder="Nome Completo" class="input-field" required>
@@ -276,7 +330,6 @@
   <script>
     let pdmPdfBase64 = null;
 
-    // Alternar visibilidade dos painéis expansíveis
     function togglePanel(panelId) {
       const panels = ['pdmPanel', 'meetingPanel', 'quotePanel'];
       panels.forEach(id => {
@@ -289,7 +342,6 @@
       });
     }
 
-    // Atualiza o nome dos ficheiros selecionados
     function updateFileName(input, labelId) {
       const label = document.getElementById(labelId);
       if (input.files && input.files.length > 0) {
@@ -309,22 +361,20 @@
       }
     }
 
-    // Recálculo dinâmico do valor da reunião (Com ou sem desconto do PDM)
     function calculateMeetingPrice() {
       const isChecked = document.getElementById('paidPdmCheck').checked;
-      const badge = document.getElementById('meetingBadge');
+      const priceTag = document.getElementById('meetingPriceTag');
       const submitBtn = document.getElementById('meetingSubmitBtn');
 
       if (isChecked) {
-        badge.innerText = "113€";
+        priceTag.innerText = "Valor com Desconto: 113€";
         submitBtn.innerText = "Confirmar e Pagar (113€)";
       } else {
-        badge.innerText = "123€";
+        priceTag.innerText = "Valor base: 123€";
         submitBtn.innerText = "Confirmar e Pagar (123€)";
       }
     }
 
-    // Submissão da Análise de PDM
     async function submitPdmAnalysis() {
       const chat = document.getElementById('pdmChat');
       const msgInput = document.getElementById('pdmUserMsg');
@@ -341,7 +391,6 @@
       chat.appendChild(sysMsg);
       chat.scrollTop = chat.scrollHeight;
 
-      // Comunicação com a Serverless Function / Backend Netlify
       try {
         const response = await fetch('/.netlify/functions/analisar-planta', {
           method: 'POST',
@@ -355,14 +404,12 @@
       }
     }
 
-    // Processamento do Agendamento da Reunião
     function processMeetingBooking() {
       const isDiscounted = document.getElementById('paidPdmCheck').checked;
       const finalPrice = isDiscounted ? "113€" : "123€";
       alert(`Obrigado! O seu pedido de agendamento (${finalPrice}) foi registado. Entraremos em contacto para os detalhes de pagamento.`);
     }
 
-    // Submissão do Pedido de Orçamento
     function submitQuoteRequest() {
       alert("O seu pedido de orçamento com anexos foi enviado com sucesso! Responderemos brevemente.");
     }
