@@ -1,38 +1,45 @@
 import { GoogleGenAI } from '@google/genai';
 
-export async function handler(event, context) {
-  // Permitir apenas requisições POST
+export const handler = async (event) => {
+  // Configuração dos cabeçalhos CORS
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Content-Type': 'application/json'
+  };
+
+  // Tratar requisição OPTIONS (Pre-flight do navegador)
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 200, headers, body: '' };
+  }
+
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
+      headers,
       body: JSON.stringify({ error: 'Método não permitido.' })
     };
   }
 
   try {
-    // 1. Verificar a chave da API
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      console.error("ERRO: GEMINI_API_KEY não configurada nas Environment Variables.");
+      console.error("ERRO: GEMINI_API_KEY ausente.");
       return {
         statusCode: 500,
-        body: JSON.stringify({ error: 'Chave de API não configurada no servidor Netlify.' })
+        headers,
+        body: JSON.stringify({ error: 'GEMINI_API_KEY não configurada no Netlify.' })
       };
     }
 
-    // 2. Extrair dados da requisição
     const { pdfBase64, userMessage, chatHistory } = JSON.parse(event.body || '{}');
 
     const ai = new GoogleGenAI({ apiKey });
-    const model = 'gemini-2.5-flash';
-
-    const systemInstruction = `Você é um assistente técnico especializado em urbanismo e arquitetura do concelho de Loulé, Portugal.
-Sua função é analisar extratos do PDM (Plano Director Municipal) de Loulé fornecidos em formato PDF e emitir análises preliminares informativas.
-Responda sempre com clareza, em português europeu, destacando as condicionantes urbanísticas, classificação do solo e orientações preliminares.`;
+    const systemInstruction = `Você é um assistente técnico especializado em urbanismo do concelho de Loulé, Portugal. Analise o extrato do PDM fornecido em PDF com precisão e clareza.`;
 
     let contents = [];
 
-    // 3. Montar a estrutura de conteúdos
     if (pdfBase64) {
       contents.push({
         inlineData: {
@@ -53,29 +60,27 @@ Responda sempre com clareza, em português europeu, destacando as condicionantes
       contents.push({ text: userMessage });
     }
 
-    // 4. Chamada à API da Gemini
     const response = await ai.models.generateContent({
-      model: model,
+      model: 'gemini-2.5-flash',
       contents: contents,
       config: {
-        systemInstruction: systemInstruction,
+        systemInstruction,
         temperature: 0.2
       }
     });
 
     return {
       statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ reply: response.text })
     };
 
   } catch (error) {
-    console.error("Erro interno na Netlify Function:", error);
+    console.error("Erro na execução da função:", error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ 
-        error: error.message || 'Erro ao comunicar com o modelo Gemini.' 
-      })
+      headers,
+      body: JSON.stringify({ error: error.message || 'Erro ao processar o ficheiro.' })
     };
   }
-}
+};
