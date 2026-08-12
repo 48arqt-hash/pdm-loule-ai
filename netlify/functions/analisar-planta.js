@@ -1,6 +1,6 @@
-const { GoogleGenAI } = require('@google/genai');
+import { GoogleGenAI } from '@google/genai';
 
-exports.handler = async (event, context) => {
+export async function handler(event, context) {
   // Permitir apenas requisições POST
   if (event.httpMethod !== 'POST') {
     return {
@@ -10,7 +10,7 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    // 1. Verificar se a API Key está configurada nas variáveis de ambiente da Netlify
+    // 1. Verificar a chave da API
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       console.error("ERRO: GEMINI_API_KEY não configurada nas Environment Variables.");
@@ -20,20 +20,19 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // 2. Parse do corpo da requisição enviado pelo front-end
+    // 2. Extrair dados da requisição
     const { pdfBase64, userMessage, chatHistory } = JSON.parse(event.body || '{}');
 
     const ai = new GoogleGenAI({ apiKey });
-    const model = 'gemini-2.5-flash'; // Modelo ideal para texto e análise multimodal de PDFs
+    const model = 'gemini-2.5-flash';
 
-    // Prompt do sistema com instruções técnicas para o PDM de Loulé
     const systemInstruction = `Você é um assistente técnico especializado em urbanismo e arquitetura do concelho de Loulé, Portugal.
 Sua função é analisar extratos do PDM (Plano Director Municipal) de Loulé fornecidos em formato PDF e emitir análises preliminares informativas.
 Responda sempre com clareza, em português europeu, destacando as condicionantes urbanísticas, classificação do solo e orientações preliminares.`;
 
     let contents = [];
 
-    // 3. Se houver PDF em Base64 (primeira análise), incluir o ficheiro
+    // 3. Montar a estrutura de conteúdos
     if (pdfBase64) {
       contents.push({
         inlineData: {
@@ -43,7 +42,6 @@ Responda sempre com clareza, em português europeu, destacando as condicionantes
       });
       contents.push({ text: userMessage || "Analise este extrato do PDM de Loulé." });
     } else if (chatHistory && chatHistory.length > 0) {
-      // Reconstruir o histórico de conversa para dúvidas subsequentes
       chatHistory.forEach(msg => {
         contents.push({
           role: msg.role === 'user' ? 'user' : 'model',
@@ -80,4 +78,4 @@ Responda sempre com clareza, em português europeu, destacando as condicionantes
       })
     };
   }
-};
+}
