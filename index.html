@@ -23,10 +23,11 @@
   <meta name="twitter:description" content="Análise preliminar de viabilidade do PDM de Loulé com Inteligência Artificial.">
   <meta name="twitter:image" content="https://leonelmendes.com/images/projeto.jpg">
 
-  <!-- Fontes Google -->
+  <!-- Fontes Google & Marked (Markdown Parser) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
   <style>
     /* --- ESTILOS GERAIS DA PÁGINA --- */
@@ -248,7 +249,14 @@
     .msg {
       margin-bottom: 12px;
       line-height: 1.5;
-      white-space: pre-wrap;
+    }
+
+    .msg p {
+      margin-bottom: 8px;
+    }
+
+    .msg p:last-child {
+      margin-bottom: 0;
     }
 
     .msg.user {
@@ -499,7 +507,7 @@
         <div class="form-group">
           <label for="planta">Planta de Localização da CM Loulé (PDF)</label>
           <input type="file" id="planta" accept="application/pdf" required>
-          <span class="file-hint">Anexe o extrato oficial em PDF emitido pela Câmara de Loulé.</span>
+          <span class="file-hint">Anexe o extrato oficial em PDF emitido pela Câmara de Loulé (máx. 10MB).</span>
         </div>
 
         <div class="checkbox-group">
@@ -650,9 +658,23 @@
     };
     let metodoSelecionado = 'mbway';
 
+    // Suporte para Tecla Enter no Chat
+    document.getElementById('user-input').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        enviarDuvida();
+      }
+    });
+
+    // Leitura e validação de tamanho do PDF
     document.getElementById('planta').addEventListener('change', function(e) {
       const file = e.target.files[0];
       if (file) {
+        if (file.size > 10 * 1024 * 1024) { // Limite de 10 MB
+          alert("O ficheiro PDF é demasiado grande. Por favor selecione um ficheiro até 10 MB.");
+          e.target.value = '';
+          pdfBase64 = null;
+          return;
+        }
         const reader = new FileReader();
         reader.onload = function(evt) {
           pdfBase64 = evt.target.result.split(',')[1];
@@ -764,7 +786,8 @@
           const data = await response.json();
 
           if (response.ok) {
-            chatBox.innerHTML = `<div class="msg ai"><strong>Relatório Preliminar (PDM Loulé):</strong><br><br>${data.reply}</div>`;
+            const htmlReply = window.marked ? marked.parse(data.reply) : data.reply;
+            chatBox.innerHTML = `<div class="msg ai"><strong>Relatório Preliminar (PDM Loulé):</strong><br><br>${htmlReply}</div>`;
             chatHistory.push({ role: 'user', text: 'Análise inicial da planta do PDM de Loulé.' });
             chatHistory.push({ role: 'model', text: data.reply });
             document.getElementById('upgrade-section').style.display = 'block';
@@ -806,7 +829,8 @@
         document.getElementById('loading')?.remove();
 
         if (response.ok) {
-          chatBox.innerHTML += `<div class="msg ai">${data.reply}</div>`;
+          const htmlReply = window.marked ? marked.parse(data.reply) : data.reply;
+          chatBox.innerHTML += `<div class="msg ai">${htmlReply}</div>`;
           chatHistory.push({ role: 'user', text: texto });
           chatHistory.push({ role: 'model', text: data.reply });
         } else {
