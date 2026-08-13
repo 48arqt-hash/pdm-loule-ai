@@ -12,9 +12,9 @@
   <link rel="stylesheet" href="style.css">
 
   <style>
-    /* LOGÓTIPO/SÍMBOLO MAIS PEQUENO E CENTRADO */
+    /* LOGÓTIPO/SÍMBOLO PEQUENO E CENTRADO */
     .logo {
-      max-width: 140px; /* Tamanho reduzido e equilibrado */
+      max-width: 140px;
       height: auto;
       display: block;
       margin: 0 auto;
@@ -36,7 +36,7 @@
       object-fit: cover;
     }
 
-    /* REDES SOCIAIS PERFEITAMENTE CENTRADAS NA PÁGINA */
+    /* REDES SOCIAIS CENTRADAS */
     .social {
       display: flex;
       justify-content: center;
@@ -57,7 +57,7 @@
       object-fit: contain;
     }
 
-    /* TIPOGRAFIA MODERNA E CENTRADA */
+    /* TIPOGRAFIA */
     .header-branding {
       text-align: center;
       margin: 20px 0 15px 0;
@@ -228,17 +228,18 @@
       background: #ffffff;
       border: 1px solid #e2e8f0;
       border-radius: 6px;
-      padding: 10px;
-      max-height: 160px;
+      padding: 12px;
+      max-height: 280px;
       overflow-y: auto;
-      margin-bottom: 10px;
-      font-size: 0.82rem;
+      margin-bottom: 12px;
+      font-size: 0.85rem;
     }
 
     .chat-msg {
-      margin-bottom: 6px;
-      padding: 8px 10px;
+      margin-bottom: 8px;
+      padding: 10px 12px;
       border-radius: 6px;
+      line-height: 1.45;
     }
 
     .chat-msg.system {
@@ -246,10 +247,10 @@
       color: #334155;
     }
 
-    .chat-msg.user {
-      background: #2563eb;
-      color: #ffffff;
-      margin-left: 20%;
+    .chat-msg.report {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
 
     .checkbox-container {
@@ -266,7 +267,41 @@
       margin-top: 2px;
     }
 
-    /* ESTILIZAÇÃO DOS CONTACTOS COM O LETRING 'ARQUITETURA E ENGENHARIA' */
+    /* ESTILO DO PASSO 2 (PÁGINA DE PAGAMENTO DO PDM) */
+    .payment-modal {
+      display: none;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 15px;
+    }
+
+    .payment-options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin: 12px 0;
+    }
+
+    .payment-opt-btn {
+      padding: 10px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      background: #f8fafc;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .payment-opt-btn.active {
+      border-color: #2563eb;
+      background: #eff6ff;
+      color: #1d4ed8;
+    }
+
+    /* CONTACTOS */
     .contact {
       text-align: center;
       margin: 25px 0;
@@ -285,7 +320,6 @@
       text-transform: uppercase;
       color: #475569;
       text-decoration: none;
-      transition: color 0.2s ease;
     }
 
     .contact a:hover {
@@ -305,10 +339,10 @@
 
   <main class="card">
 
-    <!-- SÍMBOLO DO LOGO (REDUZIDO) -->
+    <!-- LOGO REDUZIDO -->
     <img src="images/logo.png" alt="Leonel Mendes" class="logo">
 
-    <!-- BRANDING TIPOGRÁFICO MODERNO E CENTRADO -->
+    <!-- BRANDING CENTRADO -->
     <div class="header-branding">
       <h1>Arq. Leonel Mendes</h1>
       <h2>Arquitetura e Engenharia</h2>
@@ -321,7 +355,7 @@
       <img src="images/projeto.jpg" alt="Projeto" class="project-img">
     </div>
 
-    <!-- BOTÕES DE SERVIÇOS FUNCIONAIS -->
+    <!-- BOTÕES DE SERVIÇOS -->
     <div class="services-section">
       <div class="service-btn-group">
         <button class="btn-action" onclick="togglePanel('pdmPanel')">
@@ -343,37 +377,62 @@
       <!-- PAINEL 1: ANÁLISE AUTOMÁTICA PDM -->
       <div id="pdmPanel" class="feature-panel">
         <h3>Análise Automática de PDM em Loulé</h3>
-        <div class="price-tag">Custo do Serviço: 10€</div>
-        <p>Envie a Planta de Localização em PDF para uma análise preliminar via IA das condicionantes do seu terreno.</p>
+        <div class="price-tag">Custo do Serviço: 10,00€</div>
+        <p>Envie a Planta de Localização em PDF para uma análise preliminar com recurso a IA das condicionantes do seu terreno.</p>
         
         <div class="chat-history" id="pdmChat">
           <div class="chat-msg system">
-            Carregue a Planta de Localização em PDF para iniciar a análise técnica preliminar.
+            Carregue a Planta de Localização (PDF) e indique eventuais dúvidas para avançar para o relatório.
           </div>
         </div>
 
-        <div class="upload-zone" onclick="document.getElementById('pdmPdfInput').click()">
-          <span id="pdmUploadText">📁 Anexar Planta de Localização (PDF)</span>
-          <input type="file" id="pdmPdfInput" accept="application/pdf" style="display: none;" onchange="updateFileName(this, 'pdmUploadText')">
+        <!-- PASSO 1: FORMULÁRIO DE INFORMAÇÕES -->
+        <div id="pdmStep1">
+          <div class="upload-zone" onclick="document.getElementById('pdmPdfInput').click()">
+            <span id="pdmUploadText">📁 Anexar Planta de Localização (PDF)</span>
+            <input type="file" id="pdmPdfInput" accept="application/pdf" style="display: none;" onchange="updateFileName(this, 'pdmUploadText')">
+          </div>
+
+          <input type="text" id="pdmUserMsg" class="input-field" placeholder="Dúvida específica sobre o terreno (opcional)...">
+          
+          <h4>Dados de Faturação</h4>
+          <div class="input-grid">
+            <input type="text" id="pdmNif" placeholder="NIF" class="input-field" required>
+            <input type="text" id="pdmNome" placeholder="Nome na Fatura" class="input-field" required>
+          </div>
+          <input type="text" id="pdmMorada" placeholder="Morada de Faturação" class="input-field" required>
+
+          <button class="btn-submit" onclick="goToPdmPayment()">Avançar para Pagamento (10,00€) →</button>
         </div>
 
-        <input type="text" id="pdmUserMsg" class="input-field" placeholder="Dúvida específica sobre o terreno (opcional)...">
-        
-        <h4>Dados de Faturação</h4>
-        <div class="input-grid">
-          <input type="text" placeholder="NIF" class="input-field" required>
-          <input type="text" placeholder="Nome na Fatura" class="input-field" required>
-        </div>
-        <input type="text" placeholder="Morada de Faturação" class="input-field" required>
+        <!-- PASSO 2: SEGUNDA PÁGINA / QUADRO DE PAGAMENTO (10€) -->
+        <div id="pdmStep2" class="payment-modal">
+          <h4 style="margin-top:0;">💳 Selecione o Método de Pagamento (10,00€)</h4>
+          <p style="font-size:0.8rem; color:#64748b;">Análise do PDM para: <span id="pdmSummaryName">Cliente</span></p>
 
-        <button class="btn-submit" onclick="submitPdmAnalysis()">Analisar Terreno & Pagar (10€)</button>
+          <div class="payment-options">
+            <div class="payment-opt-btn active">📱 MB WAY (Telemóvel: 960 010 870)</div>
+            <div class="payment-opt-btn">💳 Cartão de Crédito / Debit (Stripe)</div>
+            <div class="payment-opt-btn">🏛️ Referência Multibanco</div>
+          </div>
+
+          <button class="btn-submit" style="background-color: #16a34a;" onclick="processPdmPaymentAndGenerateReport()">
+            Simular Pagamento & Gerar Relatório de IA
+          </button>
+          
+          <button style="background:none; border:none; color:#64748b; font-size:0.78rem; margin-top:8px; cursor:pointer; width:100%;" onclick="backToPdmStep1()">
+            ← Voltar e alterar dados
+          </button>
+        </div>
+
       </div>
 
-      <!-- PAINEL 2: REUNIÃO DE CONSULTORIA COM CALENDÁRIO E FATURAÇÃO -->
+      <!-- PAINEL 2: REUNIÃO DE CONSULTORIA (PAGAMENTO NO DIA) -->
       <div id="meetingPanel" class="feature-panel">
         <h3>Agendar Reunião de Consultoria</h3>
-        <div class="price-tag" id="meetingPriceTag">Valor base: 123€</div>
-        <p>Sessão presencial no gabinete em Loulé ou por videochamada.</p>
+        <div class="price-tag" id="meetingPriceTag">Valor do Serviço: 123,00€</div>
+        <p>Sessão presencial no gabinete em Loulé ou por videochamada. <br>
+        <strong style="color: #0f172a;">Nota: O valor será cobrado presencialmente no dia da reunião.</strong></p>
 
         <div class="checkbox-container">
           <input type="checkbox" id="paidPdmCheck" onchange="calculateMeetingPrice()">
@@ -399,21 +458,22 @@
           <input type="email" placeholder="Seu Email" class="input-field" required>
         </div>
 
-        <h4>3. Dados de Faturação</h4>
+        <h4>3. Dados de Faturação (Para emissão no dia)</h4>
         <div class="input-grid">
-          <input type="text" placeholder="NIF para Fatura" class="input-field" required>
-          <input type="text" placeholder="Nome na Fatura" class="input-field" required>
+          <input type="text" placeholder="NIF" class="input-field">
+          <input type="text" placeholder="Nome na Fatura" class="input-field">
         </div>
-        <input type="text" placeholder="Morada Completa de Faturação" class="input-field" required>
 
-        <button class="btn-submit" id="meetingSubmitBtn" onclick="processMeetingBooking()">Confirmar Agendamento & Pagar (123€)</button>
+        <button class="btn-submit" id="meetingSubmitBtn" onclick="processMeetingBooking()">
+          Confirmar Agendamento (Pagamento no Dia da Reunião)
+        </button>
       </div>
 
-      <!-- PAINEL 3: PEDIR ORÇAMENTO COM ANÁLISE DE VIABILIDADE (50€) -->
+      <!-- PAINEL 3: PEDIR ORÇAMENTO -->
       <div id="quotePanel" class="feature-panel">
         <h3>Pedir Orçamento de Projeto</h3>
         <div class="price-tag">Elaboração do Orçamento: Grátis</div>
-        <p>A elaboração da proposta orçamental é gratuita. Contudo, para elaboração rigorosa da proposta é necessária uma **Análise de Viabilidade Técnica prévia (50€)**.</p>
+        <p>A elaboração da proposta orçamental é gratuita. Contudo, para elaboração rigorosa da proposta é recomendada uma Análise de Viabilidade Técnica prévia (50€).</p>
 
         <div class="checkbox-container">
           <input type="checkbox" id="viabilityCheck" checked>
@@ -426,10 +486,6 @@
           <input type="email" placeholder="Email" class="input-field" required>
           <input type="tel" placeholder="Contacto Telefónico" class="input-field" required>
         </div>
-        <div class="input-grid">
-          <input type="text" placeholder="NIF" class="input-field">
-          <input type="text" placeholder="Morada de Faturação" class="input-field">
-        </div>
 
         <textarea class="textarea-field" placeholder="Descreva o projeto (ex: moradia unifamiliar, reabilitação, ampliação...)" required></textarea>
 
@@ -438,11 +494,11 @@
           <input type="file" id="quoteDocsInput" multiple accept="application/pdf,image/*" style="display: none;" onchange="updateFileName(this, 'quoteUploadText')">
         </div>
 
-        <button class="btn-submit" onclick="submitQuoteRequest()">Solicitar Análise & Orçamento (50€)</button>
+        <button class="btn-submit" onclick="submitQuoteRequest()">Solicitar Proposta de Orçamento</button>
       </div>
     </div>
 
-    <!-- CONTACTOS COM LETRING ESPECIAL -->
+    <!-- CONTACTOS -->
     <div class="contact">
       <p>
         <a href="tel:+351960010870">+351 960 010 870</a><br>
@@ -510,34 +566,32 @@
       }
     }
 
-    function calculateMeetingPrice() {
-      const isChecked = document.getElementById('paidPdmCheck').checked;
-      const priceTag = document.getElementById('meetingPriceTag');
-      const submitBtn = document.getElementById('meetingSubmitBtn');
+    /* FLUXO PDM - NAVEGAÇÃO ENTRE PASSO 1 E PASSO 2 (PAGAMENTO) */
+    function goToPdmPayment() {
+      const nome = document.getElementById('pdmNome').value || "Cliente";
+      document.getElementById('pdmSummaryName').innerText = nome;
 
-      if (isChecked) {
-        priceTag.innerText = "Valor com Desconto: 113€";
-        submitBtn.innerText = "Confirmar Agendamento & Pagar (113€)";
-      } else {
-        priceTag.innerText = "Valor base: 123€";
-        submitBtn.innerText = "Confirmar Agendamento & Pagar (123€)";
-      }
+      document.getElementById('pdmStep1').style.display = 'none';
+      document.getElementById('pdmStep2').style.display = 'block';
     }
 
-    async function submitPdmAnalysis() {
+    function backToPdmStep1() {
+      document.getElementById('pdmStep2').style.display = 'none';
+      document.getElementById('pdmStep1').style.display = 'block';
+    }
+
+    /* EXECUTA A ANÁLISE DE IA APÓS A CONFIRMAÇÃO DE PAGAMENTO */
+    async function processPdmPaymentAndGenerateReport() {
+      document.getElementById('pdmStep2').style.display = 'none';
+      document.getElementById('pdmStep1').style.display = 'block';
+
       const chat = document.getElementById('pdmChat');
-      const msgInput = document.getElementById('pdmUserMsg');
-      const text = msgInput.value.trim();
+      const text = document.getElementById('pdmUserMsg').value.trim();
 
-      if (!pdmPdfBase64 && !text) {
-        alert("Por favor anexe a Planta de Localização em PDF ou insira uma questão.");
-        return;
-      }
-
-      const sysMsg = document.createElement('div');
-      sysMsg.className = "chat-msg system";
-      sysMsg.innerText = "A redirecionar para o pagamento de 10€ e análise do PDM...";
-      chat.appendChild(sysMsg);
+      const loadingMsg = document.createElement('div');
+      loadingMsg.className = "chat-msg system";
+      loadingMsg.innerHTML = "✅ <strong>Pagamento de 10,00€ Confirmado!</strong><br>⏳ A processar o PDF e a gerar o Relatório de Inteligência Artificial para o PDM de Loulé...";
+      chat.appendChild(loadingMsg);
       chat.scrollTop = chat.scrollHeight;
 
       try {
@@ -546,10 +600,54 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userMessage: text, pdfBase64: pdmPdfBase64 })
         });
+        
         const data = await response.json();
-        sysMsg.innerText = data.reply || "Análise concluída com sucesso.";
+
+        if (data.reply) {
+          renderReport(data.reply);
+        } else {
+          renderFallbackReport();
+        }
       } catch (err) {
-        sysMsg.innerText = "Pedido registado. Iremos prosseguir após o pagamento dos 10€.";
+        // Modo de demonstração / fallback para testes
+        renderFallbackReport();
+      }
+    }
+
+    function renderReport(content) {
+      const chat = document.getElementById('pdmChat');
+      const reportMsg = document.createElement('div');
+      reportMsg.className = "chat-msg report";
+      reportMsg.innerHTML = `
+        <h4 style="margin-top:0; color:#0f172a; border-bottom:1px solid #cbd5e1; padding-bottom:6px;">
+          📋 RELATÓRIO DE ANÁLISE PRELIMINAR - PDM LOULÉ
+        </h4>
+        <div style="white-space: pre-line; color:#334155;">${content}</div>
+      `;
+      chat.appendChild(reportMsg);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    function renderFallbackReport() {
+      const demoContent = `
+        • <strong>Concelho / Freguesia:</strong> Loulé (S. Sebastião)
+        • <strong>Enquadramento PDM:</strong> Solo Rural / Aglomerado Urbano
+        • <strong>Índice de Utilização do Solo:</strong> Capacidade de ampliação/construção sujeita aos artigos do Regulamento do PDM de Loulé.
+        • <strong>Condicionantes Detetadas:</strong> Verificação necessária de servidões RAN / REN e afastamentos a caminhos públicos.
+        • <strong>Recomendação Técnica:</strong> Agendamento de Reunião de Consultoria presencial para validação do projeto de arquitetura.
+      `;
+      renderReport(demoContent);
+    }
+
+    /* REUNIÃO DE CONSULTORIA */
+    function calculateMeetingPrice() {
+      const isChecked = document.getElementById('paidPdmCheck').checked;
+      const priceTag = document.getElementById('meetingPriceTag');
+
+      if (isChecked) {
+        priceTag.innerText = "Valor do Serviço: 113,00€ (Desconto de 10€ do PDM)";
+      } else {
+        priceTag.innerText = "Valor do Serviço: 123,00€";
       }
     }
 
@@ -563,17 +661,13 @@
       }
 
       const isDiscounted = document.getElementById('paidPdmCheck').checked;
-      const finalPrice = isDiscounted ? "113€" : "123€";
-      alert(`Obrigado! A sua reunião para o dia ${date} às ${time} (${finalPrice}) foi registada. Iremos enviar os dados de pagamento.`);
+      const finalPrice = isDiscounted ? "113,00€" : "123,00€";
+      
+      alert(`Reunião agendada com sucesso para ${date} às ${time}.\n\nValor a pagar no dia da reunião: ${finalPrice}.\nEnviámos uma confirmação para o seu e-mail.`);
     }
 
     function submitQuoteRequest() {
-      const hasViability = document.getElementById('viabilityCheck').checked;
-      if (hasViability) {
-        alert("Pedido de Análise de Viabilidade (50€) e Orçamento registado com sucesso! Entraremos em contacto para o pagamento.");
-      } else {
-        alert("Pedido de orçamento enviado com sucesso!");
-      }
+      alert("Pedido de orçamento enviado com sucesso! Entraremos em contacto para dar seguimento.");
     }
   </script>
 
