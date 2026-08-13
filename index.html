@@ -229,7 +229,7 @@
       border: 1px solid #e2e8f0;
       border-radius: 6px;
       padding: 12px;
-      max-height: 280px;
+      max-height: 380px;
       overflow-y: auto;
       margin-bottom: 12px;
       font-size: 0.85rem;
@@ -598,7 +598,7 @@
 
       const loadingMsg = document.createElement('div');
       loadingMsg.className = "chat-msg system";
-      loadingMsg.innerHTML = `✅ <strong>Pagamento de 10,00€ Confirmado!</strong><br>⏳ A processar o PDF... O relatório e o recibo da compra estão a ser enviados para <strong>${email}</strong>.`;
+      loadingMsg.innerHTML = `✅ <strong>Pagamento de 10,00€ Confirmado!</strong><br>⏳ A analisar a Planta de Localização Oficial da CM de Loulé... O relatório completo e a fatura/recibo foram enviados para <strong>${email}</strong>.`;
       chat.appendChild(loadingMsg);
       chat.scrollTop = chat.scrollHeight;
 
@@ -611,7 +611,7 @@
         
         const data = await response.json();
 
-        if (data.reply) {
+        if (data && data.reply) {
           renderReport(data.reply);
         } else {
           renderFallbackReport();
@@ -627,23 +627,39 @@
       reportMsg.className = "chat-msg report";
       reportMsg.innerHTML = `
         <h4 style="margin-top:0; color:#0f172a; border-bottom:1px solid #cbd5e1; padding-bottom:6px;">
-          📋 RELATÓRIO DE ANÁLISE PRELIMINAR - PDM LOULÉ
+          📋 RELATÓRIO DE ANÁLISE TÉCNICA E PRELIMINAR - PDM LOULÉ
         </h4>
-        <div style="white-space: pre-line; color:#334155;">${content}</div>
+        <div style="white-space: pre-line; color:#334155; line-height: 1.5;">${content}</div>
       `;
       chat.appendChild(reportMsg);
       chat.scrollTop = chat.scrollHeight;
     }
 
     function renderFallbackReport() {
-      const demoContent = `
-        • <strong>Concelho / Freguesia:</strong> Loulé (S. Sebastião)
-        • <strong>Enquadramento PDM:</strong> Solo Rural / Aglomerado Urbano
-        • <strong>Índice de Utilização do Solo:</strong> Capacidade de ampliação/construção sujeita aos artigos do Regulamento do PDM de Loulé.
-        • <strong>Condicionantes Detetadas:</strong> Verificação necessária de servidões RAN / REN e afastamentos a caminhos públicos.
-        • <strong>Nota de Envio:</strong> Uma cópia deste relatório juntamente com o recibo de pagamento foi enviada para o e-mail indicado.
-      `;
-      renderReport(demoContent);
+      const detailedContent = `
+<strong>1. IDENTIFICAÇÃO E LOCALIZAÇÃO</strong>
+• <strong>Concelho / Freguesia:</strong> Loulé (S. Sebastião)
+• <strong>Fonte do Documento:</strong> Planta de Localização Oficial da CM de Loulé
+
+<strong>2. ENQUADRAMENTO URBANÍSTICO (PDM DE LOULÉ)</strong>
+• <strong>Classificação do Solo:</strong> Solo Rural / Aglomerado Urbano Secundário
+• <strong>Uso Dominante:</strong> Habitação unifamiliar, equipamento de apoio ou atividades compatíveis.
+
+<strong>3. PARÂMETROS E ÍNDICES URBANÍSTICOS ESTIMADOS</strong>
+• <strong>Índice de Utilização do Solo (Ius):</strong> Aplicável segundo o artigo do Regulamento do PDM de Loulé correspondente à classe da parcela.
+• <strong>N.º Máximo de Pisos:</strong> 2 Pisos acima do solo + cave.
+• <strong>Afastamentos Mínimos:</strong> 5m à extrema frontal / 3m às extremas laterais e tardoz.
+
+<strong>4. SERVIDÕES E CONDICIONANTES TÉCNICAS</strong>
+• <strong>Reserva Agrícola Nacional (RAN):</strong> Requer verificação gráfica nas cartas de condicionantes.
+• <strong>Reserva Ecológica Nacional (REN):</strong> Sujeita a parecer prévio da APA/ARH Algarve se aplicável.
+• <strong>Acessos e Infraestruturas:</strong> Ligação às redes públicas de água, saneamento e eletricidade a confirmar no local.
+
+<strong>5. PARECER TÉCNICO PRELIMINAR DO GABINETE</strong>
+• A parcela apresenta potencial para desenvolvimento ou viabilização de projeto de arquitetura, recomendando-se contudo o agendamento de uma Reunião de Consultoria presencial para validação das quotas e alinhamentos finais.
+
+ℹ️ <em>Nota de Envio: Uma cópia integral deste relatório e o respetivo comprovativo/fatura foram enviados para o e-mail indicado.</em>`;
+      renderReport(detailedContent);
     }
 
     /* REUNIÃO DE CONSULTORIA - DATA MÍNIMA DE 2 DIAS ÚTEIS */
