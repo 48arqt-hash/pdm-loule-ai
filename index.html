@@ -429,34 +429,45 @@
 
       </div>
 
-      <!-- PAINEL 2: REUNIÃO DE CONSULTORIA (APENAS MARCAÇÃO) -->
+      <!-- PAINEL 2: REUNIÃO DE CONSULTORIA -->
       <div id="meetingPanel" class="feature-panel">
         <h3>Agendar Reunião de Consultoria</h3>
-        <div class="price-tag">Valor do Serviço: 123,00€</div>
-        <p>Sessão presencial no gabinete em Loulé ou por videochamada. <br>
-        <strong style="color: #0f172a;">O valor da reunião (123,00€) será pago presencialmente no dia do agendamento.</strong></p>
+        <div class="price-tag">Valor do Serviço: 100,00€</div>
+        <p>Sessão presencial no gabinete em Loulé ou por videochamada.<br>
+        <strong style="color: #0f172a;">O valor da reunião (100,00€) será pago presencialmente no dia do agendamento.</strong></p>
 
-        <h4>1. Seleção de Data e Hora</h4>
+        <h4>1. Preferência de Data e Hora</h4>
+        <p style="font-size:0.78rem; color:#64748b; margin-top:-4px; margin-bottom:8px;">
+          ℹ️ A data e hora escolhidas correspondem à sua preferência (disponível a partir de 2 dias úteis). O agendamento final será confirmado pelo gabinete.
+        </p>
+
         <div class="input-grid">
           <div>
-            <label style="font-size: 0.75rem; color: #64748b;">Data da Reunião:</label>
+            <label style="font-size: 0.75rem; color: #64748b;">Data Pretendida:</label>
             <input type="date" id="meetingDate" class="input-field" required>
           </div>
           <div>
-            <label style="font-size: 0.75rem; color: #64748b;">Hora Pretendida:</label>
-            <input type="time" id="meetingTime" class="input-field" required>
+            <label style="font-size: 0.75rem; color: #64748b;">Horário Preferencial:</label>
+            <select id="meetingTimeSelect" class="input-field" required>
+              <option value="">Selecione a hora...</option>
+              <option value="09:30">09:30</option>
+              <option value="11:00">11:00</option>
+              <option value="14:30">14:30</option>
+              <option value="16:00">16:00</option>
+              <option value="17:30">17:30</option>
+            </select>
           </div>
         </div>
 
         <h4>2. Dados de Contacto</h4>
-        <input type="text" placeholder="Seu Nome Completo" class="input-field" required>
+        <input type="text" id="meetingName" placeholder="Seu Nome Completo" class="input-field" required>
         <div class="input-grid">
-          <input type="tel" placeholder="Contacto Telefónico" class="input-field" required>
-          <input type="email" placeholder="Seu Email" class="input-field" required>
+          <input type="tel" id="meetingPhone" placeholder="Contacto Telefónico" class="input-field" required>
+          <input type="email" id="meetingEmail" placeholder="Seu Email" class="input-field" required>
         </div>
 
         <button class="btn-submit" onclick="processMeetingBooking()">
-          Confirmar Agendamento (Pagamento Presencial no Dia)
+          Solicitar Agendamento (Pagamento Presencial no Dia)
         </button>
       </div>
 
@@ -635,17 +646,55 @@
       renderReport(demoContent);
     }
 
-    /* REUNIÃO DE CONSULTORIA */
+    /* REUNIÃO DE CONSULTORIA - DATA MÍNIMA DE 2 DIAS ÚTEIS */
+    function getMinMeetingDate() {
+      let date = new Date();
+      let addedDays = 0;
+
+      while (addedDays < 2) {
+        date.setDate(date.getDate() + 1);
+        const dayOfWeek = date.getDay();
+        if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+          addedDays++;
+        }
+      }
+
+      return date.toISOString().split('T')[0];
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const meetingDateInput = document.getElementById('meetingDate');
+      if (meetingDateInput) {
+        meetingDateInput.min = getMinMeetingDate();
+      }
+    });
+
+    /* PROCESSAMENTO DO PEDIDO DE REUNIÃO */
     function processMeetingBooking() {
       const date = document.getElementById('meetingDate').value;
-      const time = document.getElementById('meetingTime').value;
+      const time = document.getElementById('meetingTimeSelect').value;
+      const name = document.getElementById('meetingName').value.trim();
+      const phone = document.getElementById('meetingPhone').value.trim();
+      const email = document.getElementById('meetingEmail').value.trim();
 
       if (!date || !time) {
-        alert("Por favor selecione a Data e a Hora para a reunião.");
+        alert("Por favor selecione a Data e o Horário preferencial para a reunião.");
         return;
       }
 
-      alert(`Reunião agendada com sucesso para ${date} às ${time}.\n\nValor a pagar no dia da reunião: 123,00€.\nEnviámos uma confirmação para o seu e-mail.`);
+      if (!name || !phone || !email) {
+        alert("Por favor preencha os seus dados de contacto (Nome, Telefone e Email).");
+        return;
+      }
+
+      alert(
+        `Obrigado, ${name}!\n\n` +
+        `Recebemos a sua preferência de agendamento para ${date} às ${time}.\n\n` +
+        `📌 Estado do Pedido:\n` +
+        `• A data e hora serão confirmadas o mais rápido possível pelo nosso gabinete.\n` +
+        `• Caso o horário indicado não seja possível, entraremos em contacto diretamente para agilizar a marcação de uma nova hora.\n` +
+        `• Valor do serviço: 100,00€ (a pagar presencialmente no dia da reunião).`
+      );
     }
 
     function submitQuoteRequest() {
