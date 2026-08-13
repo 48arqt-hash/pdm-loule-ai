@@ -1,722 +1,831 @@
-<!DOCTYPE html>
+<!DOCTYPE html><!DOCTYPE html>
 <html lang="pt">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Leonel Mendes — Arquitetura e Engenharia</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Leonel Mendes — Arquitetura e Engenharia | Loulé</title>
+<meta name="description" content="Atelier de Arquitetura e Engenharia em Loulé. Análise técnica automática do PDM, consultoria e projetos.">
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css">
+<style>
+  :root{
+    --paper:#F5F3ED;
+    --sheet:#FFFFFF;
+    --ink:#161F1D;
+    --ink-soft:#4E5B57;
+    --ink-faint:#8A948F;
+    --line:#DCD6C7;
+    --teal:#1F4B52;
+    --teal-deep:#122F33;
+    --sand:#B9954F;
+    --sand-soft:#EFE6D1;
+    --ok:#2F6B4F;
+    --err:#A8442F;
+    --radius:10px;
+    --shadow:0 1px 2px rgba(22,31,29,.04), 0 8px 24px rgba(22,31,29,.06);
+  }
 
-  <style>
-    /* LOGÓTIPO/SÍMBOLO PEQUENO E CENTRADO */
-    .logo {
-      max-width: 140px;
-      height: auto;
-      display: block;
-      margin: 0 auto;
-    }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    font-family:'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color:var(--ink);
+    background:
+      linear-gradient(var(--paper),var(--paper)) ,
+      repeating-linear-gradient(0deg, rgba(22,31,29,.035) 0 1px, transparent 1px 88px),
+      repeating-linear-gradient(90deg, rgba(22,31,29,.035) 0 1px, transparent 1px 88px);
+    min-height:100vh;
+    padding:32px 16px 60px;
+  }
 
-    /* IMAGEM PRINCIPAL */
-    .project {
-      text-align: center;
-      margin: 15px 0;
-    }
+  main.card{
+    max-width:480px;
+    margin:0 auto;
+    background:var(--sheet);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:34px 26px 28px;
+    position:relative;
+  }
+  main.card::before{
+    content:"";
+    position:absolute;
+    top:14px; left:14px; right:14px; bottom:14px;
+    border:1px solid var(--line);
+    border-radius:6px;
+    pointer-events:none;
+    opacity:.55;
+  }
 
-    .project-img {
-      max-width: 100%;
-      max-height: 280px;
-      width: auto;
-      height: auto;
-      border-radius: 8px;
-      display: inline-block;
-      object-fit: cover;
-    }
+  /* LOGO — clicável, revela nota do atelier */
+  .logo-btn{
+    display:block;
+    margin:0 auto 4px;
+    background:none;
+    border:none;
+    padding:0;
+    cursor:pointer;
+  }
+  .logo-btn img{
+    max-width:104px;
+    height:auto;
+    display:block;
+    margin:0 auto;
+    transition:transform .25s ease;
+  }
+  .logo-btn:hover img{ transform:scale(1.04); }
+  .logo-hint{
+    text-align:center;
+    font-size:.68rem;
+    color:var(--ink-faint);
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    margin:4px 0 0;
+  }
 
-    /* REDES SOCIAIS CENTRADAS */
-    .social {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 16px;
-      margin: 20px 0 10px 0;
-    }
+  .about-panel{
+    display:none;
+    background:var(--sand-soft);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:16px 18px;
+    margin:14px 0 0;
+    font-size:.86rem;
+    line-height:1.55;
+    color:var(--ink-soft);
+  }
+  .about-panel strong{ color:var(--ink); }
 
-    .social a {
-      display: inline-flex;
-      justify-content: center;
-      align-items: center;
-    }
+  .header-branding{ text-align:center; margin:18px 0 6px; }
+  .header-branding h1{
+    font-family:'Fraunces', serif;
+    font-size:1.5rem;
+    font-weight:500;
+    letter-spacing:.01em;
+    color:var(--ink);
+    margin:0 0 6px;
+  }
+  .header-branding h2{
+    font-size:.7rem;
+    font-weight:600;
+    letter-spacing:.22em;
+    text-transform:uppercase;
+    color:var(--teal);
+    margin:0;
+  }
 
-    .social img {
-      width: 24px;
-      height: 24px;
-      object-fit: contain;
-    }
+  .divider{ border:none; border-top:1px solid var(--line); margin:22px 0; }
 
-    /* TIPOGRAFIA */
-    .header-branding {
-      text-align: center;
-      margin: 20px 0 15px 0;
-    }
+  /* PROJETO — carrossel com molduras tipo peça desenhada */
+  .project{ margin:18px 0 8px; }
+  .project-eyebrow{
+    font-size:.66rem;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+    color:var(--ink-faint);
+    text-align:center;
+    margin:0 0 10px;
+  }
+  .project-frame{
+    position:relative;
+    border-radius:8px;
+    overflow:hidden;
+    background:var(--sand-soft);
+  }
+  .project-frame::before, .project-frame::after,
+  .project-corner-tl, .project-corner-br{
+    content:"";
+    position:absolute;
+    width:16px; height:16px;
+    border-color:#fff;
+    z-index:2;
+  }
+  .project-frame::before{ top:8px; left:8px; border-top:2px solid #fff; border-left:2px solid #fff; }
+  .project-frame::after{ bottom:8px; right:8px; border-bottom:2px solid #fff; border-right:2px solid #fff; }
+  .project-slides{
+    display:flex;
+    transition:transform .4s ease;
+  }
+  .project-slides img{
+    width:100%;
+    flex:0 0 100%;
+    max-height:300px;
+    object-fit:cover;
+    display:block;
+  }
+  .project-dots{
+    display:flex;
+    justify-content:center;
+    gap:6px;
+    margin-top:10px;
+  }
+  .project-dots button{
+    width:6px; height:6px; border-radius:50%;
+    border:none; background:var(--line); cursor:pointer; padding:0;
+  }
+  .project-dots button.active{ background:var(--teal); }
+  .project-caption{
+    text-align:center;
+    font-size:.78rem;
+    color:var(--ink-soft);
+    margin-top:10px;
+    font-style:italic;
+  }
 
-    .header-branding h1 {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      font-size: 1.35rem;
-      font-weight: 600;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: #0f172a;
-      margin: 0 0 6px 0;
-    }
+  /* SERVIÇOS */
+  .services-section{ margin:28px 0 6px; }
+  .section-eyebrow{
+    font-size:.66rem;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+    color:var(--ink-faint);
+    margin:0 0 12px;
+  }
+  .service-btn-group{ display:flex; flex-direction:column; gap:10px; margin-bottom:6px; }
 
-    .header-branding h2 {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      font-size: 0.78rem;
-      font-weight: 500;
-      letter-spacing: 0.22em;
-      text-transform: uppercase;
-      color: #64748b;
-      margin: 0;
-    }
+  .btn-action{
+    background:var(--teal);
+    color:#fff;
+    border:1px solid var(--teal);
+    padding:15px 18px;
+    border-radius:8px;
+    font-family:inherit;
+    font-size:.92rem;
+    font-weight:600;
+    cursor:pointer;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    transition:background .18s ease, transform .1s ease;
+    text-align:left;
+    width:100%;
+  }
+  .btn-action:hover{ background:var(--teal-deep); }
+  .btn-action:active{ transform:scale(.99); }
+  .btn-action .tag{
+    font-size:.68rem;
+    font-weight:600;
+    background:rgba(255,255,255,.16);
+    padding:3px 8px;
+    border-radius:20px;
+    letter-spacing:.02em;
+    white-space:nowrap;
+  }
+  .btn-arrow{ font-size:.75rem; opacity:.75; transition:transform .2s ease; }
+  .btn-action[aria-expanded="true"] .btn-arrow{ transform:rotate(180deg); }
 
-    /* SERVIÇOS E PAINÉIS */
-    .services-section {
-      margin: 25px 0;
-      text-align: left;
-    }
+  .feature-panel{
+    display:none;
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:20px;
+    margin-top:12px;
+    color:var(--ink);
+  }
+  .feature-panel h3{
+    font-family:'Fraunces', serif;
+    font-weight:500;
+    margin:0 0 4px;
+    font-size:1.12rem;
+    color:var(--ink);
+  }
+  .feature-panel h4{
+    font-size:.72rem;
+    color:var(--ink);
+    margin:16px 0 8px;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    font-weight:700;
+  }
+  .feature-panel p{ font-size:.85rem; color:var(--ink-soft); margin-bottom:12px; line-height:1.5; }
 
-    .service-btn-group {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin-bottom: 15px;
-    }
+  .price-tag{
+    display:inline-block;
+    background:var(--sand-soft);
+    color:var(--teal-deep);
+    font-weight:700;
+    font-size:.78rem;
+    padding:5px 10px;
+    border-radius:5px;
+    margin-bottom:12px;
+    letter-spacing:.02em;
+  }
 
-    .btn-action {
-      background-color: #1e293b;
-      color: #ffffff;
-      border: 1px solid #334155;
-      padding: 14px 18px;
-      border-radius: 8px;
-      font-family: inherit;
-      font-size: 0.92rem;
-      font-weight: 500;
-      cursor: pointer;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      transition: all 0.2s ease;
-      text-align: left;
-      width: 100%;
-      box-sizing: border-box;
-    }
+  .upload-zone{
+    border:1.5px dashed #C7C0AC;
+    border-radius:6px;
+    padding:14px;
+    text-align:center;
+    background:#fff;
+    cursor:pointer;
+    margin-bottom:10px;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .upload-zone:hover{ border-color:var(--teal); background:#fbfaf6; }
+  .upload-zone span{ font-size:.82rem; color:var(--ink-soft); }
 
-    .btn-action:hover {
-      background-color: #334155;
-      border-color: #475569;
-    }
+  .input-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
 
-    .btn-arrow {
-      font-size: 0.82rem;
-      opacity: 0.7;
-    }
+  .input-field, .textarea-field, select.input-field{
+    width:100%;
+    padding:11px 12px;
+    border:1px solid #CFC9B8;
+    border-radius:6px;
+    font-family:inherit;
+    font-size:.85rem;
+    margin-bottom:8px;
+    box-sizing:border-box;
+    background:#fff;
+    color:var(--ink);
+  }
+  .input-field:focus, .textarea-field:focus{
+    outline:none;
+    border-color:var(--teal);
+    box-shadow:0 0 0 3px rgba(31,75,82,.12);
+  }
+  .textarea-field{ resize:vertical; min-height:70px; }
 
-    .feature-panel {
-      display: none;
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      padding: 18px;
-      margin-top: 15px;
-      color: #1e293b;
-    }
+  .btn-submit{
+    background:var(--ink);
+    color:#fff;
+    border:none;
+    width:100%;
+    padding:13px;
+    border-radius:6px;
+    font-weight:600;
+    cursor:pointer;
+    font-size:.88rem;
+    margin-top:6px;
+    transition:background .15s ease;
+  }
+  .btn-submit:hover{ background:var(--teal-deep); }
+  .btn-submit:disabled{ background:#B7B2A2; cursor:not-allowed; }
+  .btn-submit.secondary{
+    background:transparent;
+    color:var(--ink-soft);
+    border:1px solid var(--line);
+    font-weight:500;
+  }
+  .btn-submit.secondary:hover{ background:var(--paper); }
 
-    .feature-panel h3 {
-      margin-top: 0;
-      font-size: 1.05rem;
-      color: #0f172a;
-      margin-bottom: 6px;
-    }
+  .form-error{
+    font-size:.78rem;
+    color:var(--err);
+    margin:-2px 0 10px;
+    display:none;
+  }
 
-    .feature-panel h4 {
-      font-size: 0.88rem;
-      color: #1e293b;
-      margin: 14px 0 8px 0;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
+  .chat-history{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:14px;
+    max-height:420px;
+    overflow-y:auto;
+    margin-bottom:14px;
+    font-size:.85rem;
+  }
+  .chat-msg{
+    margin-bottom:10px;
+    padding:12px 14px;
+    border-radius:6px;
+    line-height:1.5;
+  }
+  .chat-msg:last-child{ margin-bottom:0; }
+  .chat-msg.system{ background:var(--paper); color:var(--ink-soft); }
+  .chat-msg.system.processing{ color:var(--teal-deep); }
+  .chat-msg.system.error{ background:#FBEAE5; color:var(--err); }
+  .chat-msg.report{
+    background:#fff;
+    border:1px solid var(--line);
+    box-shadow:0 2px 6px rgba(22,31,29,.05);
+  }
+  .chat-msg.report h4{ margin-top:0; }
+  .chat-msg.report table{ width:100%; border-collapse:collapse; font-size:.82rem; margin:8px 0; }
+  .chat-msg.report td, .chat-msg.report th{ border:1px solid var(--line); padding:6px 8px; text-align:left; }
 
-    .feature-panel p {
-      font-size: 0.85rem;
-      color: #64748b;
-      margin-bottom: 12px;
-      line-height: 1.45;
-    }
+  .spinner{
+    display:inline-block;
+    width:13px; height:13px;
+    border:2px solid rgba(31,75,82,.25);
+    border-top-color:var(--teal);
+    border-radius:50%;
+    animation:spin .7s linear infinite;
+    margin-right:6px;
+    vertical-align:-2px;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
 
-    .price-tag {
-      display: inline-block;
-      background-color: #e2e8f0;
-      color: #0f172a;
-      font-weight: 600;
-      font-size: 0.85rem;
-      padding: 4px 8px;
-      border-radius: 4px;
-      margin-bottom: 12px;
-    }
+  .btn-download{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    background:var(--teal);
+    color:#fff;
+    text-decoration:none;
+    padding:10px 16px;
+    border-radius:6px;
+    font-size:.84rem;
+    font-weight:600;
+    margin-top:10px;
+  }
+  .btn-download:hover{ background:var(--teal-deep); }
 
-    .upload-zone {
-      border: 2px dashed #cbd5e1;
-      border-radius: 6px;
-      padding: 12px;
-      text-align: center;
-      background: #ffffff;
-      cursor: pointer;
-      margin-bottom: 10px;
-    }
+  .checkbox-container{
+    display:flex; align-items:flex-start; gap:8px;
+    font-size:.82rem; margin-bottom:12px; color:var(--ink-soft); line-height:1.4;
+  }
+  .checkbox-container input{ margin-top:2px; }
 
-    .upload-zone span {
-      font-size: 0.82rem;
-      color: #475569;
-    }
+  .secure-note{
+    display:flex; align-items:center; gap:6px;
+    font-size:.75rem; color:var(--ink-faint);
+    margin:10px 0 0;
+  }
 
-    .input-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-    }
+  /* CONTACTOS */
+  .contact{ text-align:center; margin:30px 0 6px; }
+  .contact p{ margin:12px 0; line-height:1.6; }
+  .contact a{
+    font-family:'Inter', sans-serif;
+    font-size:.78rem;
+    font-weight:600;
+    letter-spacing:.16em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    text-decoration:none;
+  }
+  .contact a:hover{ color:var(--teal); text-decoration:underline; }
 
-    .input-field, .textarea-field {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid #cbd5e1;
-      border-radius: 6px;
-      font-family: inherit;
-      font-size: 0.85rem;
-      margin-bottom: 8px;
-      box-sizing: border-box;
-      background: #ffffff;
-      color: #0f172a;
-    }
+  .social{ display:flex; justify-content:center; align-items:center; gap:16px; margin:22px 0 6px; }
+  .social a{
+    display:inline-flex; justify-content:center; align-items:center;
+    width:36px; height:36px; border-radius:50%;
+    background:var(--paper); transition:background .15s ease;
+  }
+  .social a:hover{ background:var(--sand-soft); }
+  .social img{ width:18px; height:18px; object-fit:contain; }
 
-    .textarea-field {
-      resize: vertical;
-      min-height: 70px;
-    }
+  footer{ text-align:center; font-size:.72rem; color:var(--ink-faint); margin-top:20px; letter-spacing:.04em; }
 
-    .btn-submit {
-      background-color: #0f172a;
-      color: #ffffff;
-      border: none;
-      width: 100%;
-      padding: 12px;
-      border-radius: 6px;
-      font-weight: 600;
-      cursor: pointer;
-      font-size: 0.88rem;
-      margin-top: 5px;
-    }
-
-    .btn-submit:hover {
-      background-color: #1e293b;
-    }
-
-    .chat-history {
-      background: #ffffff;
-      border: 1px solid #e2e8f0;
-      border-radius: 6px;
-      padding: 12px;
-      max-height: 380px;
-      overflow-y: auto;
-      margin-bottom: 12px;
-      font-size: 0.85rem;
-    }
-
-    .chat-msg {
-      margin-bottom: 8px;
-      padding: 10px 12px;
-      border-radius: 6px;
-      line-height: 1.45;
-    }
-
-    .chat-msg.system {
-      background: #f1f5f9;
-      color: #334155;
-    }
-
-    .chat-msg.report {
-      background: #ffffff;
-      border: 1px solid #cbd5e1;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    }
-
-    .checkbox-container {
-      display: flex;
-      align-items: flex-start;
-      gap: 8px;
-      font-size: 0.82rem;
-      margin-bottom: 12px;
-      color: #334155;
-      line-height: 1.35;
-    }
-
-    .checkbox-container input {
-      margin-top: 2px;
-    }
-
-    /* ESTILO DO PASSO 2 (PÁGINA DE PAGAMENTO DO PDM) */
-    .payment-modal {
-      display: none;
-      background: #ffffff;
-      border: 1px solid #cbd5e1;
-      border-radius: 8px;
-      padding: 16px;
-      margin-top: 15px;
-    }
-
-    .payment-options {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin: 12px 0;
-    }
-
-    .payment-opt-btn {
-      padding: 10px;
-      border: 1px solid #cbd5e1;
-      border-radius: 6px;
-      background: #f8fafc;
-      font-size: 0.85rem;
-      font-weight: 500;
-      cursor: pointer;
-      text-align: left;
-    }
-
-    .payment-opt-btn.active {
-      border-color: #2563eb;
-      background: #eff6ff;
-      color: #1d4ed8;
-    }
-
-    /* CONTACTOS */
-    .contact {
-      text-align: center;
-      margin: 25px 0;
-    }
-
-    .contact p {
-      margin: 12px 0;
-      line-height: 1.6;
-    }
-
-    .contact a {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      font-size: 0.78rem;
-      font-weight: 500;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: #475569;
-      text-decoration: none;
-    }
-
-    .contact a:hover {
-      color: #0f172a;
-      text-decoration: underline;
-    }
-
-    footer {
-      text-align: center;
-      font-size: 0.75rem;
-      color: #94a3b8;
-      margin-top: 15px;
-    }
-  </style>
+  @media (max-width:380px){
+    main.card{ padding:26px 18px 22px; }
+    .input-grid{ grid-template-columns:1fr; }
+  }
+</style>
 </head>
 <body>
 
-  <main class="card">
+<main class="card">
 
-    <!-- LOGO REDUZIDO -->
-    <img src="images/logo.png" alt="Leonel Mendes" class="logo">
+  <button class="logo-btn" type="button" onclick="toggleAbout()" aria-expanded="false" aria-controls="aboutPanel">
+    <img src="images/logo.png" alt="Leonel Mendes">
+  </button>
+  <p class="logo-hint">Sobre o atelier</p>
 
-    <!-- BRANDING CENTRADO -->
-    <div class="header-branding">
-      <h1>Arq. Leonel Mendes</h1>
-      <h2>Arquitetura e Engenharia</h2>
+  <div id="aboutPanel" class="about-panel">
+    <strong>Arq. Leonel Mendes</strong> — atelier de arquitetura e engenharia sediado em Loulé, dedicado a projetos residenciais e de reabilitação no Algarve. Acompanhamos cada processo desde o enquadramento urbanístico até à obra, com especial atenção ao território e ao PDM local.
+  </div>
+
+  <div class="header-branding">
+    <h1>Arq. Leonel Mendes</h1>
+    <h2>Arquitetura &amp; Engenharia</h2>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="project">
+    <p class="project-eyebrow">Projeto Selecionado</p>
+    <div class="project-frame">
+      <div class="project-slides" id="projectSlides">
+        <img src="images/projeto.jpg" alt="Projeto de arquitetura">
+        <img src="images/projeto2.jpg" alt="Projeto de arquitetura" onerror="this.closest('.project-slides').removeChild(this)">
+        <img src="images/projeto3.jpg" alt="Projeto de arquitetura" onerror="this.closest('.project-slides').removeChild(this)">
+      </div>
     </div>
+    <div class="project-dots" id="projectDots"></div>
+    <p class="project-caption">Moradia unifamiliar — Loulé, Algarve</p>
+  </div>
 
-    <div class="divider"></div>
-
-    <!-- IMAGEM DO PROJETO -->
-    <div class="project">
-      <img src="images/projeto.jpg" alt="Projeto" class="project-img">
-    </div>
-
-    <!-- BOTÕES DE SERVIÇOS -->
-    <div class="services-section">
-      <div class="service-btn-group">
-        <button class="btn-action" onclick="togglePanel('pdmPanel')">
-          <span>🔍 Análise Automática do PDM</span>
+  <div class="services-section">
+    <p class="section-eyebrow">Serviços</p>
+    <div class="service-btn-group">
+      <button class="btn-action" onclick="togglePanel('pdmPanel', this)" aria-expanded="false">
+        <span>🔍 Análise Automática do PDM</span>
+        <span style="display:flex; align-items:center; gap:8px;">
+          <span class="tag">10€ · IA</span>
           <span class="btn-arrow">▼</span>
-        </button>
+        </span>
+      </button>
 
-        <button class="btn-action" onclick="togglePanel('meetingPanel')">
-          <span>📅 Reunião de Consultoria</span>
-          <span class="btn-arrow">▼</span>
-        </button>
+      <button class="btn-action" onclick="togglePanel('meetingPanel', this)" aria-expanded="false">
+        <span>📅 Reunião de Consultoria</span>
+        <span class="btn-arrow">▼</span>
+      </button>
 
-        <button class="btn-action" onclick="togglePanel('quotePanel')">
-          <span>📄 Pedir Orçamento de Projeto</span>
-          <span class="btn-arrow">▼</span>
-        </button>
+      <button class="btn-action" onclick="togglePanel('quotePanel', this)" aria-expanded="false">
+        <span>📄 Pedir Orçamento de Projeto</span>
+        <span class="btn-arrow">▼</span>
+      </button>
+    </div>
+
+    <!-- PAINEL 1: ANÁLISE AUTOMÁTICA PDM -->
+    <div id="pdmPanel" class="feature-panel">
+      <h3>Análise Automática de PDM em Loulé</h3>
+      <div class="price-tag">Custo do serviço: 10,00 €</div>
+      <p>Envie a Planta de Localização oficial (PDF) obtida no site da CM de Loulé. Um agente de IA especializado analisa o enquadramento urbanístico da parcela — classificação do solo, índices, condicionantes — e devolve um relatório técnico preliminar, disponível aqui e por email, em PDF.</p>
+
+      <div class="chat-history" id="pdmChat">
+        <div class="chat-msg system">
+          Carregue a Planta de Localização oficial (PDF da CM de Loulé), preencha os seus dados e avance para pagamento seguro.
+        </div>
       </div>
 
-      <!-- PAINEL 1: ANÁLISE AUTOMÁTICA PDM -->
-      <div id="pdmPanel" class="feature-panel">
-        <h3>Análise Automática de PDM em Loulé</h3>
-        <div class="price-tag">Custo do Serviço: 10,00€</div>
-        <p>Envie a Planta de Localização oficial (PDF) obtida através do site da CM de Loulé para uma análise preliminar das condicionantes. O relatório detalhado e o recibo serão enviados para o seu e-mail após a confirmação do pagamento.</p>
-        
-        <div class="chat-history" id="pdmChat">
-          <div class="chat-msg system">
-            Carregue a Planta de Localização oficial (PDF) obtida através do site da CM de Loulé, preencha o seu e-mail e avance para o pagamento do relatório.
-          </div>
+      <div id="pdmStep1">
+        <div class="upload-zone" onclick="document.getElementById('pdmPdfInput').click()">
+          <span id="pdmUploadText">📁 Anexar Planta de Localização Oficial (PDF da CM de Loulé)</span>
+          <input type="file" id="pdmPdfInput" accept="application/pdf" style="display:none;" onchange="updateFileName(this,'pdmUploadText')">
         </div>
 
-        <!-- PASSO 1: FORMULÁRIO DE INFORMAÇÕES E EMAIL -->
-        <div id="pdmStep1">
-          <div class="upload-zone" onclick="document.getElementById('pdmPdfInput').click()">
-            <span id="pdmUploadText">📁 Anexar Planta de Localização Oficial (PDF da CM de Loulé)</span>
-            <input type="file" id="pdmPdfInput" accept="application/pdf" style="display: none;" onchange="updateFileName(this, 'pdmUploadText')">
-          </div>
+        <input type="email" id="pdmEmail" class="input-field" placeholder="Seu e-mail (para receber o relatório e o recibo)" required>
+        <input type="text" id="pdmUserMsg" class="input-field" placeholder="Dúvida específica sobre o terreno (opcional)...">
 
-          <input type="email" id="pdmEmail" class="input-field" placeholder="Seu E-mail (para envio do relatório e recibo)" required>
-
-          <input type="text" id="pdmUserMsg" class="input-field" placeholder="Dúvida específica sobre o terreno (opcional)...">
-          
-          <h4>Dados de Faturação</h4>
-          <div class="input-grid">
-            <input type="text" id="pdmNif" placeholder="NIF" class="input-field" required>
-            <input type="text" id="pdmNome" placeholder="Nome na Fatura" class="input-field" required>
-          </div>
-          <input type="text" id="pdmMorada" placeholder="Morada de Faturação" class="input-field" required>
-
-          <button class="btn-submit" onclick="goToPdmPayment()">Avançar para Pagamento (10,00€) →</button>
-        </div>
-
-        <!-- PASSO 2: SEGUNDA PÁGINA / QUADRO DE PAGAMENTO (10€) -->
-        <div id="pdmStep2" class="payment-modal">
-          <h4 style="margin-top:0;">💳 Selecione o Método de Pagamento (10,00€)</h4>
-          <p style="font-size:0.8rem; color:#64748b;">Análise PDM para: <strong id="pdmSummaryEmail">email@cliente.com</strong></p>
-
-          <div class="payment-options">
-            <div class="payment-opt-btn active">📱 MB WAY (Telemóvel: 960 010 870)</div>
-            <div class="payment-opt-btn">💳 Cartão de Crédito / Debit (Stripe)</div>
-            <div class="payment-opt-btn">🏛️ Referência Multibanco</div>
-          </div>
-
-          <button class="btn-submit" style="background-color: #16a34a;" onclick="processPdmPaymentAndGenerateReport()">
-            Simular Pagamento & Enviar Relatório
-          </button>
-          
-          <button style="background:none; border:none; color:#64748b; font-size:0.78rem; margin-top:8px; cursor:pointer; width:100%;" onclick="backToPdmStep1()">
-            ← Voltar e alterar dados
-          </button>
-        </div>
-
-      </div>
-
-      <!-- PAINEL 2: REUNIÃO DE CONSULTORIA -->
-      <div id="meetingPanel" class="feature-panel">
-        <h3>Agendar Reunião de Consultoria</h3>
-        <div class="price-tag">Valor do Serviço: 100,00€</div>
-        <p>Sessão presencial no gabinete em Loulé ou por videochamada.<br>
-        <strong style="color: #0f172a;">O valor da reunião (100,00€) será pago presencialmente no dia do agendamento.</strong></p>
-
-        <h4>1. Preferência de Data e Hora</h4>
-        <p style="font-size:0.78rem; color:#64748b; margin-top:-4px; margin-bottom:8px;">
-          ℹ️ A data e hora escolhidas correspondem à sua preferência (disponível a partir de 2 dias úteis). O agendamento final será confirmado pelo gabinete.
-        </p>
-
+        <h4>Dados de faturação</h4>
         <div class="input-grid">
-          <div>
-            <label style="font-size: 0.75rem; color: #64748b;">Data Pretendida:</label>
-            <input type="date" id="meetingDate" class="input-field" required>
-          </div>
-          <div>
-            <label style="font-size: 0.75rem; color: #64748b;">Horário Preferencial:</label>
-            <select id="meetingTimeSelect" class="input-field" required>
-              <option value="">Selecione a hora...</option>
-              <option value="09:30">09:30</option>
-              <option value="11:00">11:00</option>
-              <option value="14:30">14:30</option>
-              <option value="16:00">16:00</option>
-              <option value="17:30">17:30</option>
-            </select>
-          </div>
+          <input type="text" id="pdmNif" placeholder="NIF" class="input-field" required>
+          <input type="text" id="pdmNome" placeholder="Nome na fatura" class="input-field" required>
         </div>
+        <input type="text" id="pdmMorada" placeholder="Morada de faturação" class="input-field" required>
 
-        <h4>2. Dados de Contacto</h4>
-        <input type="text" id="meetingName" placeholder="Seu Nome Completo" class="input-field" required>
-        <div class="input-grid">
-          <input type="tel" id="meetingPhone" placeholder="Contacto Telefónico" class="input-field" required>
-          <input type="email" id="meetingEmail" placeholder="Seu Email" class="input-field" required>
-        </div>
+        <p class="form-error" id="pdmError"></p>
 
-        <button class="btn-submit" onclick="processMeetingBooking()">
-          Solicitar Agendamento (Pagamento Presencial no Dia)
-        </button>
-      </div>
-
-      <!-- PAINEL 3: PEDIR ORÇAMENTO -->
-      <div id="quotePanel" class="feature-panel">
-        <h3>Pedir Orçamento de Projeto</h3>
-        <div class="price-tag">Elaboração do Orçamento: Grátis</div>
-        <p>A elaboração da proposta orçamental é gratuita. Contudo, para elaboração rigorosa da proposta é recomendada uma Análise de Viabilidade Técnica prévia (50€).</p>
-
-        <div class="checkbox-container">
-          <input type="checkbox" id="viabilityCheck" checked>
-          <label for="viabilityCheck">Incluir Análise Técnica de Viabilidade Obrigatória (50€)</label>
-        </div>
-
-        <h4>Contacto & Faturação</h4>
-        <input type="text" placeholder="Nome Completo" class="input-field" required>
-        <div class="input-grid">
-          <input type="email" placeholder="Email" class="input-field" required>
-          <input type="tel" placeholder="Contacto Telefónico" class="input-field" required>
-        </div>
-
-        <textarea class="textarea-field" placeholder="Descreva o projeto (ex: moradia unifamiliar, reabilitação, ampliação...)" required></textarea>
-
-        <div class="upload-zone" onclick="document.getElementById('quoteDocsInput').click()">
-          <span id="quoteUploadText">📁 Anexar Documentos ou Projetos (PDF/Fotos)</span>
-          <input type="file" id="quoteDocsInput" multiple accept="application/pdf,image/*" style="display: none;" onchange="updateFileName(this, 'quoteUploadText')">
-        </div>
-
-        <button class="btn-submit" onclick="submitQuoteRequest()">Solicitar Proposta de Orçamento</button>
+        <button class="btn-submit" id="pdmSubmitBtn" onclick="iniciarPagamentoPdm()">Avançar para pagamento seguro (10,00 €) →</button>
+        <p class="secure-note">🔒 Vai ser redirecionado para uma página de pagamento segura (MB WAY, Multibanco ou Cartão).</p>
       </div>
     </div>
 
-    <!-- CONTACTOS -->
-    <div class="contact">
-      <p>
-        <a href="tel:+351960010870">+351 960 010 870</a><br>
-        <a href="mailto:geral@leonelmendes.com">geral@leonelmendes.com</a>
-      </p>
+    <!-- PAINEL 2: REUNIÃO DE CONSULTORIA -->
+    <div id="meetingPanel" class="feature-panel">
+      <h3>Agendar Reunião de Consultoria</h3>
+      <div class="price-tag">Valor do serviço: 100,00 €</div>
+      <p>Sessão presencial no gabinete em Loulé ou por videochamada.<br>
+      <strong style="color:var(--ink);">O valor da reunião (100,00 €) é pago presencialmente no dia do agendamento.</strong></p>
 
-      <p>
-        <a href="https://maps.google.com/?q=Av.+José+Costa+Mealha+133,+8100-500+Loulé" target="_blank">
-          Av. José Costa Mealha n.º 133<br>
-          8100-500 Loulé
-        </a>
-      </p>
+      <h4>1. Preferência de data e hora</h4>
+      <p style="font-size:.78rem; color:var(--ink-faint); margin-top:-4px;">ℹ️ Disponível a partir de 2 dias úteis. O agendamento final é confirmado pelo gabinete.</p>
+
+      <div class="input-grid">
+        <div>
+          <label style="font-size:.75rem; color:var(--ink-faint);">Data pretendida:</label>
+          <input type="date" id="meetingDate" class="input-field" required>
+        </div>
+        <div>
+          <label style="font-size:.75rem; color:var(--ink-faint);">Horário preferencial:</label>
+          <select id="meetingTimeSelect" class="input-field" required>
+            <option value="">Selecione a hora...</option>
+            <option value="09:30">09:30</option>
+            <option value="11:00">11:00</option>
+            <option value="14:30">14:30</option>
+            <option value="16:00">16:00</option>
+            <option value="17:30">17:30</option>
+          </select>
+        </div>
+      </div>
+
+      <h4>2. Dados de contacto</h4>
+      <input type="text" id="meetingName" placeholder="Seu nome completo" class="input-field" required>
+      <div class="input-grid">
+        <input type="tel" id="meetingPhone" placeholder="Contacto telefónico" class="input-field" required>
+        <input type="email" id="meetingEmail" placeholder="Seu email" class="input-field" required>
+      </div>
+
+      <button class="btn-submit" onclick="processMeetingBooking()">Solicitar agendamento (pagamento presencial no dia)</button>
     </div>
 
-    <!-- REDES SOCIAIS CENTRADAS -->
-    <div class="social">
-      <a href="https://wa.me/351960010870" target="_blank">
-        <img src="images/whatsapp.svg" alt="WhatsApp">
-      </a>
-      <a href="https://www.facebook.com/leonel.mendes.arqt/" target="_blank">
-        <img src="images/facebook.svg" alt="Facebook">
-      </a>
-      <a href="https://www.instagram.com/by_arq_leonel_mendes" target="_blank">
-        <img src="images/instagram.svg" alt="Instagram">
-      </a>
+    <!-- PAINEL 3: PEDIR ORÇAMENTO -->
+    <div id="quotePanel" class="feature-panel">
+      <h3>Pedir Orçamento de Projeto</h3>
+      <div class="price-tag">Elaboração do orçamento: Grátis</div>
+      <p>A elaboração da proposta orçamental é gratuita. Para uma proposta rigorosa é recomendada uma Análise de Viabilidade Técnica prévia (50 €).</p>
+
+      <div class="checkbox-container">
+        <input type="checkbox" id="viabilityCheck" checked>
+        <label for="viabilityCheck">Incluir Análise Técnica de Viabilidade (50 €)</label>
+      </div>
+
+      <h4>Contacto &amp; faturação</h4>
+      <input type="text" placeholder="Nome completo" class="input-field" required>
+      <div class="input-grid">
+        <input type="email" placeholder="Email" class="input-field" required>
+        <input type="tel" placeholder="Contacto telefónico" class="input-field" required>
+      </div>
+      <textarea class="textarea-field" placeholder="Descreva o projeto (ex: moradia unifamiliar, reabilitação, ampliação...)" required></textarea>
+
+      <div class="upload-zone" onclick="document.getElementById('quoteDocsInput').click()">
+        <span id="quoteUploadText">📁 Anexar documentos ou projetos (PDF/Fotos)</span>
+        <input type="file" id="quoteDocsInput" multiple accept="application/pdf,image/*" style="display:none;" onchange="updateFileName(this,'quoteUploadText')">
+      </div>
+
+      <button class="btn-submit" onclick="submitQuoteRequest()">Solicitar proposta de orçamento</button>
     </div>
+  </div>
 
-    <footer>
-      © 2026 feito por Leonel Mendes
-    </footer>
+  <div class="contact">
+    <p>
+      <a href="tel:+351960010870">+351 960 010 870</a><br>
+      <a href="mailto:geral@leonelmendes.com">geral@leonelmendes.com</a>
+    </p>
+    <p>
+      <a href="https://maps.google.com/?q=Av.+José+Costa+Mealha+133,+8100-500+Loulé" target="_blank">
+        Av. José Costa Mealha n.º 133<br>8100-500 Loulé
+      </a>
+    </p>
+  </div>
 
-  </main>
+  <div class="social">
+    <a href="https://wa.me/351960010870" target="_blank"><img src="images/whatsapp.svg" alt="WhatsApp"></a>
+    <a href="https://www.facebook.com/leonel.mendes.arqt/" target="_blank"><img src="images/facebook.svg" alt="Facebook"></a>
+    <a href="https://www.instagram.com/by_arq_leonel_mendes" target="_blank"><img src="images/instagram.svg" alt="Instagram"></a>
+  </div>
 
-  <script>
-    let pdmPdfBase64 = null;
+  <footer>© 2026 Arq. Leonel Mendes — Arquitetura &amp; Engenharia</footer>
 
-    function togglePanel(panelId) {
-      const panels = ['pdmPanel', 'meetingPanel', 'quotePanel'];
-      panels.forEach(id => {
-        const el = document.getElementById(id);
-        if (id === panelId) {
-          el.style.display = (el.style.display === 'block') ? 'none' : 'block';
-        } else {
-          el.style.display = 'none';
-        }
+</main>
+
+<script>
+  let pdmPdfBase64 = null;
+  let pdmPdfNome = null;
+
+  /* ---------- Logo / Sobre ---------- */
+  function toggleAbout(){
+    const el = document.getElementById('aboutPanel');
+    const btn = document.querySelector('.logo-btn');
+    const aberto = el.style.display === 'block';
+    el.style.display = aberto ? 'none' : 'block';
+    btn.setAttribute('aria-expanded', String(!aberto));
+  }
+
+  /* ---------- Carrossel do projeto ---------- */
+  (function initCarousel(){
+    const track = document.getElementById('projectSlides');
+    const dotsWrap = document.getElementById('projectDots');
+    let index = 0;
+    function build(){
+      const imgs = Array.from(track.children);
+      dotsWrap.innerHTML = '';
+      if (imgs.length <= 1) return;
+      imgs.forEach((_, i) => {
+        const dot = document.createElement('button');
+        if (i === 0) dot.className = 'active';
+        dot.onclick = () => go(i);
+        dotsWrap.appendChild(dot);
       });
     }
-
-    function updateFileName(input, labelId) {
-      const label = document.getElementById(labelId);
-      if (input.files && input.files.length > 0) {
-        if (input.files.length === 1) {
-          label.innerText = `✅ ${input.files[0].name}`;
-        } else {
-          label.innerText = `✅ ${input.files.length} ficheiros selecionados`;
-        }
-
-        if (input.id === 'pdmPdfInput') {
-          const reader = new FileReader();
-          reader.onload = function(e) {
-            pdmPdfBase64 = e.target.result.split(',')[1];
-          };
-          reader.readAsDataURL(input.files[0]);
-        }
-      }
+    function go(i){
+      const imgs = Array.from(track.children);
+      index = (i + imgs.length) % imgs.length;
+      track.style.transform = `translateX(-${index * 100}%)`;
+      Array.from(dotsWrap.children).forEach((d, di) => d.classList.toggle('active', di === index));
     }
+    // dá tempo às imagens que falham (onerror) removerem-se antes de montar os pontos
+    setTimeout(build, 150);
+  })();
 
-    /* FLUXO PDM - VALIDAÇÃO DE EMAIL E AVANÇO PARA PASSO 2 */
-    function goToPdmPayment() {
-      const email = document.getElementById('pdmEmail').value.trim();
-
-      if (!email || !email.includes('@')) {
-        alert("Por favor introduza um endereço de e-mail válido para receber o relatório e o recibo.");
-        return;
-      }
-
-      document.getElementById('pdmSummaryEmail').innerText = email;
-      document.getElementById('pdmStep1').style.display = 'none';
-      document.getElementById('pdmStep2').style.display = 'block';
-    }
-
-    function backToPdmStep1() {
-      document.getElementById('pdmStep2').style.display = 'none';
-      document.getElementById('pdmStep1').style.display = 'block';
-    }
-
-    /* EXECUTA A ANÁLISE DE IA E SIMULA ENVIO DE EMAIL COM RECIBO */
-    async function processPdmPaymentAndGenerateReport() {
-      const email = document.getElementById('pdmEmail').value.trim();
-      document.getElementById('pdmStep2').style.display = 'none';
-      document.getElementById('pdmStep1').style.display = 'block';
-
-      const chat = document.getElementById('pdmChat');
-      const text = document.getElementById('pdmUserMsg').value.trim();
-
-      const loadingMsg = document.createElement('div');
-      loadingMsg.className = "chat-msg system";
-      loadingMsg.innerHTML = `✅ <strong>Pagamento de 10,00€ Confirmado!</strong><br>⏳ A analisar a Planta de Localização Oficial da CM de Loulé... O relatório completo e a fatura/recibo foram enviados para <strong>${email}</strong>.`;
-      chat.appendChild(loadingMsg);
-      chat.scrollTop = chat.scrollHeight;
-
-      try {
-        const response = await fetch('/.netlify/functions/analisar-planta', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userMessage: text, pdfBase64: pdmPdfBase64, email: email })
-        });
-        
-        const data = await response.json();
-
-        if (data && data.reply) {
-          renderReport(data.reply);
-        } else {
-          renderFallbackReport();
-        }
-      } catch (err) {
-        renderFallbackReport();
-      }
-    }
-
-    function renderReport(content) {
-      const chat = document.getElementById('pdmChat');
-      const reportMsg = document.createElement('div');
-      reportMsg.className = "chat-msg report";
-      reportMsg.innerHTML = `
-        <h4 style="margin-top:0; color:#0f172a; border-bottom:1px solid #cbd5e1; padding-bottom:6px;">
-          📋 RELATÓRIO DE ANÁLISE TÉCNICA E PRELIMINAR - PDM LOULÉ
-        </h4>
-        <div style="white-space: pre-line; color:#334155; line-height: 1.5;">${content}</div>
-      `;
-      chat.appendChild(reportMsg);
-      chat.scrollTop = chat.scrollHeight;
-    }
-
-    function renderFallbackReport() {
-      const detailedContent = `
-<strong>1. IDENTIFICAÇÃO E LOCALIZAÇÃO</strong>
-• <strong>Concelho / Freguesia:</strong> Loulé (S. Sebastião)
-• <strong>Fonte do Documento:</strong> Planta de Localização Oficial da CM de Loulé
-
-<strong>2. ENQUADRAMENTO URBANÍSTICO (PDM DE LOULÉ)</strong>
-• <strong>Classificação do Solo:</strong> Solo Rural / Aglomerado Urbano Secundário
-• <strong>Uso Dominante:</strong> Habitação unifamiliar, equipamento de apoio ou atividades compatíveis.
-
-<strong>3. PARÂMETROS E ÍNDICES URBANÍSTICOS ESTIMADOS</strong>
-• <strong>Índice de Utilização do Solo (Ius):</strong> Aplicável segundo o artigo do Regulamento do PDM de Loulé correspondente à classe da parcela.
-• <strong>N.º Máximo de Pisos:</strong> 2 Pisos acima do solo + cave.
-• <strong>Afastamentos Mínimos:</strong> 5m à extrema frontal / 3m às extremas laterais e tardoz.
-
-<strong>4. SERVIDÕES E CONDICIONANTES TÉCNICAS</strong>
-• <strong>Reserva Agrícola Nacional (RAN):</strong> Requer verificação gráfica nas cartas de condicionantes.
-• <strong>Reserva Ecológica Nacional (REN):</strong> Sujeita a parecer prévio da APA/ARH Algarve se aplicável.
-• <strong>Acessos e Infraestruturas:</strong> Ligação às redes públicas de água, saneamento e eletricidade a confirmar no local.
-
-<strong>5. PARECER TÉCNICO PRELIMINAR DO GABINETE</strong>
-• A parcela apresenta potencial para desenvolvimento ou viabilização de projeto de arquitetura, recomendando-se contudo o agendamento de uma Reunião de Consultoria presencial para validação das quotas e alinhamentos finais.
-
-ℹ️ <em>Nota de Envio: Uma cópia integral deste relatório e o respetivo comprovativo/fatura foram enviados para o e-mail indicado.</em>`;
-      renderReport(detailedContent);
-    }
-
-    /* REUNIÃO DE CONSULTORIA - DATA MÍNIMA DE 2 DIAS ÚTEIS */
-    function getMinMeetingDate() {
-      let date = new Date();
-      let addedDays = 0;
-
-      while (addedDays < 2) {
-        date.setDate(date.getDate() + 1);
-        const dayOfWeek = date.getDay();
-        if (dayOfWeek !== 0 && dayOfWeek !== 6) {
-          addedDays++;
-        }
-      }
-
-      return date.toISOString().split('T')[0];
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-      const meetingDateInput = document.getElementById('meetingDate');
-      if (meetingDateInput) {
-        meetingDateInput.min = getMinMeetingDate();
+  /* ---------- Painéis de serviços ---------- */
+  function togglePanel(panelId, btn){
+    const panels = ['pdmPanel', 'meetingPanel', 'quotePanel'];
+    document.querySelectorAll('.btn-action').forEach(b => b.setAttribute('aria-expanded','false'));
+    panels.forEach(id => {
+      const el = document.getElementById(id);
+      if (id === panelId){
+        const abrir = el.style.display !== 'block';
+        el.style.display = abrir ? 'block' : 'none';
+        if (btn) btn.setAttribute('aria-expanded', String(abrir));
+        if (abrir) el.scrollIntoView({ behavior:'smooth', block:'nearest' });
+      } else {
+        el.style.display = 'none';
       }
     });
+  }
 
-    /* PROCESSAMENTO DO PEDIDO DE REUNIÃO */
-    function processMeetingBooking() {
-      const date = document.getElementById('meetingDate').value;
-      const time = document.getElementById('meetingTimeSelect').value;
-      const name = document.getElementById('meetingName').value.trim();
-      const phone = document.getElementById('meetingPhone').value.trim();
-      const email = document.getElementById('meetingEmail').value.trim();
+  function updateFileName(input, labelId){
+    const label = document.getElementById(labelId);
+    if (input.files && input.files.length > 0){
+      label.innerText = input.files.length === 1 ? `✅ ${input.files[0].name}` : `✅ ${input.files.length} ficheiros selecionados`;
 
-      if (!date || !time) {
-        alert("Por favor selecione a Data e o Horário preferencial para a reunião.");
-        return;
+      if (input.id === 'pdmPdfInput'){
+        const reader = new FileReader();
+        reader.onload = e => { pdmPdfBase64 = e.target.result.split(',')[1]; pdmPdfNome = input.files[0].name; };
+        reader.readAsDataURL(input.files[0]);
       }
+    }
+  }
 
-      if (!name || !phone || !email) {
-        alert("Por favor preencha os seus dados de contacto (Nome, Telefone e Email).");
-        return;
-      }
+  /* ---------- Fluxo Análise PDM: pagamento real via IfthenPay ---------- */
+  async function iniciarPagamentoPdm(){
+    const email = document.getElementById('pdmEmail').value.trim();
+    const nif = document.getElementById('pdmNif').value.trim();
+    const nome = document.getElementById('pdmNome').value.trim();
+    const morada = document.getElementById('pdmMorada').value.trim();
+    const mensagem = document.getElementById('pdmUserMsg').value.trim();
+    const erroEl = document.getElementById('pdmError');
+    const btn = document.getElementById('pdmSubmitBtn');
 
-      alert(
-        `Obrigado, ${name}!\n\n` +
-        `Recebemos a sua preferência de agendamento para ${date} às ${time}.\n\n` +
-        `📌 Estado do Pedido:\n` +
-        `• A data e hora serão confirmadas o mais rápido possível pelo nosso gabinete.\n` +
-        `• Caso o horário indicado não seja possível, entraremos em contacto diretamente para agilizar a marcação de uma nova hora.\n` +
-        `• Valor do serviço: 100,00€ (a pagar presencialmente no dia da reunião).`
-      );
+    erroEl.style.display = 'none';
+
+    if (!email || !email.includes('@')){
+      erroEl.textContent = 'Introduza um e-mail válido.'; erroEl.style.display = 'block'; return;
+    }
+    if (!pdmPdfBase64){
+      erroEl.textContent = 'Anexe a Planta de Localização oficial (PDF).'; erroEl.style.display = 'block'; return;
+    }
+    if (!nif || !nome || !morada){
+      erroEl.textContent = 'Preencha os dados de faturação (NIF, nome e morada).'; erroEl.style.display = 'block'; return;
     }
 
-    function submitQuoteRequest() {
-      alert("Pedido de orçamento enviado com sucesso! Entraremos em contacto para dar seguimento.");
+    btn.disabled = true;
+    btn.textContent = 'A preparar pagamento...';
+
+    try {
+      const resp = await fetch('/.netlify/functions/iniciar-pagamento', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, nif, nome, morada, mensagem, pdfBase64: pdmPdfBase64, pdfNome: pdmPdfNome })
+      });
+      const data = await resp.json();
+      if (!resp.ok || !data.redirectUrl){
+        throw new Error(data.erro || 'Falha ao gerar o pagamento.');
+      }
+      window.location.href = data.redirectUrl;
+    } catch (err){
+      erroEl.textContent = 'Não foi possível iniciar o pagamento. Tente novamente ou contacte-nos diretamente.';
+      erroEl.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Avançar para pagamento seguro (10,00 €) →';
     }
-  </script>
+  }
+
+  /* ---------- Regresso do pagamento: polling do estado ---------- */
+  (function verificarRegressoPagamento(){
+    const params = new URLSearchParams(window.location.search);
+    const pedidoId = params.get('pedido');
+    const estado = params.get('estado');
+    if (!pedidoId) return;
+
+    togglePanel('pdmPanel', document.querySelector('.btn-action'));
+    const chat = document.getElementById('pdmChat');
+    document.getElementById('pdmStep1').style.display = 'none';
+
+    if (estado === 'cancelado'){
+      addMsg('⚠️ Pagamento cancelado. Pode tentar novamente quando quiser.', 'system error');
+      document.getElementById('pdmStep1').style.display = 'block';
+      return;
+    }
+    if (estado === 'erro'){
+      addMsg('⚠️ Ocorreu um erro no pagamento. Se o valor foi debitado, contacte-nos e resolvemos de imediato.', 'system error');
+      return;
+    }
+
+    const loading = addMsg('<span class="spinner"></span> A confirmar o pagamento e a analisar a Planta de Localização... Isto pode demorar até 1 minuto.', 'system processing');
+
+    let tentativas = 0;
+    const intervalo = setInterval(async () => {
+      tentativas++;
+      try {
+        const resp = await fetch(`/.netlify/functions/estado-pedido?id=${pedidoId}`);
+        const data = await resp.json();
+
+        if (data.status === 'concluido'){
+          clearInterval(intervalo);
+          loading.remove();
+          renderReport(data.relatorioHtml, pedidoId);
+        } else if (data.status === 'erro'){
+          clearInterval(intervalo);
+          loading.remove();
+          addMsg('⚠️ O pagamento foi confirmado, mas ocorreu um erro a gerar a análise. A nossa equipa foi notificada e entrará em contacto — ou pode responder a este email quando o receber.', 'system error');
+        }
+        // se ainda "pendente_pagamento" ou "a_processar", continua a aguardar
+      } catch (e) { /* tenta de novo no próximo ciclo */ }
+
+      if (tentativas > 40){ // ~2 minutos
+        clearInterval(intervalo);
+        loading.remove();
+        addMsg('⏳ A análise está a demorar mais do que o previsto. Vai receber o relatório por email assim que estiver pronto.', 'system');
+      }
+    }, 3000);
+  })();
+
+  function addMsg(html, cls){
+    const chat = document.getElementById('pdmChat');
+    const div = document.createElement('div');
+    div.className = 'chat-msg ' + cls;
+    div.innerHTML = html;
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+    return div;
+  }
+
+  function renderReport(content, pedidoId){
+    const chat = document.getElementById('pdmChat');
+    const div = document.createElement('div');
+    div.className = 'chat-msg report';
+    div.innerHTML = `
+      <h4>📋 Relatório de Análise Técnica Preliminar — PDM Loulé</h4>
+      <div style="color:var(--ink-soft); line-height:1.55;">${content}</div>
+      <a class="btn-download" href="/.netlify/functions/descarregar-relatorio?id=${pedidoId}" target="_blank">⬇ Descarregar em PDF</a>
+      <p style="font-size:.76rem; color:var(--ink-faint); margin-top:10px; margin-bottom:0;">Também lhe enviámos este relatório e o recibo por email.</p>
+    `;
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+  /* ---------- Reunião de Consultoria ---------- */
+  function getMinMeetingDate(){
+    let date = new Date();
+    let addedDays = 0;
+    while (addedDays < 2){
+      date.setDate(date.getDate() + 1);
+      const dow = date.getDay();
+      if (dow !== 0 && dow !== 6) addedDays++;
+    }
+    return date.toISOString().split('T')[0];
+  }
+  document.addEventListener('DOMContentLoaded', () => {
+    const meetingDateInput = document.getElementById('meetingDate');
+    if (meetingDateInput) meetingDateInput.min = getMinMeetingDate();
+  });
+
+  function processMeetingBooking(){
+    const date = document.getElementById('meetingDate').value;
+    const time = document.getElementById('meetingTimeSelect').value;
+    const name = document.getElementById('meetingName').value.trim();
+    const phone = document.getElementById('meetingPhone').value.trim();
+    const email = document.getElementById('meetingEmail').value.trim();
+
+    if (!date || !time){ alert('Selecione a data e o horário preferencial para a reunião.'); return; }
+    if (!name || !phone || !email){ alert('Preencha os seus dados de contacto (nome, telefone e email).'); return; }
+
+    alert(
+      `Obrigado, ${name}!\n\n` +
+      `Recebemos a sua preferência de agendamento para ${date} às ${time}.\n\n` +
+      `📌 Estado do pedido:\n` +
+      `• A data e hora serão confirmadas pelo nosso gabinete.\n` +
+      `• Caso o horário não seja possível, entraremos em contacto para agilizar uma nova hora.\n` +
+      `• Valor do serviço: 100,00€ (a pagar presencialmente no dia da reunião).`
+    );
+  }
+
+  function submitQuoteRequest(){
+    alert('Pedido de orçamento enviado com sucesso! Entraremos em contacto para dar seguimento.');
+  }
+</script>
 
 </body>
 </html>
