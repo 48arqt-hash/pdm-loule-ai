@@ -391,6 +391,8 @@
   .chat-msg.report h5{ margin:18px 0 7px; font-size:.78rem; letter-spacing:.05em; text-transform:uppercase; color:var(--teal-deep); }
   .chat-msg.report table{ width:100%; border-collapse:collapse; font-size:.82rem; margin:8px 0; }
   .chat-msg.report td, .chat-msg.report th{ border:1px solid var(--line); padding:6px 8px; text-align:left; }
+  .report-actions{ display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; }
+  .report-actions .btn-submit{ width:auto; padding:10px 13px; font-size:.78rem; }
 
   .spinner{
     display:inline-block;
@@ -902,9 +904,33 @@
       <h4>📋 Relatório de Análise Técnica Preliminar — PDM Loulé</h4>
       <div style="color:var(--ink-soft); line-height:1.55;">${content}</div>
       <p style="font-size:.76rem; color:var(--ink-faint); margin-top:10px; margin-bottom:0;">Guarde esta pré-análise e contacte-nos para validação técnica, pedido de informação prévia ou projeto.</p>
+      <div class="report-actions">
+        <button class="btn-submit" type="button" onclick="guardarRelatorioPdf(this)">Guardar / imprimir PDF</button>
+        <button class="btn-submit secondary" type="button" onclick="prepararEmailRelatorio(this)">Preparar e-mail com relatório</button>
+      </div>
     `;
     chat.appendChild(div);
     chat.scrollTop = chat.scrollHeight;
+  }
+
+  function guardarRelatorioPdf(button){
+    const report = button.closest('.chat-msg.report');
+    if (!report) return;
+    const popup = window.open('', '_blank', 'noopener,noreferrer');
+    if (!popup) { alert('O navegador bloqueou a janela de impressão. Autorize pop-ups para este site e tente novamente.'); return; }
+    const date = new Date().toLocaleDateString('pt-PT');
+    const printable = report.cloneNode(true);
+    printable.querySelector('.report-actions')?.remove();
+    popup.document.write(`<!doctype html><html lang="pt"><head><meta charset="utf-8"><title>Pré-análise PDM Loulé — ${date}</title><style>body{font-family:Arial,sans-serif;color:#17201f;max-width:920px;margin:36px auto;padding:0 22px;line-height:1.5}h4{font-size:20px;margin:0 0 18px}h5{margin:22px 0 8px;font-size:14px;text-transform:uppercase;color:#1f4b52}table{border-collapse:collapse;width:100%;font-size:12px;margin:10px 0}th,td{border:1px solid #cfcbbf;padding:7px;text-align:left;vertical-align:top}small{color:#66706e}@page{size:A4;margin:15mm}</style></head><body>${printable.innerHTML}<script>window.onload=()=>window.print()<\/script></body></html>`);
+    popup.document.close();
+  }
+
+  function prepararEmailRelatorio(button){
+    const email = document.getElementById('pdmEmail').value.trim();
+    if (!email || !email.includes('@')) { alert('Introduza primeiro o e-mail do destinatário no formulário.'); return; }
+    const subject = 'Pré-análise documental — PDM Loulé';
+    const body = 'Segue a pré-análise documental solicitada.\n\nGuardei o relatório em PDF para anexar a esta mensagem.\n\nNota: trata-se de uma pré-análise e requer validação técnica antes de qualquer decisão ou licenciamento.';
+    window.location.href = `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   }
 
   /* ---------- Reunião de Consultoria ---------- */
