@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfQp1eCJZQ0TtD/miZyoHS5obTRR9BMY=" crossorigin="">
 
 <style>
   :root{
@@ -118,6 +119,17 @@
     color:var(--teal);
     margin:0;
   }
+  .hero-summary{
+    margin:18px 0 0;
+    padding:14px 16px;
+    border-left:3px solid var(--sand);
+    background:var(--paper);
+    border-radius:0 7px 7px 0;
+  }
+  .hero-summary p{ margin:0; font-family:'Fraunces', serif; font-size:1.06rem; line-height:1.35; }
+  .hero-summary small{ display:block; color:var(--ink-soft); line-height:1.45; margin-top:6px; }
+  .result-steps{ display:flex; gap:6px; flex-wrap:wrap; margin-top:12px; }
+  .result-steps span{ color:var(--teal-deep); background:var(--sand-soft); border-radius:20px; font-size:.7rem; font-weight:600; padding:5px 8px; }
 
   .divider{ border:none; border-top:1px solid var(--line); margin:22px 0; }
 
@@ -270,6 +282,13 @@
   }
   .upload-zone:hover{ border-color:var(--teal); background:#fbfaf6; }
   .upload-zone span{ font-size:.82rem; color:var(--ink-soft); }
+  .map-search{ display:flex; gap:8px; margin-bottom:8px; }
+  .map-search .input-field{ margin:0; }
+  .map-search button{ width:auto; margin:0; white-space:nowrap; }
+  #parcelMap{ height:310px; border:1px solid var(--line); border-radius:7px; overflow:hidden; margin:8px 0 10px; }
+  .map-status{ font-size:.78rem; color:var(--ink-soft); margin:0 0 10px; line-height:1.45; }
+  .map-result{ display:none; background:#fff; border:1px solid var(--line); border-radius:6px; padding:12px; margin:10px 0; font-size:.8rem; line-height:1.45; }
+  .map-result strong{ color:var(--teal-deep); }
 
   .input-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
 
@@ -348,6 +367,7 @@
     box-shadow:0 2px 6px rgba(22,31,29,.05);
   }
   .chat-msg.report h4{ margin-top:0; }
+  .chat-msg.report h5{ margin:18px 0 7px; font-size:.78rem; letter-spacing:.05em; text-transform:uppercase; color:var(--teal-deep); }
   .chat-msg.report table{ width:100%; border-collapse:collapse; font-size:.82rem; margin:8px 0; }
   .chat-msg.report td, .chat-msg.report th{ border:1px solid var(--line); padding:6px 8px; text-align:left; }
 
@@ -438,6 +458,12 @@
     <h2>Arquitetura &amp; Engenharia</h2>
   </div>
 
+  <div class="hero-summary">
+    <p>Antes de comprar, projetar ou investir, perceba melhor o seu terreno.</p>
+    <small>Pré-análise documental especializada para Loulé, seguida de apoio técnico humano quando necessário.</small>
+    <div class="result-steps"><span>Documentos organizados</span><span>Alertas de divergência</span><span>Próximos passos claros</span></div>
+  </div>
+
   <div class="divider"></div>
 
   <div class="project">
@@ -455,7 +481,7 @@
     <p class="section-eyebrow">Serviços</p>
     <div class="service-btn-group">
       <button class="btn-action" onclick="togglePanel('pdmPanel', this)" aria-expanded="false">
-        <span>🔍 Análise Automática de PDM em Loulé através de Inteligência Artificial</span>
+        <span>🔍 Saber o potencial do meu terreno</span>
         <span class="btn-arrow">▼</span>
       </button>
 
@@ -470,38 +496,62 @@
       </button>
     </div>
 
-    <!-- PAINEL 1: ANÁLISE AUTOMÁTICA PDM -->
+    <!-- PAINEL 1: PRÉ-ANÁLISE DOCUMENTAL -->
     <div id="pdmPanel" class="feature-panel">
-      <h3>Análise Automática de PDM em Loulé</h3>
-      <div class="price-tag">Custo do serviço: 10,00 €</div>
-      <p>Envie a Planta de Localização oficial (PDF) obtida no site da CM de Loulé. Um agente de IA especializado analisa o enquadramento urbanístico da parcela — classificação do solo, índices, condicionantes — e devolve um relatório técnico preliminar, disponível aqui e por email, em PDF.</p>
+      <h3>Descubra o potencial do seu terreno</h3>
+      <div class="price-tag">Pré-análise documental — 10,00 €</div>
+      <p>Comece no mapa: selecione uma parcela e veja o cruzamento preliminar com as fontes geográficas oficiais. Depois, complemente com documentos para uma leitura mais rica.</p>
 
-      <div class="chat-history" id="pdmChat">
-        <div class="chat-msg system">
-          Carregue a Planta de Localização oficial (PDF da CM de Loulé), preencha os seus dados e avance para pagamento seguro.
-        </div>
+      <div class="chat-history" id="pdmChat" aria-live="polite">
+        <div class="chat-msg system">Comece pela Planta de Localização. Pode reforçar a análise com a caderneta, registo predial e levantamento topográfico.</div>
       </div>
 
       <div id="pdmStep1">
+        <h4>1. Encontre e confirme o terreno</h4>
+        <div class="map-search">
+          <input id="mapSearch" class="input-field" placeholder="Pesquise localidade ou morada em Loulé">
+          <button class="btn-submit secondary" type="button" onclick="pesquisarNoMapa()">Procurar</button>
+        </div>
+        <div id="parcelMap" aria-label="Mapa para selecionar o terreno"></div>
+        <p id="mapStatus" class="map-status">Clique dentro do terreno no mapa. Tentaremos identificar a parcela cadastral e consultar as camadas do PDM.</p>
+        <div id="mapResult" class="map-result"></div>
+
+        <h4>2. Documentos do terreno</h4>
         <div class="upload-zone" onclick="document.getElementById('pdmPdfInput').click()">
-          <span id="pdmUploadText">📁 Anexar Planta de Localização Oficial (PDF da CM de Loulé)</span>
-          <input type="file" id="pdmPdfInput" accept="application/pdf" style="display:none;" onchange="updateFileName(this,'pdmUploadText')">
+          <span id="pdmUploadText">📁 Planta de Localização CM Loulé (obrigatória, PDF)</span>
+          <input type="file" id="pdmPdfInput" accept="application/pdf" style="display:none;" onchange="updateDocuments()">
         </div>
-
-        <input type="email" id="pdmEmail" class="input-field" placeholder="Seu e-mail (para receber o relatório e o recibo)" required>
-        <input type="text" id="pdmUserMsg" class="input-field" placeholder="Dúvida específica sobre o terreno (opcional)...">
-
-        <h4>Dados de faturação</h4>
-        <div class="input-grid">
-          <input type="text" id="pdmNif" placeholder="NIF" class="input-field" required>
-          <input type="text" id="pdmNome" placeholder="Nome na fatura" class="input-field" required>
+        <div class="upload-zone" onclick="document.getElementById('pdmOptionalDocsInput').click()">
+          <span id="pdmOptionalDocsText">＋ Caderneta, registo predial ou levantamento (opcionais, até 3 PDFs)</span>
+          <input type="file" id="pdmOptionalDocsInput" multiple accept="application/pdf" style="display:none;" onchange="updateDocuments()">
         </div>
-        <input type="text" id="pdmMorada" placeholder="Morada de faturação" class="input-field" required>
+        <p class="secure-note">Máximo de 4 documentos; 10 MB por ficheiro. Documentos opcionais ajudam a detetar divergências.</p>
 
+        <h4>3. O que pretende fazer?</h4>
+        <select id="pdmObjetivo" class="input-field">
+          <option value="">Selecione a intenção (recomendado)</option>
+          <option>Construir uma moradia</option>
+          <option>Construir várias moradias</option>
+          <option>Alterar ou ampliar construção existente</option>
+          <option>Loteamento</option>
+          <option>Turismo / alojamento</option>
+          <option>Apenas conhecer o potencial do terreno</option>
+        </select>
+        <textarea id="pdmUserMsg" class="textarea-field" placeholder="Ex.: Moradia T4 com cerca de 300 m² e piscina. Indique dúvidas ou dados relevantes."></textarea>
+
+        <h4>4. Contacto</h4>
+        <input type="email" id="pdmEmail" class="input-field" placeholder="E-mail para receber o relatório" required>
+        <label class="checkbox-container"><input type="checkbox" id="pdmConsent"> <span>Autorizo o tratamento destes documentos exclusivamente para esta pré-análise.</span></label>
         <p class="form-error" id="pdmError"></p>
 
-        <button class="btn-submit" id="pdmSubmitBtn" onclick="iniciarPagamentoPdm()">Avançar para pagamento seguro (10,00 €) →</button>
-        <p class="secure-note">🔒 Vai ser redirecionado para uma página de pagamento segura (MB WAY, Multibanco ou Cartão).</p>
+        <button class="btn-submit" id="pdmSubmitBtn" onclick="pedirAnalisePdm()">Gerar pré-análise documental →</button>
+        <p class="secure-note">A análise é preliminar. A confirmação de viabilidade requer validação técnica e, quando aplicável, resposta da Câmara.</p>
+        <button class="btn-submit secondary" type="button" onclick="mostrarAcessoProfissional()">Acesso profissional</button>
+        <div id="professionalAccess" style="display:none; margin-top:10px;">
+          <input id="professionalCode" type="password" class="input-field" autocomplete="current-password" placeholder="Código de acesso profissional">
+          <button class="btn-submit secondary" type="button" onclick="validarAcessoProfissional()">Validar código</button>
+          <p class="form-error" id="professionalError"></p>
+        </div>
       </div>
     </div>
 
@@ -593,9 +643,13 @@
 
 </main>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
-  let pdmPdfBase64 = null;
-  let pdmPdfNome = null;
+  let pdmDocuments = [];
+  let map;
+  let selectedMarker;
+  let selectedParcelLayer;
+  let selectedLocation = null;
 
   /* ---------- Logo / Sobre ---------- */
   function toggleAbout(){
@@ -638,10 +692,11 @@
     document.querySelectorAll('.btn-action').forEach(b => b.setAttribute('aria-expanded','false'));
     panels.forEach(id => {
       const el = document.getElementById(id);
-      if (id === panelId){
-        const abrir = el.style.display !== 'block';
-        el.style.display = abrir ? 'block' : 'none';
-        if (btn) btn.setAttribute('aria-expanded', String(abrir));
+        if (id === panelId){
+          const abrir = el.style.display !== 'block';
+          el.style.display = abrir ? 'block' : 'none';
+          if (btn) btn.setAttribute('aria-expanded', String(abrir));
+          if (abrir && id === 'pdmPanel') setTimeout(initParcelMap, 0);
         if (abrir) el.scrollIntoView({ behavior:'smooth', block:'nearest' });
       } else {
         el.style.display = 'none';
@@ -649,112 +704,141 @@
     });
   }
 
-  function updateFileName(input, labelId){
-    const label = document.getElementById(labelId);
-    if (input.files && input.files.length > 0){
-      label.innerText = input.files.length === 1 ? `✅ ${input.files[0].name}` : `✅ ${input.files.length} ficheiros selecionados`;
-
-      if (input.id === 'pdmPdfInput'){
-        const reader = new FileReader();
-        reader.onload = e => { pdmPdfBase64 = e.target.result.split(',')[1]; pdmPdfNome = input.files[0].name; };
-        reader.readAsDataURL(input.files[0]);
-      }
-    }
+  function documentType(name, primary){
+    if (primary) return 'planta_localizacao';
+    const normalized = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    if (normalized.includes('caderneta')) return 'caderneta_predial';
+    if (normalized.includes('registo') || normalized.includes('certidao') || normalized.includes('predial')) return 'registo_predial';
+    return 'levantamento_topografico';
   }
 
-  /* ---------- Fluxo Análise PDM: pagamento real via IfthenPay ---------- */
-  async function iniciarPagamentoPdm(){
+  function escapeText(value = ''){
+    return String(value).replace(/[&<>'"]/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#039;', '"':'&quot;' }[char]));
+  }
+
+  function initParcelMap(){
+    if (!map){
+      map = L.map('parcelMap', { scrollWheelZoom: false }).setView([37.0179, -8.0187], 12);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 20, attribution: '&copy; OpenStreetMap contributors' }).addTo(map);
+      L.tileLayer.wms('https://snicws.dgterritorio.gov.pt/geoserver/inspire/ows', {
+        layers: 'cadastralparcel', format: 'image/png', transparent: true, version: '1.3.0', opacity: .6,
+        attribution: 'Carta Cadastral Digital — DGT',
+      }).addTo(map);
+      map.on('click', event => consultarLocalizacao(event.latlng.lat, event.latlng.lng));
+    }
+    map.invalidateSize();
+  }
+
+  async function pesquisarNoMapa(){
+    const query = document.getElementById('mapSearch').value.trim();
+    const status = document.getElementById('mapStatus');
+    if (!query) return;
+    status.textContent = 'A procurar localização…';
+    try {
+      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=pt&q=${encodeURIComponent(`${query}, Loulé, Portugal`)}`);
+      const result = (await response.json())[0];
+      if (!result) throw new Error('Localização não encontrada. Experimente uma localidade, rua ou coordenadas.');
+      const lat = Number(result.lat), lng = Number(result.lon);
+      if (lat < 36.9 || lat > 37.5 || lng < -8.6 || lng > -7.7) throw new Error('Selecione uma localização dentro do concelho de Loulé.');
+      map.setView([lat, lng], 17); consultarLocalizacao(lat, lng);
+    } catch (error) { status.textContent = error.message; }
+  }
+
+  async function consultarLocalizacao(latitude, longitude){
+    const status = document.getElementById('mapStatus');
+    const resultBox = document.getElementById('mapResult');
+    status.textContent = 'A identificar a parcela e a consultar PDM, condicionantes e REN…';
+    resultBox.style.display = 'none';
+    if (selectedMarker) map.removeLayer(selectedMarker);
+    if (selectedParcelLayer) map.removeLayer(selectedParcelLayer);
+    selectedMarker = L.marker([latitude, longitude]).addTo(map);
+    try {
+      const response = await fetch('/.netlify/functions/consultar-parcela', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ latitude, longitude })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Não foi possível consultar esta localização.');
+      selectedLocation = data;
+      if (data.parcela?.geometria){
+        selectedParcelLayer = L.geoJSON(data.parcela.geometria, { style: { color:'#B9954F', weight:3, fillColor:'#B9954F', fillOpacity:.12 } }).addTo(map);
+        map.fitBounds(selectedParcelLayer.getBounds(), { padding:[18,18], maxZoom:19 });
+      }
+      const parcelId = data.parcela?.propriedades?.['inspire:inspireid'] || data.parcela?.id || 'Parcela não identificada';
+      const layers = data.pdm.length ? data.pdm.map(item => `<li><strong>${escapeText(item.camada)}:</strong> ${escapeText(item.valor || 'elemento identificado')}</li>`).join('') : '<li>Sem leitura automática disponível para esta localização.</li>';
+      resultBox.innerHTML = `<strong>Localização selecionada</strong><br>Parcela: ${escapeText(parcelId)}<ul>${layers}</ul><small>${escapeText(data.avisos.join(' '))}</small>`;
+      resultBox.style.display = 'block';
+      status.textContent = 'Consulta geográfica concluída. Confirme se o limite destacado corresponde ao terreno pretendido.';
+    } catch (error) { status.textContent = error.message; }
+  }
+
+  function fileAsDocument(file, primary){
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error(`Não foi possível ler ${file.name}.`));
+      reader.onload = () => resolve({ nome: file.name, tipo: documentType(file.name, primary), base64: String(reader.result).split(',')[1] });
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function updateDocuments(){
+    const primary = document.getElementById('pdmPdfInput').files[0];
+    const optional = Array.from(document.getElementById('pdmOptionalDocsInput').files || []);
+    const error = document.getElementById('pdmError');
+    error.style.display = 'none';
+    if (optional.length > 3 || [primary, ...optional].filter(Boolean).some(file => file.size > 10 * 1024 * 1024)) {
+      error.textContent = 'Pode enviar até 4 PDFs, com máximo de 10 MB por ficheiro.'; error.style.display = 'block'; return;
+    }
+    try {
+      pdmDocuments = await Promise.all([...(primary ? [fileAsDocument(primary, true)] : []), ...optional.map(file => fileAsDocument(file, false))]);
+      document.getElementById('pdmUploadText').textContent = primary ? `✓ ${primary.name}` : '📁 Planta de Localização CM Loulé (obrigatória, PDF)';
+      document.getElementById('pdmOptionalDocsText').textContent = optional.length ? `✓ ${optional.length} documento(s) complementar(es) selecionado(s)` : '＋ Caderneta, registo predial ou levantamento (opcionais, até 3 PDFs)';
+    } catch (err) { error.textContent = err.message; error.style.display = 'block'; }
+  }
+
+  async function pedirAnalisePdm(){
     const email = document.getElementById('pdmEmail').value.trim();
-    const nif = document.getElementById('pdmNif').value.trim();
-    const nome = document.getElementById('pdmNome').value.trim();
-    const morada = document.getElementById('pdmMorada').value.trim();
-    const mensagem = document.getElementById('pdmUserMsg').value.trim();
+    const consent = document.getElementById('pdmConsent').checked;
     const erroEl = document.getElementById('pdmError');
     const btn = document.getElementById('pdmSubmitBtn');
-
     erroEl.style.display = 'none';
+    if (!email || !email.includes('@')) { erroEl.textContent = 'Introduza um e-mail válido.'; erroEl.style.display = 'block'; return; }
+    if (!selectedLocation && !pdmDocuments.some(doc => doc.tipo === 'planta_localizacao')) { erroEl.textContent = 'Selecione o terreno no mapa ou anexe a Planta de Localização oficial.'; erroEl.style.display = 'block'; return; }
+    if (!consent) { erroEl.textContent = 'Confirme a autorização para tratar os documentos nesta análise.'; erroEl.style.display = 'block'; return; }
 
-    if (!email || !email.includes('@')){
-      erroEl.textContent = 'Introduza um e-mail válido.'; erroEl.style.display = 'block'; return;
-    }
-    if (!pdmPdfBase64){
-      erroEl.textContent = 'Anexe a Planta de Localização oficial (PDF).'; erroEl.style.display = 'block'; return;
-    }
-    if (!nif || !nome || !morada){
-      erroEl.textContent = 'Preencha os dados de faturação (NIF, nome e morada).'; erroEl.style.display = 'block'; return;
-    }
-
-    btn.disabled = true;
-    btn.textContent = 'A preparar pagamento...';
-
+    btn.disabled = true; btn.textContent = 'A analisar documentação…';
+    const loading = addMsg('<span class="spinner"></span> A ler os documentos, cruzar os dados e preparar a pré-análise…', 'system processing');
     try {
-      const resp = await fetch('/.netlify/functions/iniciar-pagamento', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, nif, nome, morada, mensagem, pdfBase64: pdmPdfBase64, pdfNome: pdmPdfNome })
+      const resp = await fetch('/.netlify/functions/analisar-planta', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, documentos: pdmDocuments, localizacao: selectedLocation, objetivo: document.getElementById('pdmObjetivo').value, descricao: document.getElementById('pdmUserMsg').value.trim() })
       });
       const data = await resp.json();
-      if (!resp.ok || !data.redirectUrl){
-        throw new Error(data.erro || 'Falha ao gerar o pagamento.');
-      }
-      window.location.href = data.redirectUrl;
-    } catch (err){
-      erroEl.textContent = 'Não foi possível iniciar o pagamento. Tente novamente ou contacte-nos diretamente.';
-      erroEl.style.display = 'block';
-      btn.disabled = false;
-      btn.textContent = 'Avançar para pagamento seguro (10,00 €) →';
-    }
+      if (!resp.ok) throw new Error(data.error || 'Não foi possível concluir a análise.');
+      loading.remove(); renderReport(data.reply);
+    } catch (err) {
+      loading.remove(); erroEl.textContent = err.message || 'Não foi possível processar a análise.'; erroEl.style.display = 'block';
+    } finally { btn.disabled = false; btn.textContent = 'Gerar pré-análise documental →'; }
   }
 
-  /* ---------- Regresso do pagamento: polling do estado ---------- */
-  (function verificarRegressoPagamento(){
-    const params = new URLSearchParams(window.location.search);
-    const pedidoId = params.get('pedido');
-    const estado = params.get('estado');
-    if (!pedidoId) return;
+  function mostrarAcessoProfissional(){
+    const panel = document.getElementById('professionalAccess');
+    panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+  }
 
-    togglePanel('pdmPanel', document.querySelector('.btn-action'));
-    const chat = document.getElementById('pdmChat');
-    document.getElementById('pdmStep1').style.display = 'none';
-
-    if (estado === 'cancelado'){
-      addMsg('⚠️ Pagamento cancelado. Pode tentar novamente quando quiser.', 'system error');
-      document.getElementById('pdmStep1').style.display = 'block';
-      return;
-    }
-    if (estado === 'erro'){
-      addMsg('⚠️ Ocorreu um erro no pagamento. Se o valor foi debitado, contacte-nos e resolvemos de imediato.', 'system error');
-      return;
-    }
-
-    const loading = addMsg('<span class="spinner"></span> A confirmar o pagamento e a analisar a Planta de Localização... Isto pode demorar até 1 minuto.', 'system processing');
-
-    let tentativas = 0;
-    const intervalo = setInterval(async () => {
-      tentativas++;
-      try {
-        const resp = await fetch(`/.netlify/functions/estado-pedido?id=${pedidoId}`);
-        const data = await resp.json();
-
-        if (data.status === 'concluido'){
-          clearInterval(intervalo);
-          loading.remove();
-          renderReport(data.relatorioHtml, pedidoId);
-        } else if (data.status === 'erro'){
-          clearInterval(intervalo);
-          loading.remove();
-          addMsg('⚠️ O pagamento foi confirmado, mas ocorreu um erro a gerar a análise. A nossa equipa foi notificada e entrará em contacto — ou pode responder a este email quando o receber.', 'system error');
-        }
-        // se ainda "pendente_pagamento" ou "a_processar", continua a aguardar
-      } catch (e) { /* tenta de novo no próximo ciclo */ }
-
-      if (tentativas > 40){ // ~2 minutos
-        clearInterval(intervalo);
-        loading.remove();
-        addMsg('⏳ A análise está a demorar mais do que o previsto. Vai receber o relatório por email assim que estiver pronto.', 'system');
-      }
-    }, 3000);
-  })();
+  async function validarAcessoProfissional(){
+    const error = document.getElementById('professionalError');
+    const code = document.getElementById('professionalCode').value;
+    error.style.display = 'none';
+    try {
+      const response = await fetch('/.netlify/functions/validar-acesso', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ codigo: code })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Não foi possível validar o código.');
+      document.getElementById('professionalAccess').style.display = 'none';
+      addMsg('✓ Acesso profissional ativo nesta sessão. Pode gerar análises sem passar pelo pagamento.', 'system');
+    } catch (err) { error.textContent = err.message; error.style.display = 'block'; }
+  }
 
   function addMsg(html, cls){
     const chat = document.getElementById('pdmChat');
@@ -766,15 +850,14 @@
     return div;
   }
 
-  function renderReport(content, pedidoId){
+  function renderReport(content){
     const chat = document.getElementById('pdmChat');
     const div = document.createElement('div');
     div.className = 'chat-msg report';
     div.innerHTML = `
       <h4>📋 Relatório de Análise Técnica Preliminar — PDM Loulé</h4>
       <div style="color:var(--ink-soft); line-height:1.55;">${content}</div>
-      <a class="btn-download" href="/.netlify/functions/descarregar-relatorio?id=${pedidoId}" target="_blank">⬇ Descarregar em PDF</a>
-      <p style="font-size:.76rem; color:var(--ink-faint); margin-top:10px; margin-bottom:0;">Também lhe enviámos este relatório e o recibo por email.</p>
+      <p style="font-size:.76rem; color:var(--ink-faint); margin-top:10px; margin-bottom:0;">Guarde esta pré-análise e contacte-nos para validação técnica, pedido de informação prévia ou projeto.</p>
     `;
     chat.appendChild(div);
     chat.scrollTop = chat.scrollHeight;

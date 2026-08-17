@@ -1,39 +1,168 @@
-exports.handler = async (event, context) => {
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: 'Method Not Allowed' };
+const MAX_DOCUMENTS = 4;
+const MAX_DOCUMENT_BYTES = 10 * 1024 * 1024;
+const ALLOWED_TYPES = new Set([
+  'planta_localizacao',
+  'caderneta_predial',
+  'registo_predial',
+  'levantamento_topografico',
+]);
+
+const json = (statusCode, payload) => ({
+  statusCode,
+  headers: {
+    'Content-Type': 'application/json; charset=utf-8',
+    'Cache-Control': 'no-store',
+  },
+  body: JSON.stringify(payload),
+});
+
+const escapeHtml = (value = '') => String(value)
+  .replaceAll('&', '&amp;')
+  .replaceAll('<', '&lt;')
+  .replaceAll('>', '&gt;')
+  .replaceAll('"', '&quot;')
+  .replaceAll("'", '&#039;');
+
+function parseModelJson(text) {
+  const cleaned = text.trim().replace(/^```json\s*/i, '').replace(/\s*```$/, '');
+  return JSON.parse(cleaned);
+}
+
+function itemList(items, empty = 'Não identificado nos documentos analisados.') {
+  if (!Array.isArray(items) || !items.length) return `<p>${escapeHtml(empty)}</p>`;
+  return `<ul>${items.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`;
+}
+
+function table(rows) {
+  if (!Array.isArray(rows) || !rows.length) return '<p>Sem parâmetros confirmados nesta fase.</p>';
+  return `<table><thead><tr><th>Elemento</th><th>Resultado</th><th>Estado</th><th>Fonte</th></tr></thead><tbody>${rows.map((row) => `<tr><td>${escapeHtml(row.elemento)}</td><td>${escapeHtml(row.resultado)}</td><td>${escapeHtml(row.estado)}</td><td>${escapeHtml(row.fonte)}</td></tr>`).join('')}</tbody></table>`;
+}
+
+function renderReport(report) {
+  const identificacao = report.identificacao || {};
+  const conclusao = report.conclusao || {};
+  return `
+    <section>
+      <p><strong>Resultado preliminar:</strong> ${escapeHtml(conclusao.estado || 'Necessita validação técnica')}</p>
+      <p>${escapeHtml(conclusao.resumo || 'A análise foi limitada à informação documental fornecida.')}</p>
+    </section>
+    <h5>1. Documentação e identificação</h5>
+    <table><tbody>
+      <tr><th>Localização / freguesia</th><td>${escapeHtml(identificacao.localizacao || 'Não confirmada')}</td></tr>
+      <tr><th>Artigo matricial</th><td>${escapeHtml(identificacao.artigo_matricial || 'Não identificado')}</td></tr>
+      <tr><th>Área indicada</th><td>${escapeHtml(identificacao.area || 'Não confirmada')}</td></tr>
+      <tr><th>Coordenadas</th><td>${escapeHtml(identificacao.coordenadas || 'Não identificadas')}</td></tr>
+    </tbody></table>
+    <h5>2. Elementos extraídos e parâmetros</h5>
+    ${table(report.parametros)}
+    <h5>3. Divergências e verificações necessárias</h5>
+    ${itemList(report.divergencias, 'Não foram detetadas divergências evidentes nos documentos fornecidos.')}
+    <h5>4. Informação não confirmada</h5>
+    ${itemList(report.nao_confirmado)}
+    <h5>5. Próximos passos recomendados</h5>
+    ${itemList(report.proximos_passos)}
+    <p><small>Este relatório é uma pré-análise documental e não substitui informação prévia, parecer municipal, levantamento topográfico ou validação por técnico habilitado.</small></p>`;
+}
+
+function buildPrompt({ objetivo, descricao, documents, localizacao }) {
+  const inventory = documents.length ? documents.map((doc) => `- ${doc.tipo}: ${doc.nome}`).join('\n') : '- Sem documentos PDF anexados.';
+  const mapEvidence = localizacao ? JSON.stringify({
+    coordenadas: localizacao.coordenadas,
+    parcela: localizacao.parcela?.propriedades || null,
+    pdm: localizacao.pdm || [],
+    fontes: localizacao.fontes || [],
+    consultadoEm: localizacao.consultadoEm,
+  }) : 'Sem consulta geográfica do mapa.';
+  return `És o módulo de pré-análise documental de um serviço de urbanismo para o Município de Loulé, Portugal.
+
+Objetivo declarado pelo cliente: ${objetivo || 'Não indicado'}
+Descrição do cliente: ${descricao || 'Não indicada'}
+Documentos recebidos:\n${inventory}
+Consulta geográfica recebida (dados preliminares de fontes oficiais):\n${mapEvidence}
+
+Tarefa:
+1. Classifica e extrai apenas informação diretamente visível nos PDFs.
+2. Confronta área, artigo matricial, freguesia, localização e coordenadas entre documentos e, quando existir, a consulta geográfica.
+3. Se a Planta de Localização incluir peças de ordenamento, condicionantes ou REN, descreve somente o que seja legível nessa peça e indica-a como evidência gráfica, não como confirmação normativa autónoma.
+4. Não inventes artigos, índices, cércea, pisos, afastamentos, classificação do solo, REN/RAN ou viabilidade.
+5. Distingue sempre: confirmado, necessita verificação, não identificado.
+6. Não apresentes aconselhamento jurídico nem uma decisão de licenciamento.
+
+Responde exclusivamente com JSON válido, sem markdown, neste formato:
+{
+  "identificacao": {"localizacao":"", "artigo_matricial":"", "area":"", "coordenadas":""},
+  "parametros": [{"elemento":"", "resultado":"", "estado":"Confirmado|Necessita verificação|Não identificado", "fonte":""}],
+  "divergencias": [""],
+  "nao_confirmado": [""],
+  "proximos_passos": [""],
+  "conclusao": {"estado":"Documentação coerente|Necessita validação técnica|Divergência documental detetada", "resumo":""}
+}`;
+}
+
+export const handler = async (event) => {
+  if (event.httpMethod !== 'POST') return json(405, { error: 'Método não permitido.' });
+  const professionalAccess = hasProfessionalAccess(event.headers?.cookie || event.headers?.Cookie || '');
+  if (process.env.ALLOW_DIRECT_ANALYSIS !== 'true' && !professionalAccess) {
+    return json(503, { error: 'A análise direta está desativada até ser ligado o pagamento. Contacte o atelier para avançar.' });
   }
+  if (!process.env.GEMINI_API_KEY) return json(503, { error: 'O serviço de análise não está configurado.' });
 
   try {
-    const { userMessage, pdfBase64, email } = JSON.parse(event.body);
+    const body = JSON.parse(event.body || '{}');
+    const documents = Array.isArray(body.documentos) ? body.documentos : [];
+    const hasLocation = body.localizacao?.coordenadas && Number.isFinite(Number(body.localizacao.coordenadas.latitude)) && Number.isFinite(Number(body.localizacao.coordenadas.longitude));
+    if (documents.length > MAX_DOCUMENTS) {
+      return json(400, { error: `Pode anexar até ${MAX_DOCUMENTS} documentos.` });
+    }
+    if (!hasLocation && !documents.some((doc) => doc.tipo === 'planta_localizacao')) {
+      return json(400, { error: 'Selecione uma localização no mapa ou anexe a Planta de Localização.' });
+    }
 
-    // Prompt estritamente focado no enquadramento legal e índices urbanísticos
-    const promptSystem = `
-Atua como um Técnico de Urbanismo e Arquiteto especialista no PDM e Planos de Urbanização da Câmara Municipal de Loulé.
-Analisa a Planta de Localização Oficial enviada (PDF/visão) e gera um relatório rigoroso focado no ENQUADRAMENTO LEGAL URBANÍSTICO. Ignora o histórico de antecedentes processuais ou sobreposições de processos.
+    for (const document of documents) {
+      if (!ALLOWED_TYPES.has(document.tipo) || !document.base64 || !document.nome) {
+        return json(400, { error: 'Foi recebido um documento inválido.' });
+      }
+      const estimatedBytes = Math.floor((document.base64.length * 3) / 4);
+      if (estimatedBytes > MAX_DOCUMENT_BYTES) {
+        return json(413, { error: `${document.nome} excede o limite de 10 MB.` });
+      }
+    }
 
-O relatório deve ter:
-1. IDENTIFICAÇÃO E CARACTERIZAÇÃO DA PARCELA (Área, Freguesia e Plano Aplicável).
-2. CLASSIFICAÇÃO E QUALIFICAÇÃO DO SOLO (Solo Urbano/Rural, Categoria do solo e Usos dominantes).
-3. QUADRO DE PARÂMETROS E ÍNDICES URBANÍSTICOS (Tabela com Índice de Utilização, Pisos, Cércea e Afastamentos).
-4. SERVIDÕES E CONDICIONANTES AMBIENTAIS/LEGAIS (RAN, REN, Ruído, Afastamento a vias).
-5. PARECER TÉCNICO E PRÓXIMOS PASSOS (Recomendações para viabilização e licenciamento).
-
-Usa linguagem técnica, clara, estruturada com formatação HTML simples (<strong>, <table>, <ul>, <li>, <br>).
-`;
-
-    // Chamada à API da IA (OpenAI / Gemini / Anthropic)
-    // ...
-
-    return {
-      statusCode: 200,
+    const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(process.env.GEMINI_API_KEY)}`, {
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ reply: aiReply })
-    };
+      body: JSON.stringify({
+        contents: [{
+          role: 'user',
+          parts: [
+            { text: buildPrompt({ objetivo: body.objetivo, descricao: body.descricao, documents, localizacao: body.localizacao }) },
+            ...documents.map((document) => ({ inlineData: { mimeType: 'application/pdf', data: document.base64 } })),
+          ],
+        }],
+        generationConfig: { responseMimeType: 'application/json', temperature: 0.1 },
+      }),
+    });
+    const responseBody = await response.json();
+    if (!response.ok) {
+      console.error('provider_error', responseBody);
+      return json(502, { error: 'O fornecedor de IA não conseguiu concluir a análise.' });
+    }
 
+    const modelText = responseBody.candidates?.[0]?.content?.parts?.map((part) => part.text || '').join('') || '';
+    const report = parseModelJson(modelText);
+    const usage = responseBody.usageMetadata || {};
+    console.info('analysis_usage', JSON.stringify({
+      model,
+      promptTokens: usage.promptTokenCount || null,
+      outputTokens: usage.candidatesTokenCount || null,
+      documents: documents.length,
+    }));
+
+    return json(200, { reply: renderReport(report), resumo: report.conclusao?.estado || 'Concluído' });
   } catch (error) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: "Erro ao processar a análise." })
-    };
+    console.error('analysis_error', error);
+    return json(500, { error: 'Não foi possível processar a análise. Verifique os documentos e tente novamente.' });
   }
 };
+import { hasProfessionalAccess } from './lib/access.js';

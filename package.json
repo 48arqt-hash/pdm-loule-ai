@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "dependencies": {
-    "@google/genai": "latest"
+  "scripts": {
+    "dev": "netlify dev"
   }
 }
