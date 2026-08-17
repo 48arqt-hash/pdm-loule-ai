@@ -1,3 +1,5 @@
+import { hasProfessionalAccess } from './lib/access.js';
+
 const MAX_DOCUMENTS = 4;
 const MAX_DOCUMENT_BYTES = 10 * 1024 * 1024;
 const ALLOWED_TYPES = new Set([
@@ -26,6 +28,15 @@ const escapeHtml = (value = '') => String(value)
 function parseModelJson(text) {
   const cleaned = text.trim().replace(/^```json\s*/i, '').replace(/\s*```$/, '');
   return JSON.parse(cleaned);
+}
+
+function providerMessage(status, payload = {}) {
+  const reason = String(payload?.error?.message || '').toLowerCase();
+  if (status === 400) return 'A Gemini recusou o pedido. Confirme se os PDFs são legíveis e volte a tentar com apenas a Planta de Localização.';
+  if (status === 401 || status === 403 || reason.includes('api key')) return 'A chave da Gemini não foi aceite. Verifique a variável GEMINI_API_KEY na Netlify e faça novo deploy.';
+  if (status === 404 || reason.includes('model')) return 'O modelo configurado não está disponível. Na Netlify, defina GEMINI_MODEL como gemini-2.5-flash e faça novo deploy.';
+  if (status === 429 || reason.includes('quota') || reason.includes('rate')) return 'O limite de utilização da Gemini foi atingido. Verifique a quota/faturação no Google AI Studio e tente novamente mais tarde.';
+  return 'O fornecedor de IA não conseguiu concluir a análise. Consulte os Function logs da Netlify para ver o motivo técnico.';
 }
 
 function itemList(items, empty = 'Não identificado nos documentos analisados.') {
@@ -145,8 +156,8 @@ export const handler = async (event) => {
     });
     const responseBody = await response.json();
     if (!response.ok) {
-      console.error('provider_error', responseBody);
-      return json(502, { error: 'O fornecedor de IA não conseguiu concluir a análise.' });
+      console.error('provider_error', JSON.stringify({ status: response.status, error: responseBody?.error || null }));
+      return json(502, { error: providerMessage(response.status, responseBody) });
     }
 
     const modelText = responseBody.candidates?.[0]?.content?.parts?.map((part) => part.text || '').join('') || '';
@@ -165,4 +176,3 @@ export const handler = async (event) => {
     return json(500, { error: 'Não foi possível processar a análise. Verifique os documentos e tente novamente.' });
   }
 };
-import { hasProfessionalAccess } from './lib/access.js';
