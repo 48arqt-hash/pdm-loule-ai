@@ -44,13 +44,13 @@
   }
 
   main.card{
-    max-width:480px;
+    max-width:1120px;
     margin:0 auto;
     background:var(--sheet);
     border:1px solid var(--line);
     border-radius:var(--radius);
     box-shadow:var(--shadow);
-    padding:34px 26px 28px;
+    padding:40px 42px 34px;
     position:relative;
   }
   main.card::before{
@@ -190,7 +190,7 @@
   }
 
   /* SERVIÇOS */
-  .services-section{ margin:28px 0 6px; }
+  .services-section{ max-width:1040px; margin:32px auto 6px; }
   .section-eyebrow{
     font-size:.66rem;
     letter-spacing:.18em;
@@ -285,7 +285,7 @@
   .map-search{ display:flex; gap:8px; margin-bottom:8px; }
   .map-search .input-field{ margin:0; }
   .map-search button{ width:auto; margin:0; white-space:nowrap; }
-  #parcelMap{ height:310px; border:1px solid var(--line); border-radius:7px; overflow:hidden; margin:8px 0 10px; }
+  #parcelMap{ height:clamp(380px, 58vh, 620px); border:1px solid var(--line); border-radius:7px; overflow:hidden; margin:8px 0 10px; }
   /* Estilos de reserva: mantêm o mapa utilizável se a folha CSS externa do Leaflet falhar. */
   .leaflet-container{ position:relative; overflow:hidden; background:#E7E5DE; outline:0; font:inherit; -webkit-tap-highlight-color:transparent; }
   .leaflet-pane,.leaflet-tile,.leaflet-marker-icon,.leaflet-marker-shadow{ position:absolute; left:0; top:0; }
@@ -303,6 +303,10 @@
   .leaflet-control a{ display:block; width:28px; height:28px; line-height:28px; text-align:center; text-decoration:none; color:var(--ink); font-weight:700; }
   .leaflet-control-attribution{ font-size:9px; padding:1px 5px; margin:0; }
   .leaflet-control-attribution a{ display:inline; width:auto; height:auto; line-height:normal; font-weight:400; }
+  .leaflet-control-layers{ padding:8px 10px; background:rgba(255,255,255,.94); color:var(--ink); font-size:.78rem; }
+  .leaflet-control-layers label{ display:block; margin:4px 0; white-space:nowrap; }
+  .leaflet-control-layers input{ margin-right:5px; vertical-align:-1px; }
+  .leaflet-right .leaflet-control{ margin-right:10px; }.leaflet-top .leaflet-control{ margin-top:10px; }
   .map-status{ font-size:.78rem; color:var(--ink-soft); margin:0 0 10px; line-height:1.45; }
   .map-result{ display:none; background:#fff; border:1px solid var(--line); border-radius:6px; padding:12px; margin:10px 0; font-size:.8rem; line-height:1.45; }
   .map-result strong{ color:var(--teal-deep); }
@@ -451,9 +455,24 @@
 
   footer{ text-align:center; font-size:.72rem; color:var(--ink-faint); margin-top:20px; letter-spacing:.04em; }
 
+  @media (min-width:760px){
+    .header-branding,.hero-summary,.project,.contact,.social,footer,.logo-hint{ max-width:620px; margin-left:auto; margin-right:auto; }
+    .about-panel{ max-width:620px; margin-left:auto; margin-right:auto; }
+    .feature-panel{ padding:28px 30px; }
+    .map-search{ max-width:760px; }
+  }
+
   @media (max-width:380px){
     main.card{ padding:26px 18px 22px; }
     .input-grid{ grid-template-columns:1fr; }
+  }
+
+  @media (max-width:620px){
+    body{ padding:12px 8px 36px; }
+    main.card{ padding:28px 18px 24px; }
+    #parcelMap{ height:390px; }
+    .map-search{ flex-wrap:wrap; }
+    .map-search .input-field{ min-width:200px; flex:1; }
   }
 </style>
 </head>
@@ -667,6 +686,7 @@
   let selectedMarker;
   let selectedParcelLayer;
   let selectedLocation = null;
+  let mapResizeObserver;
 
   /* ---------- Logo / Sobre ---------- */
   function toggleAbout(){
@@ -728,7 +748,6 @@
     if (normalized.includes('registo') || normalized.includes('certidao') || normalized.includes('predial')) return 'registo_predial';
     return 'levantamento_topografico';
   }
-
   function escapeText(value = ''){
     return String(value).replace(/[&<>'"]/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#039;', '"':'&quot;' }[char]));
   }
@@ -736,12 +755,19 @@
   function initParcelMap(){
     if (!map){
       map = L.map('parcelMap', { scrollWheelZoom: false }).setView([37.0179, -8.0187], 12);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 20, attribution: '&copy; OpenStreetMap contributors' }).addTo(map);
-      L.tileLayer.wms('https://snicws.dgterritorio.gov.pt/geoserver/inspire/ows', {
+      const streetMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 20, attribution: '&copy; OpenStreetMap contributors' });
+      const aerialMap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: 'Tiles &copy; Esri' });
+      const cadastreLayer = L.tileLayer.wms('https://snicws.dgterritorio.gov.pt/geoserver/inspire/ows', {
         layers: 'cadastralparcel', format: 'image/png', transparent: true, version: '1.3.0', opacity: .6,
         attribution: 'Carta Cadastral Digital — DGT',
-      }).addTo(map);
+      });
+      streetMap.addTo(map); cadastreLayer.addTo(map);
+      L.control.layers({ 'Mapa': streetMap, 'Vista aérea': aerialMap }, { 'Limites cadastrais DGT': cadastreLayer }, { collapsed:false, position:'topright' }).addTo(map);
       map.on('click', event => consultarLocalizacao(event.latlng.lat, event.latlng.lng));
+      if ('ResizeObserver' in window){
+        mapResizeObserver = new ResizeObserver(() => map.invalidateSize({ pan:false, debounceMoveend:true }));
+        mapResizeObserver.observe(document.getElementById('parcelMap'));
+      }
     }
     map.invalidateSize({ pan:false, debounceMoveend:true });
     setTimeout(() => map.invalidateSize({ pan:false, debounceMoveend:true }), 350);
