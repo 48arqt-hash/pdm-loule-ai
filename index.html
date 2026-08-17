@@ -286,6 +286,23 @@
   .map-search .input-field{ margin:0; }
   .map-search button{ width:auto; margin:0; white-space:nowrap; }
   #parcelMap{ height:310px; border:1px solid var(--line); border-radius:7px; overflow:hidden; margin:8px 0 10px; }
+  /* Estilos de reserva: mantêm o mapa utilizável se a folha CSS externa do Leaflet falhar. */
+  .leaflet-container{ position:relative; overflow:hidden; background:#E7E5DE; outline:0; font:inherit; -webkit-tap-highlight-color:transparent; }
+  .leaflet-pane,.leaflet-tile,.leaflet-marker-icon,.leaflet-marker-shadow{ position:absolute; left:0; top:0; }
+  .leaflet-layer,.leaflet-control{ position:absolute; left:0; top:0; }
+  .leaflet-pane>img,.leaflet-pane>svg,.leaflet-tile-container{ position:absolute; left:0; top:0; }
+  .leaflet-map-pane,.leaflet-tile-pane,.leaflet-overlay-pane,.leaflet-shadow-pane,.leaflet-marker-pane,.leaflet-tooltip-pane,.leaflet-popup-pane{ position:absolute; left:0; top:0; }
+  .leaflet-tile-pane{ z-index:200; }.leaflet-overlay-pane{ z-index:400; }.leaflet-shadow-pane{ z-index:500; }.leaflet-marker-pane{ z-index:600; }.leaflet-tooltip-pane{ z-index:650; }.leaflet-popup-pane{ z-index:700; }
+  .leaflet-tile{ visibility:inherit; width:256px!important; height:256px!important; max-width:none!important; max-height:none!important; }
+  .leaflet-tile-container{ pointer-events:none; }.leaflet-zoom-animated{ transform-origin:0 0; }
+  .leaflet-map-pane svg{ max-width:none!important; max-height:none!important; }
+  .leaflet-control-container{ position:absolute; inset:0; pointer-events:none; }
+  .leaflet-top,.leaflet-bottom{ position:absolute; z-index:1000; pointer-events:none; }
+  .leaflet-top{ top:0; }.leaflet-bottom{ bottom:0; }.leaflet-left{ left:0; }.leaflet-right{ right:0; }
+  .leaflet-control{ position:relative; z-index:800; pointer-events:auto; margin:10px; background:#fff; border:1px solid rgba(0,0,0,.16); border-radius:4px; }
+  .leaflet-control a{ display:block; width:28px; height:28px; line-height:28px; text-align:center; text-decoration:none; color:var(--ink); font-weight:700; }
+  .leaflet-control-attribution{ font-size:9px; padding:1px 5px; margin:0; }
+  .leaflet-control-attribution a{ display:inline; width:auto; height:auto; line-height:normal; font-weight:400; }
   .map-status{ font-size:.78rem; color:var(--ink-soft); margin:0 0 10px; line-height:1.45; }
   .map-result{ display:none; background:#fff; border:1px solid var(--line); border-radius:6px; padding:12px; margin:10px 0; font-size:.8rem; line-height:1.45; }
   .map-result strong{ color:var(--teal-deep); }
@@ -513,7 +530,7 @@
           <button class="btn-submit secondary" type="button" onclick="pesquisarNoMapa()">Procurar</button>
         </div>
         <div id="parcelMap" aria-label="Mapa para selecionar o terreno"></div>
-        <p id="mapStatus" class="map-status">Clique dentro do terreno no mapa. Tentaremos identificar a parcela cadastral e consultar as camadas do PDM.</p>
+        <p id="mapStatus" class="map-status">Clique dentro do terreno no mapa. Consultaremos o Cadastro Predial e a Carta do Regime de Uso do Solo da DGT, além dos planos municipais em vigor.</p>
         <div id="mapResult" class="map-result"></div>
 
         <h4>2. Documentos do terreno</h4>
@@ -696,7 +713,7 @@
           const abrir = el.style.display !== 'block';
           el.style.display = abrir ? 'block' : 'none';
           if (btn) btn.setAttribute('aria-expanded', String(abrir));
-          if (abrir && id === 'pdmPanel') setTimeout(initParcelMap, 0);
+          if (abrir && id === 'pdmPanel') setTimeout(initParcelMap, 80);
         if (abrir) el.scrollIntoView({ behavior:'smooth', block:'nearest' });
       } else {
         el.style.display = 'none';
@@ -726,7 +743,8 @@
       }).addTo(map);
       map.on('click', event => consultarLocalizacao(event.latlng.lat, event.latlng.lng));
     }
-    map.invalidateSize();
+    map.invalidateSize({ pan:false, debounceMoveend:true });
+    setTimeout(() => map.invalidateSize({ pan:false, debounceMoveend:true }), 350);
   }
 
   async function pesquisarNoMapa(){
@@ -747,7 +765,7 @@
   async function consultarLocalizacao(latitude, longitude){
     const status = document.getElementById('mapStatus');
     const resultBox = document.getElementById('mapResult');
-    status.textContent = 'A identificar a parcela e a consultar PDM, condicionantes e REN…';
+    status.textContent = 'A identificar a parcela e a consultar fontes vetoriais oficiais…';
     resultBox.style.display = 'none';
     if (selectedMarker) map.removeLayer(selectedMarker);
     if (selectedParcelLayer) map.removeLayer(selectedParcelLayer);
@@ -764,10 +782,10 @@
         map.fitBounds(selectedParcelLayer.getBounds(), { padding:[18,18], maxZoom:19 });
       }
       const parcelId = data.parcela?.propriedades?.['inspire:inspireid'] || data.parcela?.id || 'Parcela não identificada';
-      const layers = data.pdm.length ? data.pdm.map(item => `<li><strong>${escapeText(item.camada)}:</strong> ${escapeText(item.valor || 'elemento identificado')}</li>`).join('') : '<li>Sem leitura automática disponível para esta localização.</li>';
+      const layers = data.pdm.length ? data.pdm.map(item => `<li><strong>${escapeText(item.camada)}:</strong> ${escapeText(item.valor || 'Classificação não indicada pela fonte')}</li>`).join('') : '<li>Não foi devolvida informação vetorial classificável para esta localização.</li>';
       resultBox.innerHTML = `<strong>Localização selecionada</strong><br>Parcela: ${escapeText(parcelId)}<ul>${layers}</ul><small>${escapeText(data.avisos.join(' '))}</small>`;
       resultBox.style.display = 'block';
-      status.textContent = 'Consulta geográfica concluída. Confirme se o limite destacado corresponde ao terreno pretendido.';
+      status.textContent = 'Consulta geográfica concluída. Confirme se o limite destacado corresponde ao terreno pretendido e consulte as fontes indicadas.';
     } catch (error) { status.textContent = error.message; }
   }
 
