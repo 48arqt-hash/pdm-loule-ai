@@ -36,9 +36,24 @@ function providerMessage(status, payload = {}) {
   const reason = String(payload?.error?.message || '').toLowerCase();
   if (status === 400) return 'A Gemini recusou o pedido. Confirme se os PDFs são legíveis e volte a tentar com apenas a Planta de Localização.';
   if (status === 401 || status === 403 || reason.includes('api key')) return 'A chave da Gemini não foi aceite. Verifique a variável GEMINI_API_KEY na Netlify e faça novo deploy.';
-  if (status === 404 || reason.includes('model')) return 'O modelo configurado não está disponível. Na Netlify, defina GEMINI_MODEL como gemini-3.6-flash e faça novo deploy.';
+  if (status === 503 || reason.includes('high demand')) return 'A Gemini está temporariamente com procura elevada. O sistema tentou novamente; aguarde alguns minutos e repita a análise.';
+  if (status === 404 || reason.includes('not found') || reason.includes('no longer available')) return 'O modelo configurado não está disponível. Na Netlify, defina GEMINI_MODEL como gemini-3.6-flash e faça novo deploy.';
   if (status === 429 || reason.includes('quota') || reason.includes('rate')) return 'O limite de utilização da Gemini foi atingido. Verifique a quota/faturação no Google AI Studio e tente novamente mais tarde.';
   return 'O fornecedor de IA não conseguiu concluir a análise. Consulte os Function logs da Netlify para ver o motivo técnico.';
+}
+
+const wait = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+
+async function requestGemini(url, requestBody) {
+  let response;
+  let payload;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(requestBody) });
+    payload = await response.json();
+    if (response.ok || response.status !== 503 || attempt === 2) return { response, payload };
+    await wait(900 * (attempt + 1));
+  }
+  return { response, payload };
 }
 
 function itemList(items, empty = 'Não identificado nos documentos analisados.') {
@@ -171,10 +186,7 @@ export const handler = async (event) => {
     const regulations = await officialRegulationDocuments(body.localizacao);
     if (body.localizacao && !regulations.length) console.warn('official_regulations_unavailable');
     const model = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(process.env.GEMINI_API_KEY)}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+    const requestBody = {
         contents: [{
           role: 'user',
           parts: [
@@ -187,9 +199,8 @@ export const handler = async (event) => {
           ],
         }],
         generationConfig: { responseMimeType: 'application/json', temperature: 0.1 },
-      }),
-    });
-    const responseBody = await response.json();
+      };
+    const { response, payload: responseBody } = await requestGemini(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(process.env.GEMINI_API_KEY)}`, requestBody);
     if (!response.ok) {
       console.error('provider_error', JSON.stringify({ status: response.status, error: responseBody?.error || null }));
       return json(502, { error: providerMessage(response.status, responseBody) });
