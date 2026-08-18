@@ -754,6 +754,16 @@
     return String(value).replace(/[&<>'"]/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#039;', '"':'&quot;' }[char]));
   }
 
+  async function readJsonResponse(response, fallbackMessage){
+    const raw = await response.text();
+    try {
+      return raw ? JSON.parse(raw) : {};
+    } catch {
+      const reference = response.status ? ` (resposta ${response.status} do servidor)` : '';
+      throw new Error(`${fallbackMessage}${reference}. Tente novamente; se persistir, consulte os Function logs da Netlify.`);
+    }
+  }
+
   function initParcelMap(){
     if (!map){
       map = L.map('parcelMap', { scrollWheelZoom: false }).setView([37.0179, -8.0187], 12);
@@ -802,7 +812,7 @@
       const response = await fetch('/.netlify/functions/consultar-parcela', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ latitude, longitude })
       });
-      const data = await response.json();
+      const data = await readJsonResponse(response, 'Não foi possível consultar esta localização');
       if (!response.ok) throw new Error(data.error || 'Não foi possível consultar esta localização.');
       selectedLocation = data;
       if (data.parcela?.geometria){
@@ -814,8 +824,9 @@
         : data.parcela?.referencia
           ? `Referência cadastral DGT: ${data.parcela.referencia}`
           : 'Parcela cadastral não identificada';
-      const layers = data.pdm.length
-        ? data.pdm.map(item => `<li><strong>${escapeText(item.camada)}:</strong> ${escapeText(item.valor)}</li>`).join('')
+      const visibleLayers = (data.pdm || []).filter(item => !(/regime de uso do solo \(dgt\)/i.test(item.camada || '') && /^\d+$/.test(String(item.valor || '').trim())));
+      const layers = visibleLayers.length
+        ? visibleLayers.map(item => `<li><strong>${escapeText(item.camada)}:</strong> ${escapeText(item.valor)}</li>`).join('')
         : '<li>Plano/uso do solo: informação técnica a confirmar no regulamento e nas plantas oficiais.</li>';
       resultBox.innerHTML = `<strong>Localização selecionada</strong><br>${escapeText(cadastralId)}<ul>${layers}</ul><small>${escapeText(data.avisos.join(' '))}</small>`;
       resultBox.style.display = 'block';
@@ -864,7 +875,7 @@
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, documentos: pdmDocuments, localizacao: selectedLocation, objetivo: document.getElementById('pdmObjetivo').value, descricao: document.getElementById('pdmUserMsg').value.trim() })
       });
-      const data = await resp.json();
+      const data = await readJsonResponse(resp, 'A análise não devolveu uma resposta válida');
       if (!resp.ok) throw new Error(data.error || 'Não foi possível concluir a análise.');
       loading.remove(); renderReport(data.reply);
     } catch (err) {
@@ -912,34 +923,66 @@
       <p style="font-size:.76rem; color:var(--ink-faint); margin-top:10px; margin-bottom:0;">Guarde esta pré-análise e contacte-nos para validação técnica, pedido de informação prévia ou projeto.</p>
       <div class="report-actions">
         <button class="btn-submit" type="button" onclick="guardarRelatorioPdf(this)">Guardar / imprimir PDF</button>
-        <button class="btn-submit secondary" type="button" onclick="prepararEmailRelatorio(this)">Preparar e-mail com relatório</button>
+        <button class="btn-submit secondary" type="button" onclick="enviarRelatorioPorEmail(this)">Enviar PDF por e-mail</button>
       </div>
     `;
     chat.appendChild(div);
     chat.scrollTop = chat.scrollHeight;
   }
 
-  function guardarRelatorioPdf(button){
+  async function guardarRelatorioPdf(button){
     const report = button.closest('.chat-msg.report');
     if (!report) return;
-    const popup = window.open('', '_blank');
-    if (!popup) { alert('O navegador bloqueou a janela de impressão. Autorize pop-ups para este site e tente novamente.'); return; }
-    const date = new Date().toLocaleDateString('pt-PT');
-    const printable = report.cloneNode(true);
-    printable.querySelector('.report-actions')?.remove();
-    popup.document.open();
-    popup.document.write(`<!doctype html><html lang="pt"><head><meta charset="utf-8"><title>Pré-análise PDM Loulé — ${date}</title><style>body{font-family:Arial,sans-serif;color:#17201f;max-width:920px;margin:36px auto;padding:0 22px;line-height:1.5}h4{font-size:20px;margin:0 0 18px}h5{margin:22px 0 8px;font-size:14px;text-transform:uppercase;color:#1f4b52}table{border-collapse:collapse;width:100%;font-size:12px;margin:10px 0}th,td{border:1px solid #cfcbbf;padding:7px;text-align:left;vertical-align:top}small{color:#66706e}@page{size:A4;margin:15mm}</style></head><body>${printable.innerHTML}</body></html>`);
-    popup.document.close();
-    popup.focus();
-    window.setTimeout(() => popup.print(), 300);
+    const copy = report.cloneNode(true);
+    copy.querySelector('.report-actions')?.remove();
+    const previous = button.textContent;
+    button.disabled = true;
+    button.textContent = 'A gerar PDF…';
+    try {
+      const response = await fetch('/.netlify/functions/gerar-relatorio-pdf', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reportText: copy.innerText })
+      });
+      if (!response.ok) throw new Error(await response.text() || 'Não foi possível gerar o PDF.');
+      const blob = await response.blob();
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'relatorio-tecnico-preliminar-pdm-loule.pdf';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(link.href);
+    } catch (error) {
+      alert(error.message || 'Não foi possível gerar o PDF.');
+    } finally {
+      button.disabled = false;
+      button.textContent = previous;
+    }
   }
 
-  function prepararEmailRelatorio(button){
+  async function enviarRelatorioPorEmail(button){
     const email = document.getElementById('pdmEmail').value.trim();
     if (!email || !email.includes('@')) { alert('Introduza primeiro o e-mail do destinatário no formulário.'); return; }
-    const subject = 'Pré-análise documental — PDM Loulé';
-    const body = 'Segue a pré-análise documental solicitada.\n\nGuardei o relatório em PDF para anexar a esta mensagem.\n\nNota: trata-se de uma pré-análise e requer validação técnica antes de qualquer decisão ou licenciamento.';
-    window.location.href = `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    const report = button.closest('.chat-msg.report');
+    if (!report) return;
+    const copy = report.cloneNode(true);
+    copy.querySelector('.report-actions')?.remove();
+    const previous = button.textContent;
+    button.disabled = true;
+    button.textContent = 'A enviar PDF…';
+    try {
+      const response = await fetch('/.netlify/functions/enviar-relatorio', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to: email, reportText: copy.innerText }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Não foi possível enviar o relatório.');
+      addMsg(`✓ Relatório em PDF enviado para ${escapeText(email)}.`, 'system');
+    } catch (error) {
+      alert(error.message || 'Não foi possível enviar o relatório por e-mail.');
+    } finally {
+      button.disabled = false;
+      button.textContent = previous;
+    }
   }
 
   /* ---------- Reunião de Consultoria ---------- */
