@@ -2,6 +2,7 @@ import { hasProfessionalAccess } from './lib/access.js';
 
 const MAX_DOCUMENTS = 4;
 const MAX_DOCUMENT_BYTES = 10 * 1024 * 1024;
+const MAX_OFFICIAL_REGULATION_BYTES = 5 * 1024 * 1024;
 const ALLOWED_TYPES = new Set([
   'planta_localizacao',
   'caderneta_predial',
@@ -78,7 +79,28 @@ function renderReport(report) {
     <p><small>Este relatório é uma pré-análise documental e não substitui informação prévia, parecer municipal, levantamento topográfico ou validação por técnico habilitado.</small></p>`;
 }
 
-function buildPrompt({ objetivo, descricao, documents, localizacao }) {
+function officialRegulationSources(localizacao) {
+  const plans = Array.isArray(localizacao?.pdm) ? localizacao.pdm.map((item) => `${item?.valor || ''} ${item?.atributos?.NOME || ''}`).join(' ').toLowerCase() : '';
+  const sources = [];
+  if (plans.includes('quarteira') && (plans.includes('norte') || plans.includes('nordeste'))) {
+    sources.push({ nome: 'Regulamento oficial do PU de Quarteira Norte-Nordeste', url: 'https://geoloule.cm-loule.pt/docs/regulamentos/pmots/PU_Quarteira_Nordeste_Regulamento.pdf' });
+  }
+  sources.push({ nome: 'Regulamento oficial do PDM de Loulé', url: 'https://geoloule.cm-loule.pt/docs/regulamentos/pmots/PDM_Regulamento.pdf' });
+  return sources;
+}
+
+async function officialRegulationDocuments(localizacao) {
+  const results = await Promise.allSettled(officialRegulationSources(localizacao).map(async (source) => {
+    const response = await fetch(source.url);
+    if (!response.ok) throw new Error(`${source.nome}: HTTP ${response.status}`);
+    const bytes = Buffer.from(await response.arrayBuffer());
+    if (!bytes.length || bytes.length > MAX_OFFICIAL_REGULATION_BYTES) throw new Error(`${source.nome}: dimensão não suportada`);
+    return { nome: source.nome, fonte: source.url, base64: bytes.toString('base64') };
+  }));
+  return results.filter((result) => result.status === 'fulfilled').map((result) => result.value);
+}
+
+function buildPrompt({ objetivo, descricao, documents, localizacao, officialRegulations = [] }) {
   const inventory = documents.length ? documents.map((doc) => `- ${doc.tipo}: ${doc.nome}`).join('\n') : '- Sem documentos PDF anexados.';
   const mapEvidence = localizacao ? JSON.stringify({
     coordenadas: localizacao.coordenadas,
@@ -87,25 +109,20 @@ function buildPrompt({ objetivo, descricao, documents, localizacao }) {
     fontes: localizacao.fontes || [],
     consultadoEm: localizacao.consultadoEm,
   }) : 'Sem consulta geográfica do mapa.';
-  const officialRegulations = [];
-  const planNames = Array.isArray(localizacao?.pdm) ? localizacao.pdm.map((item) => `${item?.valor || ''} ${item?.atributos?.NOME || ''}`.toLowerCase()).join(' ') : '';
-  if (planNames.includes('quarteira norte') || planNames.includes('quarteira nordeste')) {
-    officialRegulations.push('Regulamento oficial do PU de Quarteira Norte-Nordeste: https://geoloule.cm-loule.pt/docs/regulamentos/pmots/PU_Quarteira_Nordeste_Regulamento.pdf');
-  }
-  officialRegulations.push('Página municipal de planos territoriais em vigor: https://geoloule.cm-loule.pt/docs/regulamentos/PMOTONLINE/pmotregulamentos.htm');
+  const regulations = officialRegulations.length ? officialRegulations.map((item) => `- ${item.nome}: ${item.fonte}`).join('\n') : '- Não foi possível anexar automaticamente um regulamento oficial nesta consulta.';
   return `És o módulo de pré-análise documental de um serviço de urbanismo para o Município de Loulé, Portugal.
 
 Objetivo declarado pelo cliente: ${objetivo || 'Não indicado'}
 Descrição do cliente: ${descricao || 'Não indicada'}
 Documentos recebidos:\n${inventory}
 Consulta geográfica recebida (dados preliminares de fontes oficiais):\n${mapEvidence}
-Fontes oficiais de regulamento relevantes para confirmação humana:\n${officialRegulations.map((item) => `- ${item}`).join('\n')}
+Regulamentos oficiais analisados automaticamente:\n${regulations}
 
 Tarefa:
 1. Classifica e extrai apenas informação diretamente visível nos PDFs.
 2. Confronta área, artigo matricial, freguesia, localização e coordenadas entre documentos e, quando existir, a consulta geográfica.
 3. Se a Planta de Localização incluir peças de ordenamento, condicionantes ou REN, descreve somente o que seja legível nessa peça e indica-a como evidência gráfica, não como confirmação normativa autónoma.
-4. Na secção "regras_aplicaveis", apresenta somente regras, artigos, índices, cérceas, pisos, afastamentos, usos ou condicionantes que estejam literalmente legíveis nos PDFs enviados. Identifica sempre a página e o artigo, quando constarem. Se o plano estiver identificado mas o respetivo regulamento não tiver sido analisado, escreve "Regulamento aplicável identificado — parâmetro não confirmado nesta pré-análise". Nunca inventes valores ou artigos.
+4. Na secção "regras_aplicaveis", apresenta regras, artigos, índices, cérceas, pisos, afastamentos, usos ou condicionantes que estejam literalmente legíveis nos PDFs enviados ou nos regulamentos oficiais anexados automaticamente. Podes também apresentar os valores cartográficos explícitos recebidos na consulta geográfica oficial, mas com estado "Necessita verificação" e fonte "Consulta geográfica oficial". Identifica sempre a página e o artigo, quando constarem. Se a categoria exata de solo não for devolvida pela cartografia vetorial, explica quais as regras que dependem dessa categoria, sem escolher uma categoria por suposição. Nunca inventes valores ou artigos.
 5. Distingue sempre: confirmado, necessita verificação, não identificado.
 6. Não apresentes aconselhamento jurídico nem uma decisão de licenciamento.
 
@@ -150,6 +167,8 @@ export const handler = async (event) => {
       }
     }
 
+    const regulations = await officialRegulationDocuments(body.localizacao);
+    if (body.localizacao && !regulations.length) console.warn('official_regulations_unavailable');
     const model = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(process.env.GEMINI_API_KEY)}`, {
       method: 'POST',
@@ -158,8 +177,12 @@ export const handler = async (event) => {
         contents: [{
           role: 'user',
           parts: [
-            { text: buildPrompt({ objetivo: body.objetivo, descricao: body.descricao, documents, localizacao: body.localizacao }) },
+            { text: buildPrompt({ objetivo: body.objetivo, descricao: body.descricao, documents, localizacao: body.localizacao, officialRegulations: regulations }) },
             ...documents.map((document) => ({ inlineData: { mimeType: 'application/pdf', data: document.base64 } })),
+            ...regulations.flatMap((regulation) => [
+              { text: `Documento oficial anexo: ${regulation.nome} (${regulation.fonte})` },
+              { inlineData: { mimeType: 'application/pdf', data: regulation.base64 } },
+            ]),
           ],
         }],
         generationConfig: { responseMimeType: 'application/json', temperature: 0.1 },
