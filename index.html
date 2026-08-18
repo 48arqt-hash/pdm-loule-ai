@@ -541,7 +541,7 @@
       <p>Comece no mapa: selecione uma parcela e veja o cruzamento preliminar com as fontes geográficas oficiais. Depois, complemente com documentos para uma leitura mais rica.</p>
 
       <div class="chat-history" id="pdmChat" aria-live="polite">
-        <div class="chat-msg system">Comece pela Planta de Localização. Pode reforçar a análise com a caderneta, registo predial e levantamento topográfico.</div>
+        <div class="chat-msg system">Comece por localizar o terreno no mapa. Pode reforçar a análise com a caderneta, registo predial, levantamento topográfico ou Planta de Localização.</div>
       </div>
 
       <div id="pdmStep1">
@@ -556,14 +556,14 @@
 
         <h4>2. Documentos do terreno</h4>
         <div class="upload-zone" onclick="document.getElementById('pdmPdfInput').click()">
-          <span id="pdmUploadText">📁 Planta de Localização CM Loulé (obrigatória, PDF)</span>
+        <span id="pdmUploadText">📁 Planta de Localização (opcional, PDF)</span>
           <input type="file" id="pdmPdfInput" accept="application/pdf" style="display:none;" onchange="updateDocuments()">
         </div>
         <div class="upload-zone" onclick="document.getElementById('pdmOptionalDocsInput').click()">
           <span id="pdmOptionalDocsText">＋ Caderneta, registo predial ou levantamento (opcionais, até 3 PDFs)</span>
           <input type="file" id="pdmOptionalDocsInput" multiple accept="application/pdf" style="display:none;" onchange="updateDocuments()">
         </div>
-        <p class="secure-note">Máximo de 4 documentos; 10 MB por ficheiro. Documentos opcionais ajudam a detetar divergências.</p>
+        <p class="secure-note">O mapa é suficiente para iniciar a pré-análise. Máximo de 4 documentos; 10 MB por ficheiro. Caderneta, registo predial, levantamento ou planta ajudam a confirmar limites e áreas.</p>
 
         <h4>3. O que pretende fazer?</h4>
         <select id="pdmObjetivo" class="input-field">
@@ -809,9 +809,15 @@
         selectedParcelLayer = L.geoJSON(data.parcela.geometria, { style: { color:'#B9954F', weight:3, fillColor:'#B9954F', fillOpacity:.12 } }).addTo(map);
         map.fitBounds(selectedParcelLayer.getBounds(), { padding:[18,18], maxZoom:19 });
       }
-      const parcelId = data.parcela?.propriedades?.['inspire:inspireid'] || data.parcela?.id || 'Parcela não identificada';
-      const layers = data.pdm.length ? data.pdm.map(item => `<li><strong>${escapeText(item.camada)}:</strong> ${escapeText(item.valor || 'Classificação não indicada pela fonte')}</li>`).join('') : '<li>Não foi devolvida informação vetorial classificável para esta localização.</li>';
-      resultBox.innerHTML = `<strong>Localização selecionada</strong><br>Parcela: ${escapeText(parcelId)}<ul>${layers}</ul><small>${escapeText(data.avisos.join(' '))}</small>`;
+      const cadastralId = data.parcela?.declaracao
+        ? `Declaração cadastral: ${data.parcela.declaracao}`
+        : data.parcela?.referencia
+          ? `Referência cadastral DGT: ${data.parcela.referencia}`
+          : 'Parcela cadastral não identificada';
+      const layers = data.pdm.length
+        ? data.pdm.map(item => `<li><strong>${escapeText(item.camada)}:</strong> ${escapeText(item.valor)}</li>`).join('')
+        : '<li>Plano/uso do solo: informação técnica a confirmar no regulamento e nas plantas oficiais.</li>';
+      resultBox.innerHTML = `<strong>Localização selecionada</strong><br>${escapeText(cadastralId)}<ul>${layers}</ul><small>${escapeText(data.avisos.join(' '))}</small>`;
       resultBox.style.display = 'block';
       status.textContent = 'Consulta geográfica concluída. Confirme se o limite destacado corresponde ao terreno pretendido e consulte as fontes indicadas.';
     } catch (error) { status.textContent = error.message; }
@@ -836,7 +842,7 @@
     }
     try {
       pdmDocuments = await Promise.all([...(primary ? [fileAsDocument(primary, true)] : []), ...optional.map(file => fileAsDocument(file, false))]);
-      document.getElementById('pdmUploadText').textContent = primary ? `✓ ${primary.name}` : '📁 Planta de Localização CM Loulé (obrigatória, PDF)';
+      document.getElementById('pdmUploadText').textContent = primary ? `✓ ${primary.name}` : '📁 Planta de Localização (opcional, PDF)';
       document.getElementById('pdmOptionalDocsText').textContent = optional.length ? `✓ ${optional.length} documento(s) complementar(es) selecionado(s)` : '＋ Caderneta, registo predial ou levantamento (opcionais, até 3 PDFs)';
     } catch (err) { error.textContent = err.message; error.style.display = 'block'; }
   }
@@ -916,13 +922,16 @@
   function guardarRelatorioPdf(button){
     const report = button.closest('.chat-msg.report');
     if (!report) return;
-    const popup = window.open('', '_blank', 'noopener,noreferrer');
+    const popup = window.open('', '_blank');
     if (!popup) { alert('O navegador bloqueou a janela de impressão. Autorize pop-ups para este site e tente novamente.'); return; }
     const date = new Date().toLocaleDateString('pt-PT');
     const printable = report.cloneNode(true);
     printable.querySelector('.report-actions')?.remove();
-    popup.document.write(`<!doctype html><html lang="pt"><head><meta charset="utf-8"><title>Pré-análise PDM Loulé — ${date}</title><style>body{font-family:Arial,sans-serif;color:#17201f;max-width:920px;margin:36px auto;padding:0 22px;line-height:1.5}h4{font-size:20px;margin:0 0 18px}h5{margin:22px 0 8px;font-size:14px;text-transform:uppercase;color:#1f4b52}table{border-collapse:collapse;width:100%;font-size:12px;margin:10px 0}th,td{border:1px solid #cfcbbf;padding:7px;text-align:left;vertical-align:top}small{color:#66706e}@page{size:A4;margin:15mm}</style></head><body>${printable.innerHTML}<script>window.onload=()=>window.print()<\/script></body></html>`);
+    popup.document.open();
+    popup.document.write(`<!doctype html><html lang="pt"><head><meta charset="utf-8"><title>Pré-análise PDM Loulé — ${date}</title><style>body{font-family:Arial,sans-serif;color:#17201f;max-width:920px;margin:36px auto;padding:0 22px;line-height:1.5}h4{font-size:20px;margin:0 0 18px}h5{margin:22px 0 8px;font-size:14px;text-transform:uppercase;color:#1f4b52}table{border-collapse:collapse;width:100%;font-size:12px;margin:10px 0}th,td{border:1px solid #cfcbbf;padding:7px;text-align:left;vertical-align:top}small{color:#66706e}@page{size:A4;margin:15mm}</style></head><body>${printable.innerHTML}</body></html>`);
     popup.document.close();
+    popup.focus();
+    window.setTimeout(() => popup.print(), 300);
   }
 
   function prepararEmailRelatorio(button){
