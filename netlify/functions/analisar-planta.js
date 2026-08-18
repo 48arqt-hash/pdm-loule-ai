@@ -49,7 +49,12 @@ async function requestGemini(url, requestBody) {
   let payload;
   for (let attempt = 0; attempt < 3; attempt += 1) {
     response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(requestBody) });
-    payload = await response.json();
+    const raw = await response.text();
+    try {
+      payload = raw ? JSON.parse(raw) : {};
+    } catch {
+      payload = { error: { message: `Resposta não-JSON do fornecedor (HTTP ${response.status})` } };
+    }
     if (response.ok || response.status !== 503 || attempt === 2) return { response, payload };
     await wait(900 * (attempt + 1));
   }
@@ -116,7 +121,7 @@ async function officialRegulationDocuments(localizacao) {
   return results.filter((result) => result.status === 'fulfilled').map((result) => result.value);
 }
 
-function buildPrompt({ objetivo, descricao, documents, localizacao, officialRegulations = [] }) {
+function buildPrompt({ objetivo, descricao, documents, localizacao, regulationSources = [], officialRegulations = [] }) {
   const inventory = documents.length ? documents.map((doc) => `- ${doc.tipo}: ${doc.nome}`).join('\n') : '- Sem documentos PDF anexados.';
   const mapEvidence = localizacao ? JSON.stringify({
     coordenadas: localizacao.coordenadas,
@@ -125,20 +130,20 @@ function buildPrompt({ objetivo, descricao, documents, localizacao, officialRegu
     fontes: localizacao.fontes || [],
     consultadoEm: localizacao.consultadoEm,
   }) : 'Sem consulta geográfica do mapa.';
-  const regulations = officialRegulations.length ? officialRegulations.map((item) => `- ${item.nome}: ${item.fonte}`).join('\n') : '- Não foi possível anexar automaticamente um regulamento oficial nesta consulta.';
+  const regulations = regulationSources.length ? regulationSources.map((item) => `- ${item.nome}: ${item.url}`).join('\n') : '- Não foi identificado automaticamente um regulamento específico para esta localização.';
   return `És o módulo de pré-análise documental de um serviço de urbanismo para o Município de Loulé, Portugal.
 
 Objetivo declarado pelo cliente: ${objetivo || 'Não indicado'}
 Descrição do cliente: ${descricao || 'Não indicada'}
 Documentos recebidos:\n${inventory}
 Consulta geográfica recebida (dados preliminares de fontes oficiais):\n${mapEvidence}
-Regulamentos oficiais analisados automaticamente:\n${regulations}
+Regulamentos oficiais relevantes identificados:\n${regulations}
 
 Tarefa:
 1. Classifica e extrai apenas informação diretamente visível nos PDFs.
 2. Confronta área, artigo matricial, freguesia, localização e coordenadas entre documentos e, quando existir, a consulta geográfica.
 3. Se a Planta de Localização incluir peças de ordenamento, condicionantes ou REN, descreve somente o que seja legível nessa peça e indica-a como evidência gráfica, não como confirmação normativa autónoma.
-4. Na secção "regras_aplicaveis", apresenta regras, artigos, índices, cérceas, pisos, afastamentos, usos ou condicionantes que estejam literalmente legíveis nos PDFs enviados ou nos regulamentos oficiais anexados automaticamente. Os elementos da consulta geográfica cujo título contenha "PDM" ou "PUQNNE" são parâmetros cartográficos a reproduzir explicitamente nessa secção, com estado "Necessita verificação" quando a classificação vier de uma fonte de apoio DGT em vez da Carta de Ordenamento PDM vetorial. Identifica sempre a página e o artigo, quando constarem. Se a categoria exata de solo não for devolvida pela cartografia vetorial, explica quais as regras que dependem dessa categoria, sem escolher uma categoria por suposição. Nunca inventes valores ou artigos.
+4. Na secção "regras_aplicaveis", apresenta regras, artigos, índices, cérceas, pisos, afastamentos, usos ou condicionantes que estejam literalmente legíveis nos PDFs enviados. Os elementos da consulta geográfica cujo título contenha "PDM" ou "PUQNNE" são parâmetros cartográficos a reproduzir explicitamente nessa secção, com estado "Necessita verificação" quando a classificação vier de uma fonte de apoio DGT em vez da Carta de Ordenamento PDM vetorial. Os regulamentos identificados servem para referência e validação posterior; não inventes o respetivo conteúdo. Identifica sempre a página e o artigo, quando constarem. Se a categoria exata de solo não for devolvida pela cartografia vetorial, explica quais as regras que dependem dessa categoria, sem escolher uma categoria por suposição. Nunca inventes valores ou artigos.
 5. Distingue sempre: confirmado, necessita verificação, não identificado.
 6. Não apresentes aconselhamento jurídico nem uma decisão de licenciamento.
 
@@ -183,14 +188,20 @@ export const handler = async (event) => {
       }
     }
 
-    const regulations = await officialRegulationDocuments(body.localizacao);
-    if (body.localizacao && !regulations.length) console.warn('official_regulations_unavailable');
+    const regulationSources = officialRegulationSources(body.localizacao);
+    // PDFs completos de regulamentos podem ultrapassar o tempo máximo da função.
+    // Só são anexados se esta opção for ligada expressamente na Netlify.
+    const regulations = process.env.ATTACH_OFFICIAL_REGULATIONS === 'true'
+      ? await officialRegulationDocuments(body.localizacao)
+      : [];
+    if (body.localizacao && process.env.ATTACH_OFFICIAL_REGULATIONS === 'true' && !regulations.length) console.warn('official_regulations_unavailable');
+    if (body.localizacao && !regulations.length) console.info('official_regulations_not_attached_for_speed');
     const model = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
     const requestBody = {
         contents: [{
           role: 'user',
           parts: [
-            { text: buildPrompt({ objetivo: body.objetivo, descricao: body.descricao, documents, localizacao: body.localizacao, officialRegulations: regulations }) },
+            { text: buildPrompt({ objetivo: body.objetivo, descricao: body.descricao, documents, localizacao: body.localizacao, regulationSources, officialRegulations: regulations }) },
             ...documents.map((document) => ({ inlineData: { mimeType: 'application/pdf', data: document.base64 } })),
             ...regulations.flatMap((regulation) => [
               { text: `Documento oficial anexo: ${regulation.nome} (${regulation.fonte})` },
