@@ -86,6 +86,7 @@ function officialRegulationSources(localizacao) {
     sources.push({ nome: 'Regulamento oficial do PU de Quarteira Norte-Nordeste', url: 'https://geoloule.cm-loule.pt/docs/regulamentos/pmots/PU_Quarteira_Nordeste_Regulamento.pdf' });
   }
   sources.push({ nome: 'Regulamento oficial do PDM de Loulé', url: 'https://geoloule.cm-loule.pt/docs/regulamentos/pmots/PDM_Regulamento.pdf' });
+  sources.push({ nome: 'Regulamento Municipal de Urbanização e Edificação de Loulé (RMUE)', url: 'https://files.diariodarepublica.pt/2s/2024/08/155000000/0034300423.pdf' });
   return sources;
 }
 
@@ -122,7 +123,7 @@ Tarefa:
 1. Classifica e extrai apenas informação diretamente visível nos PDFs.
 2. Confronta área, artigo matricial, freguesia, localização e coordenadas entre documentos e, quando existir, a consulta geográfica.
 3. Se a Planta de Localização incluir peças de ordenamento, condicionantes ou REN, descreve somente o que seja legível nessa peça e indica-a como evidência gráfica, não como confirmação normativa autónoma.
-4. Na secção "regras_aplicaveis", apresenta regras, artigos, índices, cérceas, pisos, afastamentos, usos ou condicionantes que estejam literalmente legíveis nos PDFs enviados ou nos regulamentos oficiais anexados automaticamente. Podes também apresentar os valores cartográficos explícitos recebidos na consulta geográfica oficial, mas com estado "Necessita verificação" e fonte "Consulta geográfica oficial". Identifica sempre a página e o artigo, quando constarem. Se a categoria exata de solo não for devolvida pela cartografia vetorial, explica quais as regras que dependem dessa categoria, sem escolher uma categoria por suposição. Nunca inventes valores ou artigos.
+4. Na secção "regras_aplicaveis", apresenta regras, artigos, índices, cérceas, pisos, afastamentos, usos ou condicionantes que estejam literalmente legíveis nos PDFs enviados ou nos regulamentos oficiais anexados automaticamente. Os elementos da consulta geográfica cujo título contenha "PDM" ou "PUQNNE" são parâmetros cartográficos a reproduzir explicitamente nessa secção, com estado "Necessita verificação" quando a classificação vier de uma fonte de apoio DGT em vez da Carta de Ordenamento PDM vetorial. Identifica sempre a página e o artigo, quando constarem. Se a categoria exata de solo não for devolvida pela cartografia vetorial, explica quais as regras que dependem dessa categoria, sem escolher uma categoria por suposição. Nunca inventes valores ou artigos.
 5. Distingue sempre: confirmado, necessita verificação, não identificado.
 6. Não apresentes aconselhamento jurídico nem uma decisão de licenciamento.
 
