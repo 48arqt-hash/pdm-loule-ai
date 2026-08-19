@@ -3,6 +3,8 @@ import { hasProfessionalAccess } from './lib/access.js';
 const MAX_DOCUMENTS = 4;
 const MAX_DOCUMENT_BYTES = 10 * 1024 * 1024;
 const MAX_OFFICIAL_REGULATION_BYTES = 5 * 1024 * 1024;
+// Deixa margem antes do limite de execução da Netlify, evitando uma página 504.
+const MAX_GEMINI_WAIT_MS = 14_000;
 const ALLOWED_TYPES = new Set([
   'planta_localizacao',
   'caderneta_predial',
@@ -44,11 +46,33 @@ function providerMessage(status, payload = {}) {
 
 const wait = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
 
+async function fetchGeminiWithDeadline(url, requestBody) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), MAX_GEMINI_WAIT_MS);
+  try {
+    return await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestBody),
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (error?.name === 'AbortError') {
+      const timeoutError = new Error('A Gemini não respondeu dentro do tempo previsto. Tente novamente dentro de alguns minutos.');
+      timeoutError.code = 'GEMINI_TIMEOUT';
+      throw timeoutError;
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 async function requestGemini(url, requestBody) {
   let response;
   let payload;
   for (let attempt = 0; attempt < 3; attempt += 1) {
-    response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(requestBody) });
+    response = await fetchGeminiWithDeadline(url, requestBody);
     const raw = await response.text();
     try {
       payload = raw ? JSON.parse(raw) : {};
@@ -230,6 +254,7 @@ export const handler = async (event) => {
     return json(200, { reply: renderReport(report), resumo: report.conclusao?.estado || 'Concluído' });
   } catch (error) {
     console.error('analysis_error', error);
+    if (error?.code === 'GEMINI_TIMEOUT') return json(503, { error: error.message });
     return json(500, { error: 'Não foi possível processar a análise. Verifique os documentos e tente novamente.' });
   }
 };
