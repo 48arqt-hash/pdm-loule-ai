@@ -6,9 +6,9 @@ export const handler = async (event) => {
   const professionalAccess = hasProfessionalAccess(event.headers?.cookie || event.headers?.Cookie || '');
   if (process.env.ALLOW_DIRECT_ANALYSIS === 'false' && !professionalAccess) return { statusCode: 403, body: 'Valide o acesso profissional antes de gerar o PDF.' };
   try {
-    const { reportText, reportHtml } = JSON.parse(event.body || '{}');
+    const { reportText, reportHtml, location } = JSON.parse(event.body || '{}');
     if (!reportText || typeof reportText !== 'string' || reportText.length > 70000) return { statusCode: 400, body: 'Relatório inválido.' };
-    const pdf = await createProfessionalPdf({ reportHtml, reportText });
+    const pdf = await createProfessionalPdf({ reportHtml, reportText, location });
     return {
       statusCode: 200,
       isBase64Encoded: true,

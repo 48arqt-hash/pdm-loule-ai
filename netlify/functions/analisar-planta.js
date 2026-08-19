@@ -258,7 +258,7 @@ export const handler = async (event) => {
     let emailSent = false;
     let emailError = null;
     try {
-      await sendReportEmail({ to: body.email, reportText, reportHtml: reply });
+      await sendReportEmail({ to: body.email, reportText, reportHtml: reply, location: body.localizacao || null });
       emailSent = true;
     } catch (emailFailure) {
       console.error('automatic_report_email_error', emailFailure);

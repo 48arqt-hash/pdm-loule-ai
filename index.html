@@ -942,7 +942,7 @@
     try {
       const response = await fetch('/.netlify/functions/gerar-relatorio-pdf', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reportText: copy.innerText, reportHtml: copy.innerHTML }),
+        body: JSON.stringify({ reportText: copy.innerText, reportHtml: copy.innerHTML, location: selectedLocation }),
       });
       if (!response.ok) throw new Error(await response.text() || 'Não foi possível gerar o PDF.');
       const blob = await response.blob();
@@ -968,7 +968,7 @@
     try {
       const response = await fetch('/.netlify/functions/enviar-relatorio', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ to: email, reportText: copy.innerText, reportHtml: copy.innerHTML }),
+        body: JSON.stringify({ to: email, reportText: copy.innerText, reportHtml: copy.innerHTML, location: selectedLocation }),
       });
       const data = await readJsonResponse(response, 'O serviço de envio de e-mail não devolveu uma resposta válida');
       if (!response.ok) throw new Error(data.error || 'Não foi possível enviar o relatório.');

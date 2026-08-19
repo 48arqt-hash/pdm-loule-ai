@@ -121,7 +121,95 @@ function drawFooter(doc, pageNumber) {
   doc.restore();
 }
 
-export function createProfessionalPdf({ reportHtml, reportText }) {
+function locationPoints(location = {}) {
+  const geometry = location?.parcela?.geometria?.geometry || location?.parcela?.geometria;
+  const points = [];
+  const collect = (value) => {
+    if (!Array.isArray(value)) return;
+    if (typeof value[0] === 'number' && typeof value[1] === 'number') points.push(value);
+    else value.forEach(collect);
+  };
+  collect(geometry?.coordinates);
+  const latitude = Number(location?.coordenadas?.latitude);
+  const longitude = Number(location?.coordenadas?.longitude);
+  if (!points.length && Number.isFinite(latitude) && Number.isFinite(longitude)) points.push([longitude, latitude]);
+  return points;
+}
+
+async function aerialContext(location) {
+  const points = locationPoints(location);
+  if (!points.length) return null;
+  const longitudes = points.map((point) => point[0]);
+  const latitudes = points.map((point) => point[1]);
+  const minLon = Math.min(...longitudes); const maxLon = Math.max(...longitudes);
+  const minLat = Math.min(...latitudes); const maxLat = Math.max(...latitudes);
+  const span = Math.max(maxLon - minLon, maxLat - minLat, 0.00045);
+  const padding = span * 0.55;
+  const bbox = [minLon - padding, minLat - padding, maxLon + padding, maxLat + padding];
+  const url = new URL('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export');
+  url.search = new URLSearchParams({ bbox: bbox.join(','), bboxSR: '4326', imageSR: '4326', size: '1200,760', format: 'png32', transparent: 'false', f: 'image' }).toString();
+  try {
+    const response = await fetch(url, { signal: AbortSignal.timeout(4500) });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const image = Buffer.from(await response.arrayBuffer());
+    if (!image.length) throw new Error('imagem vazia');
+    return { image, bbox, points };
+  } catch (error) {
+    console.warn('aerial_context_unavailable', error.message);
+    return null;
+  }
+}
+
+function drawLocationMap(doc, aerial, location) {
+  if (!aerial) return;
+  ensureSpace(doc, 360);
+  drawSectionTitle(doc, 'Localização analisada');
+  const x = 47; const y = doc.y; const width = 501; const height = 300;
+  doc.image(aerial.image, x, y, { width, height });
+  const [minLon, minLat, maxLon, maxLat] = aerial.bbox;
+  const toPoint = ([lon, lat]) => [x + ((lon - minLon) / (maxLon - minLon)) * width, y + height - ((lat - minLat) / (maxLat - minLat)) * height];
+  if (aerial.points.length > 1) {
+    const [startX, startY] = toPoint(aerial.points[0]);
+    doc.save().opacity(0.18).fillColor(COLORS.gold).moveTo(startX, startY);
+    aerial.points.slice(1).forEach((point) => { const [px, py] = toPoint(point); doc.lineTo(px, py); });
+    doc.closePath().fill().restore();
+    doc.save().lineWidth(2.3).strokeColor(COLORS.gold).moveTo(startX, startY);
+    aerial.points.slice(1).forEach((point) => { const [px, py] = toPoint(point); doc.lineTo(px, py); });
+    doc.closePath().stroke().restore();
+  } else if (aerial.points.length === 1) {
+    const [px, py] = toPoint(aerial.points[0]);
+    doc.circle(px, py, 6).fillAndStroke(COLORS.gold, '#FFFFFF');
+  }
+  doc.rect(x, y, width, height).lineWidth(0.8).strokeColor(COLORS.line).stroke();
+  doc.y = y + height + 7;
+  const reference = location?.parcela?.declaracao || location?.parcela?.referencia || 'localização selecionada';
+  doc.font('Helvetica').fontSize(7.2).fillColor(COLORS.muted).text(`Delimitação analisada: ${reference}. Vista aérea: Esri World Imagery; limite/seleção cadastral DGT, de caráter preliminar.`, x, doc.y, { width });
+  doc.moveDown(1.15);
+}
+
+function drawCartographicEvidence(doc, location) {
+  const layers = Array.isArray(location?.pdm) ? location.pdm : [];
+  const useful = layers
+    .map((item) => ({ label: String(item?.camada || '').trim(), value: String(item?.valor || '').trim() }))
+    .filter((item) => item.label && item.value)
+    // Códigos numéricos isolados não são compreensíveis para o cliente sem legenda oficial.
+    .filter((item) => !(/regime de uso do solo \(dgt\)/i.test(item.label) && /^\d+$/.test(item.value)))
+    .slice(0, 5);
+  if (!useful.length) return;
+  drawSectionTitle(doc, 'Enquadramento cartográfico disponível');
+  useful.forEach((item) => {
+    const line = `${item.label}: ${item.value}`;
+    ensureSpace(doc, textHeight(doc, line, 470, 8.5) + 11);
+    doc.circle(53, doc.y + 5, 1.7).fill(COLORS.gold);
+    doc.font('Helvetica').fontSize(8.5).fillColor(COLORS.ink).text(line, 63, doc.y - 2, { width: 470, lineGap: 1.7 });
+    doc.moveDown(0.5);
+  });
+  doc.font('Helvetica-Oblique').fontSize(7.2).fillColor(COLORS.muted).text('Informação cartográfica de apoio; os parâmetros urbanísticos concretos constam da secção seguinte e exigem confirmação pelo regulamento e pelas plantas oficiais em vigor.', 47, doc.y + 1, { width: 501, lineGap: 1.5 });
+  doc.moveDown(1.1);
+}
+
+export async function createProfessionalPdf({ reportHtml, reportText, location = null }) {
+  const aerial = await aerialContext(location);
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: 'A4', margin: 47, bufferPages: true, info: { Title: 'Relatório de Pré-Análise Urbanística - Leonel Mendes' } });
     const chunks = [];
@@ -142,6 +230,9 @@ export function createProfessionalPdf({ reportHtml, reportText }) {
       doc.font('Helvetica').fontSize(10).fillColor(COLORS.ink).text(line, 47, doc.y, { width: 501, lineGap: 2.5 });
       doc.moveDown(0.9);
     });
+
+    drawLocationMap(doc, aerial, location);
+    drawCartographicEvidence(doc, location);
 
     if (!report.sections.length && report.fallback) {
       drawSectionTitle(doc, 'Conteúdo da pré-análise');

@@ -13,10 +13,10 @@ export const handler = async (event) => {
   if (process.env.ALLOW_DIRECT_ANALYSIS === 'false' && !professionalAccess) return json(403, { error: 'Valide o acesso profissional antes de enviar o relatório.' });
 
   try {
-    const { to, reportText, reportHtml } = JSON.parse(event.body || '{}');
+    const { to, reportText, reportHtml, location } = JSON.parse(event.body || '{}');
     if (!validEmail(to)) return json(400, { error: 'Indique um e-mail de destino válido.' });
     if (!reportText || typeof reportText !== 'string' || reportText.length > 70000) return json(400, { error: 'O relatório a enviar é inválido ou demasiado extenso.' });
-    const sent = await sendReportEmail({ to, reportText, reportHtml });
+    const sent = await sendReportEmail({ to, reportText, reportHtml, location });
     console.info('report_email_sent', JSON.stringify(sent));
     return json(200, { sent: true });
   } catch (error) {
