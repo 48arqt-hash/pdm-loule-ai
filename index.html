@@ -930,33 +930,18 @@
     chat.scrollTop = chat.scrollHeight;
   }
 
-  async function guardarRelatorioPdf(button){
+  function guardarRelatorioPdf(button){
     const report = button.closest('.chat-msg.report');
     if (!report) return;
     const copy = report.cloneNode(true);
     copy.querySelector('.report-actions')?.remove();
-    const previous = button.textContent;
-    button.disabled = true;
-    button.textContent = 'A gerar PDF…';
-    try {
-      const response = await fetch('/.netlify/functions/gerar-relatorio-pdf', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reportText: copy.innerText })
-      });
-      if (!response.ok) throw new Error(await response.text() || 'Não foi possível gerar o PDF.');
-      const blob = await response.blob();
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = 'relatorio-tecnico-preliminar-pdm-loule.pdf';
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(link.href);
-    } catch (error) {
-      alert(error.message || 'Não foi possível gerar o PDF.');
-    } finally {
-      button.disabled = false;
-      button.textContent = previous;
-    }
+    const printWindow = window.open('', '_blank', 'width=900,height=760');
+    if (!printWindow) { alert('O navegador bloqueou a janela de impressão. Permita pop-ups para este site e tente novamente.'); return; }
+    printWindow.document.write(`<!doctype html><html lang="pt"><head><meta charset="utf-8"><title>Relatório Técnico Preliminar — PDM Loulé</title><style>
+      @page { size:A4; margin:15mm; } body{font-family:Arial,sans-serif;color:#17201f;line-height:1.45;font-size:10.5pt} h4{color:#173d58;font-size:17pt;margin:0 0 8mm} h5{color:#173d58;font-size:12pt;margin:7mm 0 3mm;border-bottom:1px solid #d7dedb;padding-bottom:1.5mm} p{margin:0 0 3mm} table{width:100%;border-collapse:collapse;margin:3mm 0 5mm;break-inside:avoid} th,td{border:1px solid #cfd7d4;padding:2.4mm;text-align:left;vertical-align:top} th{background:#edf2f0;color:#173d58} ul{margin:2mm 0 5mm;padding-left:5mm} li{margin:1.5mm 0} small{font-size:8.5pt;color:#5d6866}</style></head><body>${copy.innerHTML}</body></html>`);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => printWindow.print(), 300);
   }
 
   async function enviarRelatorioPorEmail(button){
