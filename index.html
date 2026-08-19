@@ -896,7 +896,7 @@
       const response = await fetch('/.netlify/functions/validar-acesso', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ codigo: code })
       });
-      const data = await response.json();
+      const data = await readJsonResponse(response, 'O serviço de validação de acesso não devolveu uma resposta válida');
       if (!response.ok) throw new Error(data.error || 'Não foi possível validar o código.');
       document.getElementById('professionalAccess').style.display = 'none';
       addMsg('✓ Acesso profissional ativo nesta sessão. Pode gerar análises sem passar pelo pagamento.', 'system');
@@ -959,7 +959,7 @@
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ to: email, reportText: copy.innerText }),
       });
-      const data = await response.json();
+      const data = await readJsonResponse(response, 'O serviço de envio de e-mail não devolveu uma resposta válida');
       if (!response.ok) throw new Error(data.error || 'Não foi possível enviar o relatório.');
       addMsg(`✓ Relatório em PDF enviado para ${escapeText(email)}.`, 'system');
     } catch (error) {
