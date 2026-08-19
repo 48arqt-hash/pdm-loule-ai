@@ -2,6 +2,8 @@ import PDFDocument from 'pdfkit';
 
 const COLORS = { navy: '#173D58', teal: '#24565D', gold: '#B9954F', ink: '#17201F', muted: '#64716E', line: '#D8E0DD', wash: '#F2F5F3', paleGold: '#F5F0E5' };
 const FOOTER_Y = 762;
+// Reserva espaço para o aviso legal imediatamente antes da linha do rodapé.
+const CONTENT_END_Y = 724;
 const LOGO_PNG = 'iVBORw0KGgoAAAANSUhEUgAAAWgAAAFoCAYAAAB65WHVAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAA99JREFUeNrs2NFtglAUgGFp2KNuUrsGT92AMIFuQNgAX5gDN8EN3ECPG7TGe2zp9yU3PN6cE/gf2GwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA+CUqKyir7ad90lXL0DXHhHne4/GVNNMcM53M9NBMH/HYJc00xkxnX/vz1VZQ3CHrw49zTLhnmzjT/Z6TmR6yS373BLqANysAEGgABBpAoAEQaACBBkCgARBoAIEGQKABBBoAgQZAoAEEGgCBBhBoAAQaQKABEGgABBpAoAEQaACBBkCgARBoAIEGQKABBBoAgQYQaAAEGgCBBhBoAAQaQKABEGgABBpAoAEQaACBBkCgAQQaAIEGQKABBBoAgQYQaAAEGgCBBhBoAAQaQKABEGgABBpAoAEQaACBBkCgAQQaAIEGQKABBBoAgQYQaAAEGgCBBhBoAAQaQKABEGgAgQZAoAEQaACBBkCgAQQaAIEGQKABBBoAgQYQaAAEGkCgARBoAAQaQKABEGgAgQZAoAEQaACBBkCgAQQaAIEGQKABBBoAgQYQaAAEGkCgARBoAAQaQKABEGgAgQZAoAEQaACBBkCgAQQaAIEGEGgABBoAgQYQaAAEGkCgARBoAAQaQKABEGgAgQZAoAEEGgCBBkCgAQQaAIEGEGgABBoAgQYQaAAEGkCgARBoAAQaQKABEGgAgQZAoAEEGgCBBkCgAQQaAIEGEGgABBoAgQYQaAAEGkCgARBoAIEGQKABEGgAgQZAoAEEGgCBBkCgAQQaAIEGEGgABBpAoAEQaAAEGkCgARBoAIEGQKABEGgAgQZAoAEEGgCBBkCgAQQaAIEGEGgABBpAoAEQaAAEGkCgARBogFWrrYAfusSZk+5arJv/rLKCstp+uiZdNQ9d82njsB5+cQAINAACDSDQAAg0gEADINAACDSAQAMg0AACDYBAAyDQAAINgEADCDQAAg0g0AAINAACDSDQAAg0gEADINAACDTAH1BZQVltP12TrlrijDbOC4xD15yt4flqK1iNbZyDNfACcxyBLsAvDgCBBkCgAQQaAIEGEGgABBoAgQYQaAAEGkCgARBoAAQaQKABEGgAgQZAoAEEGgCBBkCgAQQaAIEGEGgABBoAgQYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgO+7CTAADjYuvdIeZVQAAAAASUVORK5CYII=';
 
 function decodeHtml(value = '') {
@@ -46,7 +48,7 @@ function drawHeader(doc) {
 }
 
 function ensureSpace(doc, height) {
-  if (doc.y + height > FOOTER_Y) doc.addPage();
+  if (doc.y + height > CONTENT_END_Y) doc.addPage();
 }
 
 function textHeight(doc, text, width, size = 9) {
@@ -109,11 +111,12 @@ function drawBullets(doc, items) {
 
 function drawFooter(doc, pageNumber) {
   doc.save();
+  // O aviso integra o conteúdo do relatório, não o rodapé administrativo.
+  doc.font('Helvetica-Oblique').fontSize(6.7).fillColor(COLORS.muted)
+    .text('Pré-análise assistida por IA. Não constitui parecer municipal nem decisão de licenciamento.', 47, FOOTER_Y - 15, { width: 501, align: 'center' });
   doc.strokeColor(COLORS.line).lineWidth(0.8).moveTo(47, FOOTER_Y).lineTo(548, FOOTER_Y).stroke();
   doc.font('Helvetica').fontSize(7).fillColor(COLORS.muted)
     .text('Morada: Av. José da Costa Mealha, n.º 133, 8100-500 Loulé - Telefone: 96 0010 870 - E-mail: geral@leonelmendes.com', 47, FOOTER_Y + 9, { width: 501, align: 'center' });
-  doc.font('Helvetica').fontSize(6.7).fillColor(COLORS.muted)
-    .text('Pré-análise assistida por IA. Não constitui parecer municipal nem decisão de licenciamento.', 47, FOOTER_Y + 20, { width: 415 });
   doc.font('Helvetica-Bold').fontSize(7).fillColor(COLORS.navy).text(`PÁGINA ${pageNumber}`, 470, FOOTER_Y + 20, { width: 78, align: 'right' });
   doc.restore();
 }
