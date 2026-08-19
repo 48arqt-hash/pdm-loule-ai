@@ -537,7 +537,7 @@
     <!-- PAINEL 1: PRÉ-ANÁLISE DOCUMENTAL -->
     <div id="pdmPanel" class="feature-panel">
       <h3>Descubra o potencial do seu terreno</h3>
-      <div class="price-tag">Pré-análise documental — 10,00 €</div>
+      <div class="price-tag">Pré-análise documental — acesso de teste gratuito</div>
       <p>Comece no mapa: selecione uma parcela e veja o cruzamento preliminar com as fontes geográficas oficiais. Depois, complemente com documentos para uma leitura mais rica.</p>
 
       <div class="chat-history" id="pdmChat" aria-live="polite">
@@ -878,6 +878,8 @@
       const data = await readJsonResponse(resp, 'A análise não devolveu uma resposta válida');
       if (!resp.ok) throw new Error(data.error || 'Não foi possível concluir a análise.');
       loading.remove(); renderReport(data.reply);
+      if (data.emailSent) addMsg(`✓ Relatório em PDF enviado para ${escapeText(email)} e registado no atelier.`, 'system');
+      if (data.emailError) addMsg(`⚠ ${escapeText(data.emailError)} Pode tentar o envio manual abaixo.`, 'system');
     } catch (err) {
       loading.remove(); erroEl.textContent = err.message || 'Não foi possível processar a análise.'; erroEl.style.display = 'block';
     } finally { btn.disabled = false; btn.textContent = 'Gerar pré-análise documental →'; }
@@ -923,7 +925,7 @@
       <p style="font-size:.76rem; color:var(--ink-faint); margin-top:10px; margin-bottom:0;">Guarde esta pré-análise e contacte-nos para validação técnica, pedido de informação prévia ou projeto.</p>
       <div class="report-actions">
         <button class="btn-submit" type="button" onclick="guardarRelatorioPdf(this)">Guardar / imprimir PDF</button>
-        <button class="btn-submit secondary" type="button" onclick="enviarRelatorioPorEmail(this)">Enviar PDF por e-mail</button>
+        <button class="btn-submit secondary" type="button" onclick="enviarRelatorioPorEmail(this)">Reenviar PDF por e-mail</button>
       </div>
     `;
     chat.appendChild(div);

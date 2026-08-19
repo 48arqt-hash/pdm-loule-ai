@@ -82,14 +82,15 @@ function drawTable(doc, rows) {
     const heights = values.map((value, index) => textHeight(doc, value, widths[index] - 10, isHeader ? 7.6 : 8.5));
     const height = Math.max(...heights, isHeader ? 20 : 24) + 10;
     ensureSpace(doc, height + 4);
+    const rowY = doc.y;
     let cursor = x;
     values.forEach((value, index) => {
-      doc.save().rect(cursor, doc.y, widths[index], height).fillAndStroke(isHeader ? COLORS.navy : '#FFFFFF', COLORS.line).restore();
+      doc.save().rect(cursor, rowY, widths[index], height).fillAndStroke(isHeader ? COLORS.navy : '#FFFFFF', COLORS.line).restore();
       doc.font(isHeader ? 'Helvetica-Bold' : 'Helvetica').fontSize(isHeader ? 7.6 : 8.5).fillColor(isHeader ? '#FFFFFF' : COLORS.ink)
-        .text(value, cursor + 5, doc.y + 5, { width: widths[index] - 10, lineGap: 1.5 });
+        .text(value, cursor + 5, rowY + 5, { width: widths[index] - 10, lineGap: 1.5 });
       cursor += widths[index];
     });
-    doc.y += height;
+    doc.y = rowY + height;
   };
   drawRow(header, true);
   data.forEach((row) => drawRow(row));

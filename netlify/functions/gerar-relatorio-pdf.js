@@ -4,7 +4,7 @@ import { createProfessionalPdf } from './lib/report-pdf.js';
 export const handler = async (event) => {
   if (event.httpMethod !== 'POST') return { statusCode: 405, body: 'Método não permitido.' };
   const professionalAccess = hasProfessionalAccess(event.headers?.cookie || event.headers?.Cookie || '');
-  if (process.env.ALLOW_DIRECT_ANALYSIS !== 'true' && !professionalAccess) return { statusCode: 403, body: 'Valide o acesso profissional antes de gerar o PDF.' };
+  if (process.env.ALLOW_DIRECT_ANALYSIS === 'false' && !professionalAccess) return { statusCode: 403, body: 'Valide o acesso profissional antes de gerar o PDF.' };
   try {
     const { reportText, reportHtml } = JSON.parse(event.body || '{}');
     if (!reportText || typeof reportText !== 'string' || reportText.length > 70000) return { statusCode: 400, body: 'Relatório inválido.' };

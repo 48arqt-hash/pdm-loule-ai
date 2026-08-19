@@ -1,4 +1,5 @@
 import { hasProfessionalAccess } from './lib/access.js';
+import { sendReportEmail } from './lib/report-email.js';
 
 const MAX_DOCUMENTS = 4;
 const MAX_DOCUMENT_BYTES = 10 * 1024 * 1024;
@@ -149,7 +150,7 @@ function buildPrompt({ objetivo, descricao, documents, localizacao, regulationSo
   const inventory = documents.length ? documents.map((doc) => `- ${doc.tipo}: ${doc.nome}`).join('\n') : '- Sem documentos PDF anexados.';
   const mapEvidence = localizacao ? JSON.stringify({
     coordenadas: localizacao.coordenadas,
-    parcela: localizacao.parcela?.propriedades || null,
+    parcela: { referencia: localizacao.parcela?.referencia || null, declaracao: localizacao.parcela?.declaracao || null, propriedades: localizacao.parcela?.propriedades || null, geometria: localizacao.parcela?.geometria || null },
     pdm: localizacao.pdm || [],
     fontes: localizacao.fontes || [],
     consultadoEm: localizacao.consultadoEm,
@@ -166,10 +167,11 @@ Regulamentos oficiais relevantes identificados:\n${regulations}
 Tarefa:
 1. Classifica e extrai apenas informação diretamente visível nos PDFs.
 2. Confronta área, artigo matricial, freguesia, localização e coordenadas entre documentos e, quando existir, a consulta geográfica.
-3. Se a Planta de Localização incluir peças de ordenamento, condicionantes ou REN, descreve somente o que seja legível nessa peça e indica-a como evidência gráfica, não como confirmação normativa autónoma.
-4. Na secção "regras_aplicaveis", apresenta regras, artigos, índices, cérceas, pisos, afastamentos, usos ou condicionantes que estejam literalmente legíveis nos PDFs enviados. Os elementos da consulta geográfica cujo título contenha "PDM" ou "PUQNNE" são parâmetros cartográficos a reproduzir explicitamente nessa secção, com estado "Necessita verificação" quando a classificação vier de uma fonte de apoio DGT em vez da Carta de Ordenamento PDM vetorial. Os regulamentos identificados servem para referência e validação posterior; não inventes o respetivo conteúdo. Identifica sempre a página e o artigo, quando constarem. Se a categoria exata de solo não for devolvida pela cartografia vetorial, explica quais as regras que dependem dessa categoria, sem escolher uma categoria por suposição. Nunca inventes valores ou artigos.
-5. Distingue sempre: confirmado, necessita verificação, não identificado.
-6. Não apresentes aconselhamento jurídico nem uma decisão de licenciamento.
+3. Quando existir Planta de Localização oficial, identifica o polígono/área delimitada na planta e confronta-a com a parcela e coordenadas da consulta geográfica. Regista expressamente no relatório se a coincidência é aparente, divergente ou não verificável, indicando a fonte e o grau de confiança. Nunca apresentes uma sobreposição visual como georreferenciação rigorosa se o PDF não tiver elementos suficientes.
+4. Se a Planta de Localização incluir peças de ordenamento, condicionantes ou REN, descreve somente o que seja legível nessa peça e indica-a como evidência gráfica, não como confirmação normativa autónoma.
+5. Na secção "regras_aplicaveis", apresenta regras, artigos, índices, cérceas, pisos, afastamentos, usos ou condicionantes que estejam literalmente legíveis nos PDFs enviados. Cruza a delimitação aparente da planta com a parcela selecionada e com os elementos PDM/PUQNNE da consulta geográfica; reproduz esses parâmetros cartográficos explicitamente e identifica o plano aplicável. Os elementos da consulta geográfica cuja classificação venha de fonte de apoio DGT têm estado "Necessita verificação". Os regulamentos identificados servem para referência e validação posterior; não inventes o respetivo conteúdo. Identifica sempre a página e o artigo, quando constarem. Se a categoria exata de solo não for devolvida pela cartografia vetorial, explica quais as regras que dependem dessa categoria, sem escolher uma categoria por suposição. Nunca inventes valores ou artigos.
+6. Distingue sempre: confirmado, necessita verificação, não identificado.
+7. Não apresentes aconselhamento jurídico nem uma decisão de licenciamento.
 
 Responde exclusivamente com JSON válido, sem markdown, neste formato:
 {
@@ -186,8 +188,8 @@ Responde exclusivamente com JSON válido, sem markdown, neste formato:
 export const handler = async (event) => {
   if (event.httpMethod !== 'POST') return json(405, { error: 'Método não permitido.' });
   const professionalAccess = hasProfessionalAccess(event.headers?.cookie || event.headers?.Cookie || '');
-  if (process.env.ALLOW_DIRECT_ANALYSIS !== 'true' && !professionalAccess) {
-    return json(503, { error: 'A análise direta está desativada até ser ligado o pagamento. Contacte o atelier para avançar.' });
+  if (process.env.ALLOW_DIRECT_ANALYSIS === 'false' && !professionalAccess) {
+    return json(503, { error: 'A análise direta está temporariamente desativada.' });
   }
   if (!process.env.GEMINI_API_KEY) return json(503, { error: 'O serviço de análise não está configurado.' });
 
@@ -251,7 +253,18 @@ export const handler = async (event) => {
       documents: documents.length,
     }));
 
-    return json(200, { reply: renderReport(report), resumo: report.conclusao?.estado || 'Concluído' });
+    const reply = renderReport(report);
+    const reportText = reply.replace(/<br\s*\/?\s*>/gi, '\n').replace(/<\/p>|<\/li>|<\/tr>/gi, '\n').replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#039;/g, "'").replace(/\n\s*/g, '\n').trim();
+    let emailSent = false;
+    let emailError = null;
+    try {
+      await sendReportEmail({ to: body.email, reportText, reportHtml: reply });
+      emailSent = true;
+    } catch (emailFailure) {
+      console.error('automatic_report_email_error', emailFailure);
+      emailError = 'A análise foi concluída, mas não foi possível enviar automaticamente o relatório por e-mail.';
+    }
+    return json(200, { reply, resumo: report.conclusao?.estado || 'Concluído', emailSent, emailError });
   } catch (error) {
     console.error('analysis_error', error);
     if (error?.code === 'GEMINI_TIMEOUT') return json(503, { error: error.message });
