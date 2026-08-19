@@ -628,7 +628,7 @@
         <input type="email" id="meetingEmail" placeholder="Seu email" class="input-field" required>
       </div>
 
-      <button class="btn-submit" onclick="processMeetingBooking()">Solicitar agendamento (pagamento presencial no dia)</button>
+      <button class="btn-submit" id="meetingSubmitBtn" onclick="processMeetingBooking()">Solicitar agendamento (pagamento presencial no dia)</button>
     </div>
 
     <!-- PAINEL 3: PEDIR ORÇAMENTO -->
@@ -997,7 +997,7 @@
     if (meetingDateInput) meetingDateInput.min = getMinMeetingDate();
   });
 
-  function processMeetingBooking(){
+  async function processMeetingBooking(){
     const date = document.getElementById('meetingDate').value;
     const time = document.getElementById('meetingTimeSelect').value;
     const name = document.getElementById('meetingName').value.trim();
@@ -1005,16 +1005,38 @@
     const email = document.getElementById('meetingEmail').value.trim();
 
     if (!date || !time){ alert('Selecione a data e o horário preferencial para a reunião.'); return; }
-    if (!name || !phone || !email){ alert('Preencha os seus dados de contacto (nome, telefone e email).'); return; }
+    if (!name || !phone || !email || !email.includes('@')){ alert('Preencha os seus dados de contacto com um e-mail válido.'); return; }
 
-    alert(
+    const button = document.getElementById('meetingSubmitBtn');
+    const previous = button.textContent;
+    button.disabled = true; button.textContent = 'A verificar disponibilidade…';
+    try {
+      const availabilityResponse = await fetch('/.netlify/functions/verificar-disponibilidade-reuniao', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ date, time })
+      });
+      const availability = await readJsonResponse(availabilityResponse, 'A consulta ao calendário não devolveu uma resposta válida');
+      if (!availabilityResponse.ok) throw new Error(availability.error || 'Não foi possível consultar o calendário.');
+      if (!availability.available) throw new Error('Esse horário já não está disponível. Escolha outra data ou hora.');
+
+      button.textContent = 'A enviar pedido…';
+      const response = await fetch('/.netlify/functions/enviar-pedido-reuniao', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ date, time, name, phone, email })
+      });
+      const data = await readJsonResponse(response, 'O pedido de reunião não devolveu uma resposta válida');
+      if (!response.ok) throw new Error(data.error || 'Não foi possível enviar o pedido de reunião.');
+
+      alert(
       `Obrigado, ${name}!\n\n` +
       `Recebemos a sua preferência de agendamento para ${date} às ${time}.\n\n` +
       `📌 Estado do pedido:\n` +
+      `• Horário verificado como disponível no calendário.\n` +
       `• A data e hora serão confirmadas pelo nosso gabinete.\n` +
       `• Caso o horário não seja possível, entraremos em contacto para agilizar uma nova hora.\n` +
       `• Valor do serviço: 100,00€ (a pagar presencialmente no dia da reunião).`
-    );
+      );
+    } catch (error) {
+      alert(error.message || 'Não foi possível enviar o pedido de reunião.');
+    } finally { button.disabled = false; button.textContent = previous; }
   }
 
   function submitQuoteRequest(){
