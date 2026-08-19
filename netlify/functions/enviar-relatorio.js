@@ -1,5 +1,5 @@
-import PDFDocument from 'pdfkit';
 import { hasProfessionalAccess } from './lib/access.js';
+import { createProfessionalPdf } from './lib/report-pdf.js';
 
 const json = (statusCode, payload) => ({
   statusCode,
@@ -18,31 +18,6 @@ function validEmail(value = '') {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
-function createPdf(text) {
-  return new Promise((resolve, reject) => {
-    const document = new PDFDocument({ size: 'A4', margin: 46, info: { Title: 'Relatório Técnico Preliminar - PDM Loulé' } });
-    const chunks = [];
-    document.on('data', (chunk) => chunks.push(chunk));
-    document.on('error', reject);
-    document.on('end', () => resolve(Buffer.concat(chunks)));
-
-    document.font('Helvetica-Bold').fontSize(16).fillColor('#1F4B52').text('Relatório Técnico Preliminar - PDM Loulé');
-    document.moveDown(0.4);
-    document.font('Helvetica').fontSize(8).fillColor('#5D6866').text(`Gerado em ${new Date().toLocaleString('pt-PT')}`);
-    document.moveDown();
-
-    for (const rawLine of String(text).split(/\r?\n/)) {
-      const line = rawLine.trim();
-      if (!line) { document.moveDown(0.35); continue; }
-      const heading = /^(\d+\.|Resultado preliminar|Relatório de Análise Técnica|Documentação e identificação|Elementos extraídos|Regime e regras|Divergências|Informação não confirmada|Próximos passos)/i.test(line);
-      document.font(heading ? 'Helvetica-Bold' : 'Helvetica').fontSize(heading ? 10 : 9).fillColor(heading ? '#1F4B52' : '#17201F').text(line, { lineGap: 2 });
-    }
-    document.moveDown();
-    document.font('Helvetica').fontSize(7).fillColor('#5D6866').text('Este relatório é uma pré-análise e não substitui informação prévia, parecer municipal, levantamento topográfico ou validação por técnico habilitado.');
-    document.end();
-  });
-}
-
 export const handler = async (event) => {
   if (event.httpMethod !== 'POST') return json(405, { error: 'Método não permitido.' });
   const professionalAccess = hasProfessionalAccess(event.headers?.cookie || event.headers?.Cookie || '');
@@ -50,11 +25,11 @@ export const handler = async (event) => {
   if (!process.env.RESEND_API_KEY || !process.env.REPORT_FROM_EMAIL) return json(503, { error: 'O envio por e-mail ainda não está configurado.' });
 
   try {
-    const { to, reportText } = JSON.parse(event.body || '{}');
+    const { to, reportText, reportHtml } = JSON.parse(event.body || '{}');
     if (!validEmail(to)) return json(400, { error: 'Indique um e-mail de destino válido.' });
     if (!reportText || typeof reportText !== 'string' || reportText.length > 70000) return json(400, { error: 'O relatório a enviar é inválido ou demasiado extenso.' });
 
-    const pdf = await createPdf(reportText);
+    const pdf = await createProfessionalPdf({ reportHtml, reportText });
     const recipient = to.trim();
     const payload = {
       from: process.env.REPORT_FROM_EMAIL,
