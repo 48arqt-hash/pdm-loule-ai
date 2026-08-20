@@ -125,13 +125,14 @@ function renderReport(report) {
 }
 
 function officialRegulationSources(localizacao) {
+  const municipalSources = Array.isArray(localizacao?.municipio?.regulamentos) ? localizacao.municipio.regulamentos.filter((item) => item?.nome && item?.url) : [];
   const plans = Array.isArray(localizacao?.pdm) ? localizacao.pdm.map((item) => `${item?.valor || ''} ${item?.atributos?.NOME || ''}`).join(' ').toLowerCase() : '';
-  const sources = [];
+  const sources = [...municipalSources];
   if (plans.includes('quarteira') && (plans.includes('norte') || plans.includes('nordeste'))) {
     sources.push({ nome: 'Regulamento oficial do PU de Quarteira Norte-Nordeste', url: 'https://geoloule.cm-loule.pt/docs/regulamentos/pmots/PU_Quarteira_Nordeste_Regulamento.pdf' });
   }
-  sources.push({ nome: 'Regulamento oficial do PDM de Loulé', url: 'https://geoloule.cm-loule.pt/docs/regulamentos/pmots/PDM_Regulamento.pdf' });
-  sources.push({ nome: 'Regulamento Municipal de Urbanização e Edificação de Loulé (RMUE)', url: 'https://files.diariodarepublica.pt/2s/2024/08/155000000/0034300423.pdf' });
+  if (sources.length) return sources;
+  sources.push({ nome: 'Regulamento municipal aplicável - confirmação necessária', url: localizacao?.municipio?.geoportal || 'https://www.ccdr-alg.pt/site/info/mapa-interativo' });
   return sources;
 }
 
@@ -150,13 +151,14 @@ function buildPrompt({ objetivo, descricao, documents, localizacao, regulationSo
   const inventory = documents.length ? documents.map((doc) => `- ${doc.tipo}: ${doc.nome}`).join('\n') : '- Sem documentos PDF anexados.';
   const mapEvidence = localizacao ? JSON.stringify({
     coordenadas: localizacao.coordenadas,
+    municipio: { nome: localizacao.municipio?.nome || null, estado: localizacao.municipio?.estado || null, capacidade: localizacao.municipio?.capacidade || null, geoportal: localizacao.municipio?.geoportal || null },
     parcela: { referencia: localizacao.parcela?.referencia || null, declaracao: localizacao.parcela?.declaracao || null, propriedades: localizacao.parcela?.propriedades || null, geometria: localizacao.parcela?.geometria || null },
     pdm: localizacao.pdm || [],
     fontes: localizacao.fontes || [],
     consultadoEm: localizacao.consultadoEm,
   }) : 'Sem consulta geográfica do mapa.';
   const regulations = regulationSources.length ? regulationSources.map((item) => `- ${item.nome}: ${item.url}`).join('\n') : '- Não foi identificado automaticamente um regulamento específico para esta localização.';
-  return `És o módulo de pré-análise documental de um serviço de urbanismo para o Município de Loulé, Portugal.
+  return `És o módulo de pré-análise documental de um serviço de urbanismo para municípios do Algarve, Portugal. O concelho e o nível de cobertura técnica constam na consulta geográfica recebida.
 
 Objetivo declarado pelo cliente: ${objetivo || 'Não indicado'}
 Descrição do cliente: ${descricao || 'Não indicada'}
@@ -169,7 +171,7 @@ Tarefa:
 2. Confronta área, artigo matricial, freguesia, localização e coordenadas entre documentos e, quando existir, a consulta geográfica.
 3. Quando existir Planta de Localização oficial, identifica o polígono/área delimitada na planta e confronta-a com a parcela e coordenadas da consulta geográfica. Regista expressamente no relatório se a coincidência é aparente, divergente ou não verificável, indicando a fonte e o grau de confiança. Nunca apresentes uma sobreposição visual como georreferenciação rigorosa se o PDF não tiver elementos suficientes.
 4. Se a Planta de Localização incluir peças de ordenamento, condicionantes ou REN, descreve somente o que seja legível nessa peça e indica-a como evidência gráfica, não como confirmação normativa autónoma.
-5. Na secção "regras_aplicaveis", apresenta regras, artigos, índices, cérceas, pisos, afastamentos, usos ou condicionantes que estejam literalmente legíveis nos PDFs enviados. Cruza a delimitação aparente da planta com a parcela selecionada e com os elementos PDM/PUQNNE da consulta geográfica; reproduz esses parâmetros cartográficos explicitamente e identifica o plano aplicável. Os elementos da consulta geográfica cuja classificação venha de fonte de apoio DGT têm estado "Necessita verificação". Os regulamentos identificados servem para referência e validação posterior; não inventes o respetivo conteúdo. Identifica sempre a página e o artigo, quando constarem. Se a categoria exata de solo não for devolvida pela cartografia vetorial, explica quais as regras que dependem dessa categoria, sem escolher uma categoria por suposição. Nunca inventes valores ou artigos.
+5. Na secção "regras_aplicaveis", apresenta regras, artigos, índices, cérceas, pisos, afastamentos, usos ou condicionantes que estejam literalmente legíveis nos PDFs enviados. Cruza a delimitação aparente da planta com a parcela selecionada e com os elementos cartográficos municipais recebidos; reproduz esses parâmetros explicitamente e identifica o plano aplicável. Os elementos da consulta geográfica cuja classificação venha de fonte de apoio DGT têm estado "Necessita verificação". Os regulamentos identificados servem para referência e validação posterior; não inventes o respetivo conteúdo. Identifica sempre a página e o artigo, quando constarem. Se a categoria exata de solo não for devolvida pela cartografia vetorial, explica quais as regras que dependem dessa categoria, sem escolher uma categoria por suposição. Nunca inventes valores ou artigos.
 6. Distingue sempre: confirmado, necessita verificação, não identificado.
 7. Não apresentes aconselhamento jurídico nem uma decisão de licenciamento.
 

@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Leonel Mendes — Arquitetura e Engenharia | Loulé</title>
-<meta name="description" content="Atelier de Arquitetura e Engenharia em Loulé. Análise técnica automática do PDM, consultoria e projetos.">
+<title>Leonel Mendes — Arquitetura e Engenharia | Algarve</title>
+<meta name="description" content="Atelier de Arquitetura e Engenharia no Algarve. Pré-análise urbanística assistida por IA, consultoria e projetos.">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -488,7 +488,7 @@
   <p class="logo-hint">Sobre o atelier</p>
 
   <div id="aboutPanel" class="about-panel">
-    <strong>Arq. Leonel Mendes</strong> — Atelier de arquitetura e engenharia sediado em Loulé, dedicado a consultoria técnica especial e a projetos residenciais. Acompanhamos cada processo desde o enquadramento urbanístico até à obra, com especial atenção ao território e ao PDM local.
+    <strong>Arq. Leonel Mendes</strong> — Atelier de arquitetura e engenharia sediado em Loulé, dedicado a consultoria técnica especial e a projetos residenciais no Algarve. Acompanhamos cada processo desde o enquadramento urbanístico até à obra, com especial atenção ao território e aos planos aplicáveis.
   </div>
 
   <div class="header-branding">
@@ -498,7 +498,7 @@
 
   <div class="hero-summary">
     <p>Antes de comprar, projetar ou investir, perceba melhor o seu terreno.</p>
-    <small>Pré-análise documental especializada para Loulé, seguida de apoio técnico humano quando necessário.</small>
+    <small>Pré-análise urbanística para o Algarve, seguida de apoio técnico humano quando necessário.</small>
     <div class="result-steps"><span>Documentos organizados</span><span>Alertas de divergência</span><span>Próximos passos claros</span></div>
   </div>
 
@@ -547,7 +547,7 @@
       <div id="pdmStep1">
         <h4>1. Encontre e confirme o terreno</h4>
         <div class="map-search">
-          <input id="mapSearch" class="input-field" placeholder="Pesquise localidade ou morada em Loulé">
+          <input id="mapSearch" class="input-field" placeholder="Pesquise localidade ou morada no Algarve">
           <button class="btn-submit secondary" type="button" onclick="pesquisarNoMapa()">Procurar</button>
         </div>
         <div id="parcelMap" aria-label="Mapa para selecionar o terreno"></div>
@@ -791,11 +791,11 @@
     if (!query) return;
     status.textContent = 'A procurar localização…';
     try {
-      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=pt&q=${encodeURIComponent(`${query}, Loulé, Portugal`)}`);
+      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=pt&q=${encodeURIComponent(`${query}, Algarve, Portugal`)}`);
       const result = (await response.json())[0];
       if (!result) throw new Error('Localização não encontrada. Experimente uma localidade, rua ou coordenadas.');
       const lat = Number(result.lat), lng = Number(result.lon);
-      if (lat < 36.9 || lat > 37.5 || lng < -8.6 || lng > -7.7) throw new Error('Selecione uma localização dentro do concelho de Loulé.');
+      if (lat < 36.8 || lat > 37.75 || lng < -9.2 || lng > -7.05) throw new Error('Selecione uma localização dentro do Algarve.');
       map.setView([lat, lng], 17); consultarLocalizacao(lat, lng);
     } catch (error) { status.textContent = error.message; }
   }
@@ -828,7 +828,8 @@
       const layers = visibleLayers.length
         ? visibleLayers.map(item => `<li><strong>${escapeText(item.camada)}:</strong> ${escapeText(item.valor)}</li>`).join('')
         : '<li>Plano/uso do solo: informação técnica a confirmar no regulamento e nas plantas oficiais.</li>';
-      resultBox.innerHTML = `<strong>Localização selecionada</strong><br>${escapeText(cadastralId)}<ul>${layers}</ul><small>${escapeText(data.avisos.join(' '))}</small>`;
+      const municipality = data.municipio?.nome ? `<br><strong>Concelho:</strong> ${escapeText(data.municipio.nome)}${data.municipio.geoportal ? ` — <a href="${encodeURI(data.municipio.geoportal)}" target="_blank" rel="noopener">consultar geoportal municipal</a>` : ''}` : '';
+      resultBox.innerHTML = `<strong>Localização selecionada</strong>${municipality}<br>${escapeText(cadastralId)}<ul>${layers}</ul><small>${escapeText(data.avisos.join(' '))}</small>`;
       resultBox.style.display = 'block';
       status.textContent = 'Consulta geográfica concluída. Confirme se o limite destacado corresponde ao terreno pretendido e consulte as fontes indicadas.';
     } catch (error) { status.textContent = error.message; }
@@ -920,7 +921,7 @@
     const div = document.createElement('div');
     div.className = 'chat-msg report';
     div.innerHTML = `
-      <h4>📋 Relatório de Análise Técnica Preliminar — PDM Loulé</h4>
+      <h4>📋 Relatório de Pré-Análise Urbanística — Algarve</h4>
       <div style="color:var(--ink-soft); line-height:1.55;">${content}</div>
       <p style="font-size:.76rem; color:var(--ink-faint); margin-top:10px; margin-bottom:0;">Guarde esta pré-análise e contacte-nos para validação técnica, pedido de informação prévia ou projeto.</p>
       <div class="report-actions">
