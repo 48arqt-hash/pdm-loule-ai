@@ -1,3 +1,5 @@
+import { regulatoryContextFor } from './lib/territorial-data.js';
+
 const DGT_API = 'https://ogcapi.dgterritorio.gov.pt';
 const LOULÉ_PLANS = 'https://geoloule.cm-loule.pt/arcgisnprot/rest/services/Siteadmin/eploc_pmots_vigor/MapServer/15/query';
 const LOULÉ_ZONING = 'https://geoloule.cm-loule.pt/arcgisnprot/rest/services/MapasOnline/PMOT_vigor_ZONAM_MO/MapServer';
@@ -104,6 +106,19 @@ async function zoningFeatures(layerId, lat, lng) {
   return (await fetchJson(`${LOULÉ_ZONING}/${layerId}/query?${params}`)).features || [];
 }
 
+async function municipalOrderingFeatures(queryUrl, lat, lng) {
+  if (!queryUrl) return [];
+  const params = new URLSearchParams({
+    f: 'json',
+    geometry: JSON.stringify({ x: lng, y: lat, spatialReference: { wkid: 4326 } }),
+    geometryType: 'esriGeometryPoint', inSR: '4326', spatialRel: 'esriSpatialRelIntersects',
+    outFields: '*', returnGeometry: 'false',
+  });
+  const separator = queryUrl.includes('?') ? '&' : '?';
+  const response = await fetchJson(`${queryUrl}${separator}${params}`);
+  return response.features || [];
+}
+
 async function quarteiraNorthEastRules(lat, lng) {
   const responses = await Promise.allSettled([231, 232, 233].map((layerId) => zoningFeatures(layerId, lat, lng)));
   return responses.flatMap((response) => response.status === 'fulfilled' ? response.value : []).map((feature) => feature.attributes || {});
@@ -138,6 +153,11 @@ function pdmRulesForLandUse(landUseLabel, parcelArea) {
   ];
 }
 
+function officialClassification(attributes = {}) {
+  const value = readableValue(attributes) || propertyValue(attributes, ['categoria', 'subcategoria', 'classe', 'designacao', 'designação', 'uso_solo', 'uso do solo']);
+  return value && !/^\d+$/.test(String(value).trim()) ? String(value).trim() : null;
+}
+
 export const handler = async (event) => {
   if (event.httpMethod !== 'POST') return json(405, { error: 'Método não permitido.' });
   try {
@@ -156,6 +176,11 @@ export const handler = async (event) => {
     const planFeatures = plans;
     const hasQuarteiraNorthEastPlan = planFeatures.some((feature) => /quarteira.*norte|norte.*nordeste/i.test(`${feature.attributes?.NOME || ''} ${feature.attributes?.TIPO || ''}`));
     const zoning = hasQuarteiraNorthEastPlan ? await quarteiraNorthEastRules(lat, lng) : [];
+    const faroOrdering = municipality?.nome === 'Faro'
+      ? await municipalOrderingFeatures(process.env.FARO_PDM_ORDERING_QUERY_URL, lat, lng).catch((error) => { console.warn('faro_ordering_unavailable', error.message); return []; })
+      : [];
+    const faroClassification = officialClassification(faroOrdering[0]?.attributes || {});
+    const regulatoryContext = regulatoryContextFor(municipality?.nome, faroClassification);
     const landUseLabel = use ? readableValue(use.properties) : null;
     const parcelArea = propertyValue(parcel?.properties || {}, ['area', 'area_m2', 'area_ha', 'area_parcela']);
     const results = [
@@ -163,6 +188,8 @@ export const handler = async (event) => {
       ...(municipality ? [{ camada: 'Cobertura da pré-análise', valor: municipality.estado }] : []),
       ...(landUseLabel ? [{ camada: 'Regime de uso do solo (DGT)', valor: landUseLabel, atributos: use.properties || {} }] : []),
       ...pdmRulesForLandUse(landUseLabel, parcelArea),
+      ...(faroClassification ? [{ camada: 'Classificação do solo — PDM de Faro (camada vetorial oficial)', valor: faroClassification, atributos: faroOrdering[0]?.attributes || {} }] : []),
+      ...regulatoryContext.rules.map((rule) => ({ camada: rule.camada, valor: rule.valor, artigo: rule.artigo, pagina: rule.pagina, fonte: rule.fonte?.documento || 'Regulamento municipal' })),
       ...planFeatures.map((feature) => ({ camada: 'Plano municipal em vigor (CML)', valor: feature.attributes?.NOME || feature.attributes?.TIPO || null, atributos: feature.attributes || {} })),
       ...zoning.flatMap(zoningResult),
     ];
@@ -172,12 +199,13 @@ export const handler = async (event) => {
         ...(parcel ? [] : ['A Carta Cadastral Digital não devolveu uma parcela para este ponto. Pode tratar-se de cobertura incompleta, limite impreciso ou de prédio não representado na fonte pública.']),
         ...(!use ? ['Não foi possível obter uma classificação de uso do solo vetorial neste ponto.'] : []),
         ...(use && !landUseLabel ? ['O regime de uso do solo foi encontrado, mas a fonte pública devolveu apenas um código técnico sem designação legível. Esse código não é apresentado ao cliente.'] : []),
+        ...(municipality?.nome === 'Faro' && !process.env.FARO_PDM_ORDERING_QUERY_URL ? ['A base regulamentar do PDM de Faro está preparada, mas falta configurar a ligação oficial à camada vetorial de ordenamento. Por isso ainda não são atribuídas regras específicas à parcela.'] : []),
         ...(municipality?.geoportal ? [`Consulte também o geoportal municipal de ${municipality.nome} para confirmação das plantas e legendas em vigor: ${municipality.geoportal}`] : []),
         'A classificação cartográfica do plano é cruzada automaticamente quando a camada vetorial oficial estiver disponível. A aplicação final do regulamento depende da geometria exata da propriedade e da pretensão apresentada.',
         'O resultado é preliminar e deve ser confirmado pelos diplomas, regulamentos e representações gráficas oficiais.',
       ],
       municipio: municipality,
-      fontes: ['Direção-Geral do Território — OGC API: Cadastro Predial, CAOP e Carta do Regime de Uso do Solo (CC-BY 4.0)', ...(municipality?.geoportal ? [`Município de ${municipality.nome} — Geoportal/planos municipais`] : []), ...(hasQuarteiraNorthEastPlan ? ['Câmara Municipal de Loulé — PU de Quarteira Norte-Nordeste: categorias de espaço e parâmetros cartográficos'] : [])], consultadoEm: new Date().toISOString(),
+      fontes: ['Direção-Geral do Território — OGC API: Cadastro Predial, CAOP e Carta do Regime de Uso do Solo (CC-BY 4.0)', ...(municipality?.geoportal ? [`Município de ${municipality.nome} — Geoportal/planos municipais`] : []), ...regulatoryContext.sources.map((source) => `${source.documento} (${source.versao}) — ${source.url}`), ...(hasQuarteiraNorthEastPlan ? ['Câmara Municipal de Loulé — PU de Quarteira Norte-Nordeste: categorias de espaço e parâmetros cartográficos'] : [])], consultadoEm: new Date().toISOString(),
     });
   } catch (error) { console.error('parcel_lookup_error', error); return json(502, { error: 'Não foi possível consultar as fontes geográficas oficiais neste momento.' }); }
 };
