@@ -156,8 +156,43 @@ async function aerialContext(location) {
     return { image, bbox, points };
   } catch (error) {
     console.warn('aerial_context_unavailable', error.message);
+  }
+
+  // Alguns servidores bloqueiam a exportação estática. Neste caso, monta-se uma
+  // vista aérea a partir dos mosaicos oficiais, mantendo a imagem no PDF.
+  const centerLon = (minLon + maxLon) / 2;
+  const centerLat = (minLat + maxLat) / 2;
+  const zoom = span > 0.025 ? 14 : span > 0.006 ? 16 : 18;
+  const n = 2 ** zoom;
+  const tileX = (lon) => Math.floor(((lon + 180) / 360) * n);
+  const tileY = (lat) => Math.floor((1 - Math.asinh(Math.tan((lat * Math.PI) / 180)) / Math.PI) / 2 * n);
+  const tileLon = (x) => (x / n) * 360 - 180;
+  const tileLat = (y) => (Math.atan(Math.sinh(Math.PI * (1 - (2 * y) / n))) * 180) / Math.PI;
+  const centerX = tileX(centerLon); const centerY = tileY(centerLat);
+  const requests = [];
+  for (let y = centerY - 1; y <= centerY + 1; y += 1) {
+    for (let x = centerX - 1; x <= centerX + 1; x += 1) {
+      const safeX = ((x % n) + n) % n;
+      const safeY = Math.max(0, Math.min(n - 1, y));
+      requests.push(fetch(`https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${zoom}/${safeY}/${safeX}`, { signal: AbortSignal.timeout(5000) })
+        .then(async (response) => {
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          return { x, y, image: Buffer.from(await response.arrayBuffer()) };
+        }));
+    }
+  }
+  const attempts = await Promise.allSettled(requests);
+  const tiles = attempts.filter((attempt) => attempt.status === 'fulfilled' && attempt.value.image.length).map((attempt) => attempt.value);
+  if (tiles.length < 5) {
+    console.warn('aerial_tiles_unavailable', JSON.stringify({ received: tiles.length }));
     return null;
   }
+  return {
+    tiles,
+    tileOrigin: { x: centerX - 1, y: centerY - 1 },
+    bbox: [tileLon(centerX - 1), tileLat(centerY + 2), tileLon(centerX + 2), tileLat(centerY - 1)],
+    points,
+  };
 }
 
 function drawLocationMap(doc, aerial, location) {
@@ -165,7 +200,16 @@ function drawLocationMap(doc, aerial, location) {
   ensureSpace(doc, 360);
   drawSectionTitle(doc, 'Localização analisada');
   const x = 47; const y = doc.y; const width = 501; const height = 300;
-  doc.image(aerial.image, x, y, { width, height });
+  if (aerial.image) {
+    doc.image(aerial.image, x, y, { width, height });
+  } else {
+    const tileWidth = width / 3; const tileHeight = height / 3;
+    aerial.tiles.forEach((tile) => {
+      const tileX = x + (tile.x - aerial.tileOrigin.x) * tileWidth;
+      const tileY = y + (tile.y - aerial.tileOrigin.y) * tileHeight;
+      doc.image(tile.image, tileX, tileY, { width: tileWidth + 0.4, height: tileHeight + 0.4 });
+    });
+  }
   const [minLon, minLat, maxLon, maxLat] = aerial.bbox;
   const toPoint = ([lon, lat]) => [x + ((lon - minLon) / (maxLon - minLon)) * width, y + height - ((lat - minLat) / (maxLat - minLat)) * height];
   if (aerial.points.length > 1) {
