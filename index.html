@@ -635,13 +635,8 @@
     <!-- PAINEL 3: PEDIR ORÇAMENTO -->
     <div id="quotePanel" class="feature-panel">
       <h3>Pedir Orçamento de Projeto</h3>
-      <div class="price-tag">Elaboração do orçamento: Grátis</div>
-      <p>A elaboração da proposta orçamental é gratuita. Para uma proposta rigorosa é recomendada uma Análise de Viabilidade Técnica prévia (50 €).</p>
-
-      <div class="checkbox-container">
-        <input type="checkbox" id="viabilityCheck" checked>
-        <label for="viabilityCheck">Incluir Análise Técnica de Viabilidade (50 €)</label>
-      </div>
+      <div class="price-tag">Análise técnica de viabilidade — 100,00 €</div>
+      <p>O custo imputado corresponde à análise técnica de viabilidade necessária para enquadrar o pedido e preparar uma proposta de orçamento informada.</p>
 
       <h4>Contacto &amp; faturação</h4>
       <input type="text" id="quoteName" placeholder="Nome completo" class="input-field" required>
@@ -1048,7 +1043,6 @@
     const email = document.getElementById('quoteEmail').value.trim();
     const phone = document.getElementById('quotePhone').value.trim();
     const description = document.getElementById('quoteDescription').value.trim();
-    const includeViability = document.getElementById('viabilityCheck').checked;
     const documents = [...(document.getElementById('quoteDocsInput').files || [])].map((file) => file.name);
     if (!name || !phone || !description || !email.includes('@')) { alert('Preencha o nome, e-mail, telefone e descrição do projeto.'); return; }
 
@@ -1058,7 +1052,7 @@
     try {
       const response = await fetch('/.netlify/functions/enviar-pedido-orcamento', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, phone, description, includeViability, documents })
+        body: JSON.stringify({ name, email, phone, description, documents })
       });
       const data = await readJsonResponse(response, 'O pedido de orçamento não devolveu uma resposta válida');
       if (!response.ok) throw new Error(data.error || `resposta ${response.status} do servidor`);
