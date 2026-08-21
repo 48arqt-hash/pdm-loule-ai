@@ -3,6 +3,9 @@ import { sendReportEmail } from './lib/report-email.js';
 
 const MAX_DOCUMENTS = 4;
 const MAX_DOCUMENT_BYTES = 10 * 1024 * 1024;
+// O pedido completo passa pela Netlify em base64. O limite efetivo para os
+// documentos é inferior ao limite por ficheiro, para não provocar HTTP 413.
+const MAX_TOTAL_DOCUMENT_BYTES = 4 * 1024 * 1024;
 const MAX_OFFICIAL_REGULATION_BYTES = 5 * 1024 * 1024;
 // Deixa margem antes do limite de execução da Netlify, evitando uma página 504.
 const MAX_GEMINI_WAIT_MS = 11_000;
@@ -209,14 +212,19 @@ export const handler = async (event) => {
       return json(400, { error: 'Selecione uma localização no mapa ou anexe a Planta de Localização.' });
     }
 
+    let totalDocumentBytes = 0;
     for (const document of documents) {
       if (!ALLOWED_TYPES.has(document.tipo) || !document.base64 || !document.nome) {
         return json(400, { error: 'Foi recebido um documento inválido.' });
       }
       const estimatedBytes = Math.floor((document.base64.length * 3) / 4);
+      totalDocumentBytes += estimatedBytes;
       if (estimatedBytes > MAX_DOCUMENT_BYTES) {
         return json(413, { error: `${document.nome} excede o limite de 10 MB.` });
       }
+    }
+    if (totalDocumentBytes > MAX_TOTAL_DOCUMENT_BYTES) {
+      return json(413, { error: 'Os documentos selecionados excedem o limite técnico de 4 MB para envio online. Remova-os e faça a pré-análise diretamente pelo terreno selecionado no mapa, cadastro e camadas do PDM.' });
     }
 
     const regulationSources = officialRegulationSources(body.localizacao);

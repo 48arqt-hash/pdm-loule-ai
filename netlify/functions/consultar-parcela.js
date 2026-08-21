@@ -18,21 +18,49 @@ const MUNICIPAL_PROFILES = {
 const MUNICIPALITY_CODES = { '0801': 'albufeira', '0802': 'alcoutim', '0803': 'aljezur', '0804': 'castromarim', '0805': 'faro', '0806': 'lagoa', '0807': 'lagos', '0808': 'loule', '0809': 'monchique', '0810': 'olhao', '0811': 'portimao', '0812': 'saobrasdealportel', '0813': 'silves', '0814': 'tavira', '0815': 'viladobispo', '0816': 'vilarealdesantoantonio' };
 
 const json = (statusCode, payload) => ({ statusCode, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }, body: JSON.stringify(payload) });
-async function fetchJson(url) { const response = await fetch(url, { headers: { Accept: 'application/json' } }); if (!response.ok) throw new Error(`Fonte oficial indisponível (${response.status}).`); return response.json(); }
+async function fetchJson(url) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 9_000);
+  try {
+    const response = await fetch(url, { headers: { Accept: 'application/json' }, signal: controller.signal });
+    if (!response.ok) throw new Error(`Fonte oficial indisponível (${response.status}).`);
+    return response.json();
+  } finally {
+    clearTimeout(timeout);
+  }
+}
 
 async function findCollection(...terms) {
   if (!collectionsCache) collectionsCache = fetchJson(`${DGT_API}/collections?f=json`);
-  const { collections = [] } = await collectionsCache;
+  let collections;
+  try {
+    ({ collections = [] } = await collectionsCache);
+  } catch (error) {
+    // Não manter em memória uma promessa rejeitada: uma indisponibilidade breve
+    // da DGT não pode impedir todas as consultas seguintes desta função.
+    collectionsCache = null;
+    throw error;
+  }
   const required = terms.map((term) => term.toLowerCase());
   const collection = collections.find((item) => required.every((term) => `${item.id || ''} ${item.title || ''} ${item.description || ''}`.toLowerCase().includes(term)));
   if (!collection?.id) throw new Error(`Coleção DGT não encontrada: ${terms.join(' ')}.`);
   return collection.id;
 }
 
-async function featuresNear(collectionId, lat, lng) {
-  const delta = 0.00035;
-  const params = new URLSearchParams({ bbox: `${lng - delta},${lat - delta},${lng + delta},${lat + delta}`, limit: '100', f: 'json' });
+async function featuresNear(collectionId, lat, lng, delta = 0.00035) {
+  const params = new URLSearchParams({ bbox: `${lng - delta},${lat - delta},${lng + delta},${lat + delta}`, limit: '200', f: 'json' });
   return (await fetchJson(`${DGT_API}/collections/${encodeURIComponent(collectionId)}/items?${params}`)).features || [];
+}
+
+async function featureAt(collectionId, lat, lng) {
+  // A primeira consulta é muito localizada. A segunda apenas amplia a janela
+  // de pesquisa; a seleção continua a exigir que o ponto esteja dentro do polígono.
+  for (const delta of [0.00035, 0.0015]) {
+    const features = await featuresNear(collectionId, lat, lng, delta);
+    const match = features.find((feature) => containsPoint(feature, [lng, lat]));
+    if (match) return match;
+  }
+  return null;
 }
 
 function insideRing(point, ring) {
@@ -84,7 +112,7 @@ function municipalityProfile(name = '') {
 
 async function municipalityAt(lat, lng) {
   const caop = await findCollection('caop');
-  const feature = (await featuresNear(caop, lat, lng)).find((item) => containsPoint(item, [lng, lat]));
+  const feature = await featureAt(caop, lat, lng);
   const rawName = municipalityName(feature?.properties || {});
   const code = propertyValue(feature?.properties || {}, ['dtmn', 'codigo_municipio', 'código_município', 'dicofre']);
   const profile = municipalityProfile(rawName) || municipalityProfile(code);
@@ -164,15 +192,14 @@ export const handler = async (event) => {
     const { latitude, longitude } = JSON.parse(event.body || '{}'); const lat = Number(latitude); const lng = Number(longitude);
     if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < ALGARVE.minLat || lat > ALGARVE.maxLat || lng < ALGARVE.minLng || lng > ALGARVE.maxLng) return json(400, { error: 'Selecione uma localização dentro do Algarve.' });
     const [cadastre, landUse, municipalityResult] = await Promise.allSettled([
-      findCollection('cadastro', 'predial').then((id) => featuresNear(id, lat, lng)),
-      findCollection('crus').then((id) => featuresNear(id, lat, lng)),
+      findCollection('cadastro', 'predial').then((id) => featureAt(id, lat, lng)),
+      findCollection('crus').then((id) => featureAt(id, lat, lng)),
       municipalityAt(lat, lng),
     ]);
     const municipality = municipalityResult.status === 'fulfilled' ? municipalityResult.value : null;
     const plans = municipality?.nome === 'Loulé' ? await Promise.allSettled([municipalPlans(lat, lng)]).then(([result]) => result.status === 'fulfilled' ? result.value : []) : [];
-    const point = [lng, lat];
-    const parcel = (cadastre.status === 'fulfilled' ? cadastre.value : []).find((feature) => containsPoint(feature, point)) || null;
-    const use = (landUse.status === 'fulfilled' ? landUse.value : []).find((feature) => containsPoint(feature, point)) || null;
+    const parcel = cadastre.status === 'fulfilled' ? cadastre.value : null;
+    const use = landUse.status === 'fulfilled' ? landUse.value : null;
     const planFeatures = plans;
     const hasQuarteiraNorthEastPlan = planFeatures.some((feature) => /quarteira.*norte|norte.*nordeste/i.test(`${feature.attributes?.NOME || ''} ${feature.attributes?.TIPO || ''}`));
     const zoning = hasQuarteiraNorthEastPlan ? await quarteiraNorthEastRules(lat, lng) : [];
@@ -196,7 +223,8 @@ export const handler = async (event) => {
     return json(200, {
       coordenadas: { latitude: lat, longitude: lng }, parcela: parcel ? { id: parcel.id || null, ...cadastralIdentification(parcel.properties || {}, parcel.id || null), propriedades: parcel.properties || {}, geometria: parcel.geometry || null } : null, pdm: results,
       avisos: [
-        ...(parcel ? [] : ['A Carta Cadastral Digital não devolveu uma parcela para este ponto. Pode tratar-se de cobertura incompleta, limite impreciso ou de prédio não representado na fonte pública.']),
+        ...(cadastre.status === 'rejected' ? ['A fonte do Cadastro Predial da DGT não respondeu nesta tentativa. Tente novamente dentro de alguns segundos; não foi selecionado qualquer polígono por aproximação.'] : []),
+        ...(cadastre.status === 'fulfilled' && !parcel ? ['A Carta Cadastral Digital não devolveu uma parcela para este ponto. Pode tratar-se de cobertura incompleta, limite impreciso ou de prédio não representado na fonte pública.'] : []),
         ...(!use ? ['Não foi possível obter uma classificação de uso do solo vetorial neste ponto.'] : []),
         ...(use && !landUseLabel ? ['O regime de uso do solo foi encontrado, mas a fonte pública devolveu apenas um código técnico sem designação legível. Esse código não é apresentado ao cliente.'] : []),
         ...(municipality?.nome === 'Faro' && !process.env.FARO_PDM_ORDERING_QUERY_URL ? ['A base regulamentar do PDM de Faro está preparada, mas falta configurar a ligação oficial à camada vetorial de ordenamento. Por isso ainda não são atribuídas regras específicas à parcela.'] : []),

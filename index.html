@@ -564,7 +564,7 @@
           <span id="pdmOptionalDocsText">＋ Caderneta, registo predial ou levantamento (opcionais, até 3 PDFs)</span>
           <input type="file" id="pdmOptionalDocsInput" multiple accept="application/pdf" style="display:none;" onchange="updateDocuments()">
         </div>
-        <p class="secure-note">O mapa é suficiente para iniciar a pré-análise. Máximo de 4 documentos; 10 MB por ficheiro. Caderneta, registo predial, levantamento ou planta ajudam a confirmar limites e áreas.</p>
+        <p class="secure-note">O mapa e o cadastro são suficientes para iniciar a pré-análise. Os documentos são opcionais; para envio online, o conjunto tem o limite técnico de 4 MB. Uma Planta de Localização maior não impede a análise geográfica no mapa.</p>
 
         <h4>3. O que pretende fazer?</h4>
         <select id="pdmObjetivo" class="input-field">
@@ -849,8 +849,16 @@
     const optional = Array.from(document.getElementById('pdmOptionalDocsInput').files || []);
     const error = document.getElementById('pdmError');
     error.style.display = 'none';
-    if (optional.length > 3 || [primary, ...optional].filter(Boolean).some(file => file.size > 10 * 1024 * 1024)) {
+    const files = [primary, ...optional].filter(Boolean);
+    const totalBytes = files.reduce((total, file) => total + file.size, 0);
+    if (optional.length > 3 || files.some(file => file.size > 10 * 1024 * 1024)) {
       error.textContent = 'Pode enviar até 4 PDFs, com máximo de 10 MB por ficheiro.'; error.style.display = 'block'; return;
+    }
+    if (totalBytes > 4 * 1024 * 1024) {
+      pdmDocuments = [];
+      document.getElementById('pdmUploadText').textContent = primary ? `⚠ ${primary.name} não será enviado (${(primary.size / 1024 / 1024).toFixed(1)} MB)` : '📁 Planta de Localização (opcional, PDF)';
+      document.getElementById('pdmOptionalDocsText').textContent = '＋ Documentos não anexados — a análise usará mapa, cadastro e PDM';
+      error.textContent = 'Os documentos ultrapassam o limite técnico de 4 MB para envio online. Pode continuar: a análise será feita pela localização selecionada no mapa, cadastro e camadas do PDM.'; error.style.display = 'block'; return;
     }
     try {
       pdmDocuments = await Promise.all([...(primary ? [fileAsDocument(primary, true)] : []), ...optional.map(file => fileAsDocument(file, false))]);
