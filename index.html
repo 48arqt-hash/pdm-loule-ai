@@ -873,20 +873,27 @@
     const erroEl = document.getElementById('pdmError');
     const btn = document.getElementById('pdmSubmitBtn');
     erroEl.style.display = 'none';
+    // Proteção final: mesmo que um ficheiro grande tenha ficado selecionado
+    // numa versão anterior da página, nunca o enviar para a Netlify.
+    const MAX_ONLINE_DOCUMENT_BYTES = 4 * 1024 * 1024;
+    const documentsBytes = pdmDocuments.reduce((total, doc) => total + Math.floor((String(doc.base64 || '').length * 3) / 4), 0);
+    const documentsForAnalysis = documentsBytes <= MAX_ONLINE_DOCUMENT_BYTES ? pdmDocuments : [];
+    const documentsSkipped = pdmDocuments.length > 0 && documentsForAnalysis.length === 0;
     if (!email || !email.includes('@')) { erroEl.textContent = 'Introduza um e-mail válido.'; erroEl.style.display = 'block'; return; }
-    if (!selectedLocation && !pdmDocuments.some(doc => doc.tipo === 'planta_localizacao')) { erroEl.textContent = 'Selecione o terreno no mapa ou anexe a Planta de Localização oficial.'; erroEl.style.display = 'block'; return; }
+    if (!selectedLocation && !documentsForAnalysis.some(doc => doc.tipo === 'planta_localizacao')) { erroEl.textContent = 'Selecione o terreno no mapa ou anexe uma Planta de Localização com menos de 4 MB.'; erroEl.style.display = 'block'; return; }
     if (!consent) { erroEl.textContent = 'Confirme a autorização para tratar os documentos nesta análise.'; erroEl.style.display = 'block'; return; }
 
-    btn.disabled = true; btn.textContent = 'A analisar documentação…';
+    btn.disabled = true; btn.textContent = documentsSkipped ? 'A analisar mapa e cadastro…' : 'A analisar documentação…';
     const loading = addMsg('<span class="spinner"></span> A ler os documentos, cruzar os dados e preparar a pré-análise…', 'system processing');
     try {
       const resp = await fetch('/.netlify/functions/analisar-planta', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, documentos: pdmDocuments, localizacao: selectedLocation, objetivo: document.getElementById('pdmObjetivo').value, descricao: document.getElementById('pdmUserMsg').value.trim() })
+        body: JSON.stringify({ email, documentos: documentsForAnalysis, localizacao: selectedLocation, objetivo: document.getElementById('pdmObjetivo').value, descricao: document.getElementById('pdmUserMsg').value.trim() })
       });
       const data = await readJsonResponse(resp, 'A análise não devolveu uma resposta válida');
       if (!resp.ok) throw new Error(data.error || `Não foi possível concluir a análise (resposta ${resp.status} do servidor).`);
       loading.remove(); renderReport(data.reply);
+      if (documentsSkipped) addMsg('ℹ Os PDFs selecionados não foram enviados por excederem o limite técnico. Esta pré-análise foi realizada pela parcela selecionada, cadastro e camadas territoriais disponíveis.', 'system');
       if (data.emailSent) addMsg(`✓ Relatório em PDF enviado para ${escapeText(email)} e registado no atelier.`, 'system');
       if (data.emailError) addMsg(`⚠ ${escapeText(data.emailError)} Pode tentar o envio manual abaixo.`, 'system');
     } catch (err) {

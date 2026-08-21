@@ -3,6 +3,8 @@ import { regulatoryContextFor } from './lib/territorial-data.js';
 const DGT_API = 'https://ogcapi.dgterritorio.gov.pt';
 const LOULÉ_PLANS = 'https://geoloule.cm-loule.pt/arcgisnprot/rest/services/Siteadmin/eploc_pmots_vigor/MapServer/15/query';
 const LOULÉ_ZONING = 'https://geoloule.cm-loule.pt/arcgisnprot/rest/services/MapasOnline/PMOT_vigor_ZONAM_MO/MapServer';
+const FARO_WMS = 'https://mapas.cm-faro.pt/geoserver/wms';
+const FARO_ORDERING_LAYER = 'pdm2024:1_1_P_Ordenamento_MOT';
 let collectionsCache;
 
 const ALGARVE = { minLat: 36.8, maxLat: 37.75, minLng: -9.2, maxLng: -7.05 };
@@ -147,6 +149,36 @@ async function municipalOrderingFeatures(queryUrl, lat, lng) {
   return response.features || [];
 }
 
+function textFromHtml(value = '') {
+  return String(value).replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function featureInfoProperties(payload) {
+  if (Array.isArray(payload?.features) && payload.features.length) return payload.features[0]?.properties || {};
+  if (payload?.properties && typeof payload.properties === 'object') return payload.properties;
+  return {};
+}
+
+async function faroVisualOrderingAt(lat, lng) {
+  // A planta municipal é disponibilizada como WMS. Primeiro tentamos obter a
+  // identificação da feição pelo GetFeatureInfo; a leitura por legenda só é
+  // usada como interpretação cartográfica preliminar, nunca como confirmação vetorial.
+  const delta = 0.00018;
+  const params = new URLSearchParams({
+    SERVICE: 'WMS', VERSION: '1.3.0', REQUEST: 'GetFeatureInfo',
+    LAYERS: FARO_ORDERING_LAYER, QUERY_LAYERS: FARO_ORDERING_LAYER,
+    CRS: 'EPSG:4326', BBOX: `${lat - delta},${lng - delta},${lat + delta},${lng + delta}`,
+    WIDTH: '101', HEIGHT: '101', I: '50', J: '50', INFO_FORMAT: 'application/json', FEATURE_COUNT: '5',
+  });
+  const response = await fetch(`${FARO_WMS}?${params}`, { headers: { Accept: 'application/json, text/html;q=0.8, text/plain;q=0.7' } });
+  if (!response.ok) throw new Error(`WMS Faro indisponível (${response.status}).`);
+  const raw = await response.text();
+  let properties = {};
+  try { properties = featureInfoProperties(raw ? JSON.parse(raw) : {}); } catch { properties = { descricao_wms: textFromHtml(raw) }; }
+  const label = officialClassification(properties);
+  return { label, properties, raw: raw.slice(0, 1500) };
+}
+
 async function quarteiraNorthEastRules(lat, lng) {
   const responses = await Promise.allSettled([231, 232, 233].map((layerId) => zoningFeatures(layerId, lat, lng)));
   return responses.flatMap((response) => response.status === 'fulfilled' ? response.value : []).map((feature) => feature.attributes || {});
@@ -206,7 +238,11 @@ export const handler = async (event) => {
     const faroOrdering = municipality?.nome === 'Faro'
       ? await municipalOrderingFeatures(process.env.FARO_PDM_ORDERING_QUERY_URL, lat, lng).catch((error) => { console.warn('faro_ordering_unavailable', error.message); return []; })
       : [];
-    const faroClassification = officialClassification(faroOrdering[0]?.attributes || {});
+    const faroVisualOrdering = municipality?.nome === 'Faro'
+      ? await faroVisualOrderingAt(lat, lng).catch((error) => { console.warn('faro_visual_ordering_unavailable', error.message); return null; })
+      : null;
+    const faroClassification = officialClassification(faroOrdering[0]?.attributes || {}) || faroVisualOrdering?.label || null;
+    const faroClassificationMethod = faroOrdering.length ? 'camada vetorial oficial' : faroVisualOrdering?.label ? 'leitura por ponto da planta de ordenamento WMS' : null;
     const regulatoryContext = regulatoryContextFor(municipality?.nome, faroClassification);
     const landUseLabel = use ? readableValue(use.properties) : null;
     const parcelArea = propertyValue(parcel?.properties || {}, ['area', 'area_m2', 'area_ha', 'area_parcela']);
@@ -215,7 +251,7 @@ export const handler = async (event) => {
       ...(municipality ? [{ camada: 'Cobertura da pré-análise', valor: municipality.estado }] : []),
       ...(landUseLabel ? [{ camada: 'Regime de uso do solo (DGT)', valor: landUseLabel, atributos: use.properties || {} }] : []),
       ...pdmRulesForLandUse(landUseLabel, parcelArea),
-      ...(faroClassification ? [{ camada: 'Classificação do solo — PDM de Faro (camada vetorial oficial)', valor: faroClassification, atributos: faroOrdering[0]?.attributes || {} }] : []),
+      ...(faroClassification ? [{ camada: `Classificação do solo — PDM de Faro (${faroClassificationMethod})`, valor: faroClassification, atributos: faroOrdering[0]?.attributes || faroVisualOrdering?.properties || {} }] : []),
       ...regulatoryContext.rules.map((rule) => ({ camada: rule.camada, valor: rule.valor, artigo: rule.artigo, pagina: rule.pagina, fonte: rule.fonte?.documento || 'Regulamento municipal' })),
       ...planFeatures.map((feature) => ({ camada: 'Plano municipal em vigor (CML)', valor: feature.attributes?.NOME || feature.attributes?.TIPO || null, atributos: feature.attributes || {} })),
       ...zoning.flatMap(zoningResult),
@@ -227,7 +263,8 @@ export const handler = async (event) => {
         ...(cadastre.status === 'fulfilled' && !parcel ? ['A Carta Cadastral Digital não devolveu uma parcela para este ponto. Pode tratar-se de cobertura incompleta, limite impreciso ou de prédio não representado na fonte pública.'] : []),
         ...(!use ? ['Não foi possível obter uma classificação de uso do solo vetorial neste ponto.'] : []),
         ...(use && !landUseLabel ? ['O regime de uso do solo foi encontrado, mas a fonte pública devolveu apenas um código técnico sem designação legível. Esse código não é apresentado ao cliente.'] : []),
-        ...(municipality?.nome === 'Faro' && !process.env.FARO_PDM_ORDERING_QUERY_URL ? ['A base regulamentar do PDM de Faro está preparada, mas falta configurar a ligação oficial à camada vetorial de ordenamento. Por isso ainda não são atribuídas regras específicas à parcela.'] : []),
+        ...(municipality?.nome === 'Faro' && faroClassificationMethod === 'leitura por ponto da planta de ordenamento WMS' ? ['A classe foi obtida por consulta da planta de ordenamento visual publicada pelo Município de Faro. A categoria e as regras são uma interpretação cartográfica preliminar e exigem confirmação municipal ou acesso à camada vetorial oficial.'] : []),
+        ...(municipality?.nome === 'Faro' && !faroClassification ? ['A Planta de Ordenamento do PDM de Faro respondeu sem atributo de categoria neste ponto. A leitura automática por cor/legenda será tratada como preliminar até ser disponibilizada a camada vetorial municipal.'] : []),
         ...(municipality?.geoportal ? [`Consulte também o geoportal municipal de ${municipality.nome} para confirmação das plantas e legendas em vigor: ${municipality.geoportal}`] : []),
         'A classificação cartográfica do plano é cruzada automaticamente quando a camada vetorial oficial estiver disponível. A aplicação final do regulamento depende da geometria exata da propriedade e da pretensão apresentada.',
         'O resultado é preliminar e deve ser confirmado pelos diplomas, regulamentos e representações gráficas oficiais.',

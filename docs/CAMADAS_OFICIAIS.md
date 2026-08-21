@@ -20,6 +20,10 @@ Base regulamentar preparada a partir da Revisão do PDM de Faro, Aviso n.º 2094
 
 Para ativar o cruzamento automático, configurar na Netlify a variável `FARO_PDM_ORDERING_QUERY_URL` com o URL completo do endpoint `query` da camada de ordenamento (ArcGIS Feature/Map Service). A função acrescenta os parâmetros de consulta espacial necessários. O URL deve permitir `POST`/`GET` público, devolver JSON e disponibilizar os atributos da categoria de solo.
 
+### Estado de confirmação — 21-08-2026
+
+O geoportal municipal disponibiliza a Planta 1.1 — Modelo de Organização do Território como WMS `pdm2024:1_1_P_Ordenamento_MOT`, no endereço `https://mapas.cm-faro.pt/geoserver/wms`. A integração consulta agora o WMS por ponto (`GetFeatureInfo`) antes de recorrer a uma fonte externa. Quando a camada devolver a classe/categoria, o relatório associa-a às regras da base regulamentar e identifica o resultado como **interpretação cartográfica preliminar**. A confirmação vetorial continua a exigir uma camada WFS/GeoPackage/Shapefile/Feature Service do Município de Faro.
+
 Exemplo de formato esperado:
 
 `https://servidor.exemplo.pt/arcgis/rest/services/PDM/MapServer/0/query`
