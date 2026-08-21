@@ -177,19 +177,25 @@ async function cartographicEvidence(localizacao) {
   const lat = Number(localizacao?.coordenadas?.latitude);
   const lng = Number(localizacao?.coordenadas?.longitude);
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) return [];
-  const delta = 0.0012;
-  const base = new URLSearchParams({ SERVICE: 'WMS', VERSION: '1.3.0', FORMAT: 'image/png', TRANSPARENT: 'false' });
-  const mapQuery = new URLSearchParams(base);
-  mapQuery.set('REQUEST', 'GetMap'); mapQuery.set('LAYERS', 'pdm2024:1_1_P_Ordenamento_MOT');
-  mapQuery.set('CRS', 'EPSG:4326'); mapQuery.set('BBOX', `${lat - delta},${lng - delta},${lat + delta},${lng + delta}`);
-  mapQuery.set('WIDTH', '600'); mapQuery.set('HEIGHT', '600'); mapQuery.set('STYLES', '');
+  // Dois excertos: um muito próximo para leitura da cor no ponto selecionado e
+  // outro de enquadramento. O anterior (c. 260 m) era demasiado amplo e levava
+  // o modelo a confundir a mancha central com as categorias vizinhas.
+  const makeMapQuery = ({ delta, width, height }) => {
+    const query = new URLSearchParams({ SERVICE: 'WMS', VERSION: '1.3.0', FORMAT: 'image/png', TRANSPARENT: 'false' });
+    query.set('REQUEST', 'GetMap'); query.set('LAYERS', 'pdm2024:1_1_P_Ordenamento_MOT');
+    query.set('CRS', 'EPSG:4326'); query.set('BBOX', `${lat - delta},${lng - delta},${lat + delta},${lng + delta}`);
+    query.set('WIDTH', String(width)); query.set('HEIGHT', String(height)); query.set('STYLES', '');
+    return query;
+  };
   const legendQuery = new URLSearchParams({ SERVICE: 'WMS', VERSION: '1.3.0', REQUEST: 'GetLegendGraphic', LAYER: 'pdm2024:1_1_P_Ordenamento_MOT', FORMAT: 'image/png' });
-  const [map, legend] = await Promise.allSettled([
-    fetchCartographicImage(faroWmsProxyUrl(mapQuery.toString())),
+  const [closeMap, contextMap, legend] = await Promise.allSettled([
+    fetchCartographicImage(faroWmsProxyUrl(makeMapQuery({ delta: 0.00022, width: 420, height: 420 }).toString())),
+    fetchCartographicImage(faroWmsProxyUrl(makeMapQuery({ delta: 0.0012, width: 600, height: 600 }).toString())),
     fetchCartographicImage(faroWmsProxyUrl(legendQuery.toString())),
   ]);
   return [
-    ...(map.status === 'fulfilled' ? [{ tipo: 'Excerto da Planta 1.1 - Modelo de Organização do Território; o centro da imagem é a localização selecionada.', ...map.value }] : []),
+    ...(closeMap.status === 'fulfilled' ? [{ tipo: 'LEITURA PRIORITÁRIA: excerto muito aproximado da Planta 1.1 - Modelo de Organização do Território. A localização selecionada é exatamente o centro da imagem; identifica a cor/padrão no centro antes de consultar o enquadramento.', ...closeMap.value }] : []),
+    ...(contextMap.status === 'fulfilled' ? [{ tipo: 'Excerto de enquadramento da Planta 1.1 - Modelo de Organização do Território; o centro da imagem é a localização selecionada.', ...contextMap.value }] : []),
     ...(legend.status === 'fulfilled' ? [{ tipo: 'Legenda oficial da Planta 1.1 - Modelo de Organização do Território.', ...legend.value }] : []),
   ];
 }
@@ -208,7 +214,7 @@ function buildPrompt({ objetivo, descricao, documents, localizacao, regulationSo
   const regulations = regulationSources.length ? regulationSources.map((item) => `- ${item.nome}: ${item.url}`).join('\n') : '- Não foi identificado automaticamente um regulamento específico para esta localização.';
   const rulesCatalog = regulatoryRuleCatalogFor(localizacao?.municipio?.nome);
   const cartographicInstruction = cartographicLayers.length
-    ? 'Foram anexados um excerto WMS oficial centrado no ponto e a respetiva legenda. Compara a cor/assinatura cartográfica no centro do excerto com a legenda para identificar a categoria. Se houver incerteza, não escolhas uma categoria.'
+    ? 'Foram anexados dois excertos WMS oficiais e a legenda. Usa primeiro o excerto marcado LEITURA PRIORITÁRIA: o ponto selecionado coincide exatamente com o pixel central. Compara a cor/padrão desse centro com a legenda; usa o segundo excerto apenas para confirmar continuidade da mancha. Se o centro estiver na linha divisória ou a assinatura não for legível, não escolhas uma categoria.'
     : 'Não foram obtidas imagens cartográficas adicionais para esta consulta.';
   return `És o módulo de pré-análise documental de um serviço de urbanismo para municípios do Algarve, Portugal. O concelho e o nível de cobertura técnica constam na consulta geográfica recebida.
 

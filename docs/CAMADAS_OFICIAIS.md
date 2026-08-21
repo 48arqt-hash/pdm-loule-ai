@@ -35,3 +35,8 @@ Antes de publicar, validar um conjunto de 10 localizações contra o geoportal e
 A IDEAlg é uma fonte de referência para condicionantes regionais. Deve ser integrada por tema (REN, RAN, risco, património, orla costeira) apenas por serviços ou ficheiros oficiais que permitam consulta de atributos. Para cada tema guardar: entidade produtora, diploma, data, licença e precisão/escala.
 
 Uma coincidência de fronteira ou uma camada digitalizada a partir de carta analógica deve continuar marcada como `Necessita validação técnica`.
+# Leitura da Planta de Ordenamento de Faro
+
+O geoportal de Faro disponibiliza a Planta 1.1 - Modelo de Organização do Território por WMS, mas não expõe atributos consultáveis de forma fiável para todas as manchas. Quando a parcela está em Faro, a pré-análise obtém dois excertos oficiais dessa planta, centrados no ponto selecionado: um excerto muito aproximado para leitura da assinatura cartográfica central e outro de enquadramento, juntamente com a legenda oficial. A categoria resultante é sempre apresentada como **interpretação por cor/legenda - necessita verificação**, nunca como atributo vetorial confirmado.
+
+As regras reproduzidas no relatório são limitadas à categoria identificada e à biblioteca regulamentar com artigo e página do Regulamento do PDM de Faro (Aviso n.º 20948/2024/2, 20-09-2024). A análise deve assinalar quando uma fronteira de mancha, a escala ou a legibilidade da legenda impedem essa leitura.

@@ -37,6 +37,28 @@ export const MUNICIPAL_DATA = {
         { elemento: 'Regime de edificabilidade', resultado: 'Nas áreas integradas em PP, PU, unidade de execução ou projeto municipal aprovado aplica-se o respetivo regime; nos restantes casos, índice de utilização máximo de 5 %.', artigo: 'Artigo 103.º, n.os 1 e 2', pagina: '60-61' },
         { elemento: 'Ampliação/alteração/reconstrução', resultado: 'Admitida até ao máximo de 10 % da área de construção existente em situação legal.', artigo: 'Artigo 103.º, n.º 3', pagina: '61' },
       ],
+      'areas de edificacao dispersa do barrocal': [
+        { elemento: 'Uso dominante', resultado: 'Habitação (máximo de 2 fogos, incluindo anexos) e instalações de apoio à atividade agrícola e florestal. Admite complementarmente comércio e serviços de escala local, equipamentos, recreio/lazer e determinadas tipologias de turismo.', artigo: 'Artigo 86.º', pagina: '49-50' },
+        { elemento: 'Habitação - área de construção máxima', resultado: '300 m² para alteração/ampliação de habitação existente ou nova habitação, incluindo anexos; 400 m² quando inclua comércio/serviços local compatível. Se a preexistência tiver área superior, esse valor constitui o máximo.', artigo: 'Artigo 87.º, n.º 2, alínea a)', pagina: '50' },
+        { elemento: 'Habitação - pisos e altura', resultado: 'Máximo de 2 pisos, incluindo semienterrados, e altura máxima de fachada de 7,0 m; se a preexistência tiver valor superior, esse valor constitui o máximo.', artigo: 'Artigo 87.º, n.º 2, alínea a)', pagina: '50' },
+        { elemento: 'Apoio agrícola/florestal', resultado: 'Área máxima de construção de 200 m²; altura máxima de fachada 9,0 m. Quando articulado com habitação, área máxima conjunta de 500 m², salvo preexistência superior.', artigo: 'Artigo 87.º, n.º 2, alínea b)', pagina: '50' },
+      ],
+      'espacos agricolas de producao': [
+        { elemento: 'Enquadramento', resultado: 'Áreas de elevada capacidade de uso e aptidão agrícola, afetas ou não à RAN. Aplicam-se cumulativamente as condicionantes da RAN quando incidirem.', artigo: 'Artigos 65.º e 66.º', pagina: '41' },
+        { elemento: 'Regra geral de nova edificação isolada', resultado: 'A edificação dispersa é proibida, exceto nos casos previstos. Para habitação do agricultor e usos associados à exploração, exige-se, entre outras condições, propriedade com pelo menos 10 ha e exploração economicamente viável comprovada.', artigo: 'Artigos 47.º e 48.º, n.º 1', pagina: '31-33' },
+        { elemento: 'Novas edificações isoladas admitidas', resultado: 'Habitação do agricultor: área máxima de construção 500 m²; outros usos, incluindo TER/TH: 2 000 m²; altura máxima de fachada 7,5 m; máximo 2 pisos, incluindo semienterrados.', artigo: 'Artigo 48.º, n.º 1, alínea g)', pagina: '32' },
+      ],
+      'espacos florestais de conservacao — protecao parcial': [
+        { elemento: 'Uso e restrições', resultado: 'Admite usos florestais, agrícolas e pecuários extensivos nos termos do regulamento, mas a conservação dos valores naturais e as regras de gestão florestal condicionam a intervenção.', artigo: 'Artigos 70.º e 71.º', pagina: '42-43' },
+        { elemento: 'Regime de edificabilidade', resultado: 'Aplica-se o regime geral do solo rústico; novas edificações isoladas só nas exceções regulamentares e legais, com controlo de condicionantes ambientais e de incêndio.', artigo: 'Artigos 47.º, 48.º e 71.º', pagina: '31-33, 43' },
+      ],
+      'espacos de atividades industriais': [
+        { elemento: 'Uso dominante', resultado: 'Atividades industriais ligadas exclusivamente à atividade agrícola, pecuária e florestal, para aproveitamento dos respetivos produtos. Não é permitido uso habitacional, salvo o preexistente e apoio indispensável à vigilância/segurança.', artigo: 'Artigos 72.º e 73.º', pagina: '43-44' },
+        { elemento: 'Edificabilidade', resultado: 'Operações urbanísticas integradas em plano de intervenção no espaço rústico: índice de utilização 0,2; índice de ocupação 20 %; altura máxima de fachada 10,0 m; máximo 2 pisos acima da cota de soleira.', artigo: 'Artigo 74.º', pagina: '44' },
+      ],
+      'espacos naturais e paisagisticos': [
+        { elemento: 'Regime de proteção', resultado: 'Área costeira e lagunar terrestre integrada no Parque Natural da Ria Formosa, com proteção total, parcial I ou parcial II. A edificação é, em regra, interdita, com exceções muito limitadas para atividades e infraestruturas legalmente admitidas.', artigo: 'Artigos 75.º e 76.º', pagina: '44-45' },
+      ],
     },
   },
 };
