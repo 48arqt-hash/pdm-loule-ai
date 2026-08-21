@@ -71,3 +71,13 @@ export function regulatoryContextFor(municipalityName, officialClassification) {
   const rules = regulatoryRulesFor(municipalityName, officialClassification);
   return { sources, rules };
 }
+
+export function regulatoryRuleCatalogFor(municipalityName) {
+  const municipality = MUNICIPAL_DATA[municipalityKey(municipalityName)];
+  if (!municipality) return [];
+  return Object.entries(municipality.regras).map(([categoria, rules]) => ({
+    categoria,
+    regras: rules.map((rule) => ({ elemento: rule.elemento, resultado: rule.resultado, artigo: rule.artigo, pagina: rule.pagina })),
+    fonte: municipality.fontes[0],
+  }));
+}

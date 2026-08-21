@@ -1,5 +1,6 @@
 import { hasProfessionalAccess } from './lib/access.js';
 import { sendReportEmail } from './lib/report-email.js';
+import { regulatoryRuleCatalogFor } from './lib/territorial-data.js';
 
 const MAX_DOCUMENTS = 4;
 const MAX_DOCUMENT_BYTES = 10 * 1024 * 1024;
@@ -7,6 +8,7 @@ const MAX_DOCUMENT_BYTES = 10 * 1024 * 1024;
 // documentos é inferior ao limite por ficheiro, para não provocar HTTP 413.
 const MAX_TOTAL_DOCUMENT_BYTES = 4 * 1024 * 1024;
 const MAX_OFFICIAL_REGULATION_BYTES = 5 * 1024 * 1024;
+const MAX_CARTOGRAPHIC_EVIDENCE_BYTES = 1_200_000;
 // Deixa margem antes do limite de execução da Netlify, evitando uma página 504.
 const MAX_GEMINI_WAIT_MS = 11_000;
 const ALLOWED_TYPES = new Set([
@@ -152,7 +154,47 @@ async function officialRegulationDocuments(localizacao) {
   return results.filter((result) => result.status === 'fulfilled').map((result) => result.value);
 }
 
-function buildPrompt({ objetivo, descricao, documents, localizacao, regulationSources = [], officialRegulations = [] }) {
+function faroWmsProxyUrl(query) {
+  return `https://mapas.cm-faro.pt/geoportal/map/proxy?url=${encodeURIComponent(`http://mapas.cm-faro.pt/geoserver/wms?${query}`)}`;
+}
+
+async function fetchCartographicImage(url) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 6_000);
+  try {
+    const response = await fetch(url, { signal: controller.signal });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const bytes = Buffer.from(await response.arrayBuffer());
+    if (!bytes.length || bytes.length > MAX_CARTOGRAPHIC_EVIDENCE_BYTES) throw new Error('imagem com dimensão não suportada');
+    return { base64: bytes.toString('base64'), mimeType: response.headers.get('content-type')?.split(';')[0] || 'image/png' };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function cartographicEvidence(localizacao) {
+  if (localizacao?.municipio?.nome !== 'Faro') return [];
+  const lat = Number(localizacao?.coordenadas?.latitude);
+  const lng = Number(localizacao?.coordenadas?.longitude);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return [];
+  const delta = 0.0012;
+  const base = new URLSearchParams({ SERVICE: 'WMS', VERSION: '1.3.0', FORMAT: 'image/png', TRANSPARENT: 'false' });
+  const mapQuery = new URLSearchParams(base);
+  mapQuery.set('REQUEST', 'GetMap'); mapQuery.set('LAYERS', 'pdm2024:1_1_P_Ordenamento_MOT');
+  mapQuery.set('CRS', 'EPSG:4326'); mapQuery.set('BBOX', `${lat - delta},${lng - delta},${lat + delta},${lng + delta}`);
+  mapQuery.set('WIDTH', '600'); mapQuery.set('HEIGHT', '600'); mapQuery.set('STYLES', '');
+  const legendQuery = new URLSearchParams({ SERVICE: 'WMS', VERSION: '1.3.0', REQUEST: 'GetLegendGraphic', LAYER: 'pdm2024:1_1_P_Ordenamento_MOT', FORMAT: 'image/png' });
+  const [map, legend] = await Promise.allSettled([
+    fetchCartographicImage(faroWmsProxyUrl(mapQuery.toString())),
+    fetchCartographicImage(faroWmsProxyUrl(legendQuery.toString())),
+  ]);
+  return [
+    ...(map.status === 'fulfilled' ? [{ tipo: 'Excerto da Planta 1.1 - Modelo de Organização do Território; o centro da imagem é a localização selecionada.', ...map.value }] : []),
+    ...(legend.status === 'fulfilled' ? [{ tipo: 'Legenda oficial da Planta 1.1 - Modelo de Organização do Território.', ...legend.value }] : []),
+  ];
+}
+
+function buildPrompt({ objetivo, descricao, documents, localizacao, regulationSources = [], officialRegulations = [], cartographicLayers = [] }) {
   const inventory = documents.length ? documents.map((doc) => `- ${doc.tipo}: ${doc.nome}`).join('\n') : '- Sem documentos PDF anexados.';
   const mapEvidence = localizacao ? JSON.stringify({
     coordenadas: localizacao.coordenadas,
@@ -164,6 +206,10 @@ function buildPrompt({ objetivo, descricao, documents, localizacao, regulationSo
     consultadoEm: localizacao.consultadoEm,
   }) : 'Sem consulta geográfica do mapa.';
   const regulations = regulationSources.length ? regulationSources.map((item) => `- ${item.nome}: ${item.url}`).join('\n') : '- Não foi identificado automaticamente um regulamento específico para esta localização.';
+  const rulesCatalog = regulatoryRuleCatalogFor(localizacao?.municipio?.nome);
+  const cartographicInstruction = cartographicLayers.length
+    ? 'Foram anexados um excerto WMS oficial centrado no ponto e a respetiva legenda. Compara a cor/assinatura cartográfica no centro do excerto com a legenda para identificar a categoria. Se houver incerteza, não escolhas uma categoria.'
+    : 'Não foram obtidas imagens cartográficas adicionais para esta consulta.';
   return `És o módulo de pré-análise documental de um serviço de urbanismo para municípios do Algarve, Portugal. O concelho e o nível de cobertura técnica constam na consulta geográfica recebida.
 
 Objetivo declarado pelo cliente: ${objetivo || 'Não indicado'}
@@ -171,13 +217,15 @@ Descrição do cliente: ${descricao || 'Não indicada'}
 Documentos recebidos:\n${inventory}
 Consulta geográfica recebida (dados preliminares de fontes oficiais):\n${mapEvidence}
 Regulamentos oficiais relevantes identificados:\n${regulations}
+Biblioteca regulamentar interna, transcrita do diploma identificado (só aplicável depois de identificares a categoria):\n${JSON.stringify(rulesCatalog)}
+Evidência cartográfica visual: ${cartographicInstruction}
 
 Tarefa:
 1. Classifica e extrai apenas informação diretamente visível nos PDFs.
 2. Confronta área, artigo matricial, freguesia, localização e coordenadas entre documentos e, quando existir, a consulta geográfica.
 3. Quando existir Planta de Localização oficial, identifica o polígono/área delimitada na planta e confronta-a com a parcela e coordenadas da consulta geográfica. Regista expressamente no relatório se a coincidência é aparente, divergente ou não verificável, indicando a fonte e o grau de confiança. Nunca apresentes uma sobreposição visual como georreferenciação rigorosa se o PDF não tiver elementos suficientes.
 4. Se a Planta de Localização incluir peças de ordenamento, condicionantes ou REN, descreve somente o que seja legível nessa peça e indica-a como evidência gráfica, não como confirmação normativa autónoma.
-5. Na secção "regras_aplicaveis", inclui todas as regras já presentes em "regrasBase" da consulta geográfica: foram cruzadas pela aplicação com categoria de solo devolvida por camada vetorial oficial e devem manter artigo, página, fonte e estado "Necessita verificação". Acrescenta regras, artigos, índices, cérceas, pisos, afastamentos, usos ou condicionantes literalmente legíveis nos PDFs enviados. Cruza a delimitação aparente da planta com a parcela selecionada e com os elementos cartográficos municipais recebidos; reproduz esses parâmetros explicitamente e identifica o plano aplicável. Os elementos da consulta geográfica cuja classificação venha de fonte de apoio DGT têm estado "Necessita verificação". Os regulamentos identificados servem para referência e validação posterior; não inventes o respetivo conteúdo. Identifica sempre a página e o artigo, quando constarem. Se a categoria exata de solo não for devolvida pela cartografia vetorial, explica quais as regras que dependem dessa categoria, sem escolher uma categoria por suposição. Nunca inventes valores ou artigos.
+5. Na secção "regras_aplicaveis", inclui todas as regras já presentes em "regrasBase" da consulta geográfica: foram cruzadas pela aplicação com categoria de solo devolvida por camada vetorial oficial e devem manter artigo, página, fonte e estado "Necessita verificação". Se a evidência cartográfica visual permitir identificar uma categoria, acrescenta primeiro uma linha "Categoria PDM interpretada" com estado "Necessita verificação" e fonte "Planta 1.1 - Modelo de Organização do Território, PDM de Faro (leitura por cor/legenda)". Depois reproduz somente as regras da mesma categoria presentes na Biblioteca regulamentar interna, conservando artigo e página e com estado "Necessita verificação". Acrescenta regras, artigos, índices, cérceas, pisos, afastamentos, usos ou condicionantes literalmente legíveis nos PDFs enviados. Nunca inventes valores ou artigos. Se a categoria não for legível, explica quais as regras que dependem dela, sem escolher uma categoria por suposição.
 6. Distingue sempre: confirmado, necessita verificação, não identificado.
 7. Não apresentes aconselhamento jurídico nem uma decisão de licenciamento.
 
@@ -235,12 +283,18 @@ export const handler = async (event) => {
       : [];
     if (body.localizacao && process.env.ATTACH_OFFICIAL_REGULATIONS === 'true' && !regulations.length) console.warn('official_regulations_unavailable');
     if (body.localizacao && !regulations.length) console.info('official_regulations_not_attached_for_speed');
+    const visualLayers = await cartographicEvidence(body.localizacao);
+    if (body.localizacao?.municipio?.nome === 'Faro' && !visualLayers.length) console.warn('faro_cartographic_evidence_unavailable');
     const model = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
     const requestBody = {
         contents: [{
           role: 'user',
           parts: [
-            { text: buildPrompt({ objetivo: body.objetivo, descricao: body.descricao, documents, localizacao: body.localizacao, regulationSources, officialRegulations: regulations }) },
+            { text: buildPrompt({ objetivo: body.objetivo, descricao: body.descricao, documents, localizacao: body.localizacao, regulationSources, officialRegulations: regulations, cartographicLayers: visualLayers }) },
+            ...visualLayers.flatMap((layer) => [
+              { text: layer.tipo },
+              { inlineData: { mimeType: layer.mimeType, data: layer.base64 } },
+            ]),
             ...documents.map((document) => ({ inlineData: { mimeType: 'application/pdf', data: document.base64 } })),
             ...regulations.flatMap((regulation) => [
               { text: `Documento oficial anexo: ${regulation.nome} (${regulation.fonte})` },
