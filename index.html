@@ -752,8 +752,12 @@
 
   async function readJsonResponse(response, fallbackMessage){
     const raw = await response.text();
+    if (!raw) {
+      const reference = response.status ? ` (resposta ${response.status} do servidor)` : '';
+      throw new Error(`${fallbackMessage}${reference}. A função não devolveu detalhe técnico; consulte os Function logs da Netlify.`);
+    }
     try {
-      return raw ? JSON.parse(raw) : {};
+      return JSON.parse(raw);
     } catch {
       const reference = response.status ? ` (resposta ${response.status} do servidor)` : '';
       throw new Error(`${fallbackMessage}${reference}. Tente novamente; se persistir, consulte os Function logs da Netlify.`);
@@ -873,7 +877,7 @@
         body: JSON.stringify({ email, documentos: pdmDocuments, localizacao: selectedLocation, objetivo: document.getElementById('pdmObjetivo').value, descricao: document.getElementById('pdmUserMsg').value.trim() })
       });
       const data = await readJsonResponse(resp, 'A análise não devolveu uma resposta válida');
-      if (!resp.ok) throw new Error(data.error || 'Não foi possível concluir a análise.');
+      if (!resp.ok) throw new Error(data.error || `Não foi possível concluir a análise (resposta ${resp.status} do servidor).`);
       loading.remove(); renderReport(data.reply);
       if (data.emailSent) addMsg(`✓ Relatório em PDF enviado para ${escapeText(email)} e registado no atelier.`, 'system');
       if (data.emailError) addMsg(`⚠ ${escapeText(data.emailError)} Pode tentar o envio manual abaixo.`, 'system');

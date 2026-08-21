@@ -5,7 +5,7 @@ const MAX_DOCUMENTS = 4;
 const MAX_DOCUMENT_BYTES = 10 * 1024 * 1024;
 const MAX_OFFICIAL_REGULATION_BYTES = 5 * 1024 * 1024;
 // Deixa margem antes do limite de execução da Netlify, evitando uma página 504.
-const MAX_GEMINI_WAIT_MS = 14_000;
+const MAX_GEMINI_WAIT_MS = 11_000;
 const ALLOWED_TYPES = new Set([
   'planta_localizacao',
   'caderneta_predial',
@@ -72,7 +72,9 @@ async function fetchGeminiWithDeadline(url, requestBody) {
 async function requestGemini(url, requestBody) {
   let response;
   let payload;
-  for (let attempt = 0; attempt < 3; attempt += 1) {
+  // Uma única repetição mantém a função dentro do tempo da Netlify. Três
+  // tentativas podiam transformar uma indisponibilidade temporária numa 504.
+  for (let attempt = 0; attempt < 2; attempt += 1) {
     response = await fetchGeminiWithDeadline(url, requestBody);
     const raw = await response.text();
     try {
@@ -80,7 +82,7 @@ async function requestGemini(url, requestBody) {
     } catch {
       payload = { error: { message: `Resposta não-JSON do fornecedor (HTTP ${response.status})` } };
     }
-    if (response.ok || response.status !== 503 || attempt === 2) return { response, payload };
+    if (response.ok || response.status !== 503 || attempt === 1) return { response, payload };
     await wait(900 * (attempt + 1));
   }
   return { response, payload };
@@ -247,7 +249,17 @@ export const handler = async (event) => {
     }
 
     const modelText = responseBody.candidates?.[0]?.content?.parts?.map((part) => part.text || '').join('') || '';
-    const report = parseModelJson(modelText);
+    if (!modelText.trim()) {
+      console.error('provider_empty_response', JSON.stringify({ finishReason: responseBody.candidates?.[0]?.finishReason || null, promptFeedback: responseBody.promptFeedback || null }));
+      return json(502, { error: 'A Gemini devolveu uma resposta vazia. Tente novamente dentro de alguns minutos.' });
+    }
+    let report;
+    try {
+      report = parseModelJson(modelText);
+    } catch (parseFailure) {
+      console.error('provider_invalid_json', JSON.stringify({ message: parseFailure.message, excerpt: modelText.slice(0, 300) }));
+      return json(502, { error: 'A Gemini concluiu a resposta, mas o formato do relatório foi inválido. Tente novamente.' });
+    }
     const usage = responseBody.usageMetadata || {};
     console.info('analysis_usage', JSON.stringify({
       model,
@@ -271,6 +283,6 @@ export const handler = async (event) => {
   } catch (error) {
     console.error('analysis_error', error);
     if (error?.code === 'GEMINI_TIMEOUT') return json(503, { error: error.message });
-    return json(500, { error: 'Não foi possível processar a análise. Verifique os documentos e tente novamente.' });
+    return json(500, { error: 'Não foi possível processar a análise. Tente novamente; se persistir, consulte os Function logs da Netlify.' });
   }
 };
