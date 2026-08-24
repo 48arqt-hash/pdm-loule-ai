@@ -11,7 +11,7 @@ let collectionsCache;
 
 const ALGARVE = { minLat: 36.8, maxLat: 37.75, minLng: -9.2, maxLng: -7.05 };
 const MUNICIPAL_PROFILES = {
-  'loule': { nome: 'Loulé', estado: 'Integração vetorial avançada', geoportal: 'https://geoloule.cm-loule.pt/', regulamentos: [{ nome: 'Regulamento oficial do PDM de Loulé', url: 'https://geoloule.cm-loule.pt/docs/regulamentos/pmots/PDM_Regulamento.pdf' }, { nome: 'RMUE de Loulé', url: 'https://files.diariodarepublica.pt/2s/2024/08/155000000/0034300423.pdf' }], capacidade: 'Parâmetros vetoriais disponíveis em zonas específicas, quando a fonte municipal os devolver.' },
+  'loule': { nome: 'Loulé', estado: 'Planos municipais vetoriais e regras PDM por classe CRUS; confirmação final pela planta de ordenamento', geoportal: 'https://geoloule.cm-loule.pt/', regulamentos: [{ nome: 'Regulamento oficial do PDM de Loulé', url: 'https://geoloule.cm-loule.pt/docs/regulamentos/pmots/PDM_Regulamento.pdf' }, { nome: 'RMUE de Loulé', url: 'https://files.diariodarepublica.pt/2s/2024/08/155000000/0034300423.pdf' }], capacidade: 'Parâmetros vetoriais disponíveis em zonas específicas, quando a fonte municipal os devolver.' },
   'faro': { nome: 'Faro', estado: 'Perfil prioritário - cartografia e planos disponíveis', geoportal: 'https://mapas.cm-faro.pt/geoportal/mapa/pmot', regulamentos: [{ nome: 'Regulamento do PDM de Faro', url: 'https://mapas.cm-faro.pt/geoportal/docs/pdm_2024/Regulamento.pdf' }], capacidade: 'PDM, condicionantes, RAN, REN, riscos, património, ruído e planos municipais disponíveis no geoportal.' },
   'olhao': { nome: 'Olhão', estado: 'Perfil prioritário - cartografia e planos disponíveis', geoportal: 'https://mapas.cm-olhao.pt/geoportal/webforms/menu_territorio.aspx?separador=&xml=menu_webpdm.xml', regulamentos: [{ nome: 'PDM de Olhão e alterações em vigor', url: 'https://cm-olhao.pt/areas-de-atuacao/urbanismo/planeamento-urbanistico/planos-municipais-de-ordenamento-do-territorio/planos-municipais-em-vigor/pdm-plano-diretor-municipal' }], capacidade: 'PDM, condicionantes, RAN, REN, ortofoto e planos de pormenor disponíveis no geoportal.' },
   'alcoutim': { nome: 'Alcoutim', estado: 'Perfil prioritário - cartografia georreferenciada disponível', geoportal: 'https://geoportal.cm-alcoutim.pt/mapa/cartomapas', regulamentos: [{ nome: 'PDM de Alcoutim', url: 'https://cm-alcoutim.pt/pt/areas-de-atuacao/planeamento-e-urbanismo/planeamento-e-ordenamento-do-territorio/plano-diretor-municipal' }], capacidade: 'PDM, REN e extratos de PDM, PU e PP disponíveis no CartoMapas municipal.' },
@@ -275,14 +275,17 @@ export const handler = async (event) => {
     const faroVectorFeature = faroOrdering[0] || faroWfsOrdering[0] || null;
     const faroClassification = officialClassification(faroVectorFeature?.attributes || faroVectorFeature?.properties || {}) || faroVisualOrdering?.label || null;
     const faroClassificationMethod = faroOrdering.length ? 'camada vetorial oficial ArcGIS' : faroWfsOrdering.length ? 'camada vetorial oficial WFS' : faroVisualOrdering?.label ? 'leitura por ponto da planta de ordenamento WMS' : null;
-    const regulatoryContext = regulatoryContextFor(municipality?.nome, faroClassification);
     const landUseLabel = use ? readableValue(use.properties) : null;
+    // Em Loulé, a CRUS da DGT devolve designações coincidentes com as
+    // subcategorias do PDM em vigor. A regra é apresentada como pré-análise
+    // e mantém a ressalva de confirmação pela planta de ordenamento.
+    const regulatoryClassification = faroClassification || (municipality?.nome === 'Loulé' ? landUseLabel : null);
+    const regulatoryContext = regulatoryContextFor(municipality?.nome, regulatoryClassification);
     const parcelArea = propertyValue(parcel?.properties || {}, ['area', 'area_m2', 'area_ha', 'area_parcela']);
     const results = [
       ...(municipality ? [{ camada: 'Concelho identificado (CAOP)', valor: municipality.nome, atributos: municipality.propriedades || {} }] : []),
       ...(municipality ? [{ camada: 'Cobertura da pré-análise', valor: municipality.estado }] : []),
       ...(landUseLabel ? [{ camada: 'Regime de uso do solo (DGT)', valor: landUseLabel, atributos: use.properties || {} }] : []),
-      ...pdmRulesForLandUse(landUseLabel, parcelArea),
       ...(faroClassification ? [{ camada: `Classificação do solo — PDM de Faro (${faroClassificationMethod})`, valor: faroClassification, atributos: faroVectorFeature?.attributes || faroVectorFeature?.properties || faroVisualOrdering?.properties || {} }] : []),
       ...regulatoryContext.rules.map((rule) => ({ camada: rule.camada, valor: rule.valor, artigo: rule.artigo, pagina: rule.pagina, fonte: rule.fonte?.documento || 'Regulamento municipal' })),
       ...planFeatures.map((feature) => ({ camada: 'Plano municipal em vigor (CML)', valor: feature.attributes?.NOME || feature.attributes?.TIPO || null, atributos: feature.attributes || {} })),

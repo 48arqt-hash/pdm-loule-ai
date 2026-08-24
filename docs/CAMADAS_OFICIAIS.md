@@ -46,6 +46,14 @@ publicado no geoportal como cartografia raster: é uma fonte visual, não uma ba
 segura para calcular índices automaticamente. A revisão do PDM em discussão
 pública não é aplicada como regulamento em vigor.
 
+Quando a CRUS/DGT devolver uma designação textual coincidente com a
+subcategoria do PDM de Loulé, a aplicação apresenta as regras do Regulamento
+do PDM com artigo e página, sempre marcadas como **Necessita verificação**.
+Atualmente estão estruturados os aglomerados urbanos Tipo A, B e C (Artigo
+14.º). Isto permite indicar usos, densidade, COS e pisos, mas não substitui a
+confirmação da mancha na Planta de Ordenamento nem os parâmetros de PU/PP
+eventualmente prevalecentes.
+
 ## Fontes nacionais já incorporadas
 
 - **Cadastro Predial (SNIC/DGT)**: polígono e referência cadastral;

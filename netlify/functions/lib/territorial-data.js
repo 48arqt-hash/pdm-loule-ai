@@ -5,8 +5,39 @@ const faroSource = {
   versao: '20-09-2024',
   url: 'https://mapas.cm-faro.pt/docs/pdm_2024/Regulamento.pdf',
 };
+const louleSource = {
+  documento: 'Regulamento do Plano Diretor Municipal de Loulé — Aviso n.º 7430/2017',
+  versao: '03-07-2017',
+  url: 'https://geoloule.cm-loule.pt/docs/regulamentos/pmots/PDM_Regulamento.pdf',
+};
 
 export const MUNICIPAL_DATA = {
+  loule: {
+    nome: 'Loulé',
+    estado: 'Base regulamentar ativa para classes CRUS compatíveis; a delimitação PDM deve ser confirmada na planta de ordenamento em vigor.',
+    fontes: [louleSource],
+    regras: {
+      'espaco urbano - aglomerado urbano - tipo a': [
+        { elemento: 'Usos e infraestruturação', resultado: 'São admitidos loteamento urbano e construção para habitação, comércio, serviços, equipamentos, restauração e bebidas e empreendimentos turísticos. As infraestruturas de água e drenagem de esgotos devem ligar às redes públicas.', artigo: 'Artigo 14.º, corpo do artigo', pagina: '13' },
+        { elemento: 'Densidade populacional máxima', resultado: '200 habitantes por hectare.', artigo: 'Artigo 14.º, n.º 1', pagina: '13' },
+        { elemento: 'Coeficiente de ocupação do solo (COS) máximo', resultado: '0,70.', artigo: 'Artigo 14.º, n.º 1', pagina: '13' },
+        { elemento: 'Número máximo de pisos', resultado: '6 pisos acima do nível da cota de soleira.', artigo: 'Artigo 14.º, n.º 1', pagina: '13' },
+        { elemento: 'Forma de execução', resultado: 'Fora da renovação e preenchimento de espaços intersticiais, as intervenções são em geral definidas por loteamento, empreendimento turístico ou plano territorial municipal.', artigo: 'Artigo 14.º, corpo do artigo', pagina: '13' },
+      ],
+      'espaco urbano - aglomerado urbano - tipo b': [
+        { elemento: 'Usos e infraestruturação', resultado: 'São admitidos loteamento urbano e construção para habitação, comércio, serviços, equipamentos, restauração e bebidas e empreendimentos turísticos. As infraestruturas de água e drenagem de esgotos devem ligar às redes públicas.', artigo: 'Artigo 14.º, corpo do artigo', pagina: '13' },
+        { elemento: 'Densidade populacional máxima', resultado: '125 habitantes por hectare.', artigo: 'Artigo 14.º, n.º 2', pagina: '13' },
+        { elemento: 'Coeficiente de ocupação do solo (COS) máximo', resultado: '0,50.', artigo: 'Artigo 14.º, n.º 2', pagina: '13' },
+        { elemento: 'Número máximo de pisos', resultado: '3 pisos acima do nível da cota de soleira.', artigo: 'Artigo 14.º, n.º 2', pagina: '13' },
+      ],
+      'espaco urbano - aglomerado urbano - tipo c': [
+        { elemento: 'Usos e infraestruturação', resultado: 'São admitidos loteamento urbano e construção para habitação, comércio, serviços, equipamentos, restauração e bebidas e empreendimentos turísticos. As infraestruturas de água e drenagem de esgotos devem ligar às redes públicas.', artigo: 'Artigo 14.º, corpo do artigo', pagina: '13' },
+        { elemento: 'Densidade populacional máxima', resultado: '75 habitantes por hectare.', artigo: 'Artigo 14.º, n.º 3', pagina: '13' },
+        { elemento: 'Coeficiente de ocupação do solo (COS) máximo', resultado: '0,30.', artigo: 'Artigo 14.º, n.º 3', pagina: '13' },
+        { elemento: 'Número máximo de pisos', resultado: '3 pisos acima do nível da cota de soleira.', artigo: 'Artigo 14.º, n.º 3', pagina: '13' },
+      ],
+    },
+  },
   faro: {
     nome: 'Faro',
     estado: 'Base regulamentar ativa; aguarda ligação à camada vetorial oficial de ordenamento.',
