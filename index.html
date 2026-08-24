@@ -113,7 +113,7 @@
   .header-branding{ text-align:center; margin:18px 0 6px; }
   .header-branding h1{
     font-family:'Fraunces', serif;
-    font-size:1.5rem;
+    font-size:clamp(1.7rem, 3vw, 2.35rem);
     font-weight:500;
     letter-spacing:.01em;
     color:var(--ink);
@@ -128,16 +128,20 @@
     margin:0;
   }
   .hero-summary{
-    margin:18px 0 0;
-    padding:14px 16px;
-    border-left:3px solid var(--sand);
-    background:var(--paper);
-    border-radius:0 7px 7px 0;
+    margin:22px 0 0;
+    padding:clamp(22px, 4vw, 34px);
+    background:linear-gradient(135deg, var(--teal-deep), var(--teal));
+    color:#fff;
+    border-radius:14px;
+    box-shadow:0 18px 40px rgba(18,50,83,.16);
+    position:relative;
+    overflow:hidden;
   }
-  .hero-summary p{ margin:0; font-family:'Fraunces', serif; font-size:1.06rem; line-height:1.35; }
-  .hero-summary small{ display:block; color:var(--ink-soft); line-height:1.45; margin-top:6px; }
+  .hero-summary::after{ content:""; position:absolute; width:230px; height:230px; border:1px solid rgba(255,255,255,.16); border-radius:50%; right:-75px; top:-120px; }
+  .hero-summary p{ margin:0; font-family:'Fraunces', serif; font-size:clamp(1.25rem, 2.6vw, 1.7rem); line-height:1.22; max-width:720px; position:relative; z-index:1; }
+  .hero-summary small{ display:block; color:rgba(255,255,255,.8); line-height:1.5; margin-top:10px; max-width:620px; position:relative; z-index:1; }
   .result-steps{ display:flex; gap:6px; flex-wrap:wrap; margin-top:12px; }
-  .result-steps span{ color:var(--teal-deep); background:var(--sand-soft); border-radius:20px; font-size:.7rem; font-weight:600; padding:5px 8px; }
+  .result-steps span{ color:#fff; background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.16); border-radius:20px; font-size:.7rem; font-weight:600; padding:6px 9px; position:relative; z-index:1; }
 
   .divider{ border:none; border-top:1px solid var(--line); margin:22px 0; }
 
@@ -206,27 +210,29 @@
     color:var(--ink-faint);
     margin:0 0 12px;
   }
-  .service-btn-group{ display:flex; flex-direction:column; gap:10px; margin-bottom:6px; }
+  .service-btn-group{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin-bottom:6px; }
 
   .btn-action{
     background:var(--teal);
     color:#fff;
     border:1px solid var(--teal);
-    padding:15px 18px;
-    border-radius:8px;
+    padding:20px;
+    border-radius:12px;
     font-family:inherit;
     font-size:.92rem;
     font-weight:600;
     cursor:pointer;
     display:flex;
-    justify-content:space-between;
-    align-items:center;
+    flex-direction:column;
+    justify-content:flex-start;
+    align-items:flex-start;
     gap:10px;
-    transition:background .18s ease, transform .1s ease;
+    transition:background .18s ease, transform .18s ease, box-shadow .18s ease;
     text-align:left;
     width:100%;
   }
-  .btn-action:hover{ background:var(--teal-deep); }
+  .btn-action:hover{ background:var(--teal-deep); transform:translateY(-3px); box-shadow:0 14px 24px rgba(18,50,83,.18); }
+  .btn-action[aria-expanded="true"]{ background:var(--teal-deep); box-shadow:0 14px 24px rgba(18,50,83,.18); }
   .btn-action:active{ transform:scale(.99); }
   .btn-action .tag{
     font-size:.68rem;
@@ -237,16 +243,24 @@
     letter-spacing:.02em;
     white-space:nowrap;
   }
-  .btn-arrow{ font-size:.75rem; opacity:.75; transition:transform .2s ease; }
+  .btn-action .service-title{ font-size:1rem; line-height:1.3; }
+  .btn-action .service-copy{ font-size:.78rem; line-height:1.45; color:rgba(255,255,255,.75); font-weight:400; }
+  .btn-arrow{ font-size:.75rem; opacity:.75; transition:transform .2s ease; position:absolute; top:16px; right:16px; }
+  .btn-action{ position:relative; min-height:150px; }
   .btn-action[aria-expanded="true"] .btn-arrow{ transform:rotate(180deg); }
+  .process-strip{ display:grid; grid-template-columns:repeat(3,1fr); gap:1px; margin:18px 0 6px; border:1px solid var(--line); border-radius:10px; overflow:hidden; background:var(--line); }
+  .process-step{ background:#fff; padding:14px; min-height:92px; }
+  .process-step strong{ display:block; color:var(--teal-deep); font-size:.76rem; letter-spacing:.06em; text-transform:uppercase; margin-bottom:5px; }
+  .process-step span{ font-size:.76rem; color:var(--ink-soft); line-height:1.4; }
 
   .feature-panel{
     display:none;
     background:var(--paper);
     border:1px solid var(--line);
-    border-radius:8px;
+    border-radius:12px;
     padding:20px;
-    margin-top:12px;
+    margin-top:16px;
+    box-shadow:0 12px 30px rgba(22,31,29,.05);
     color:var(--ink);
   }
   .feature-panel h3{
@@ -486,6 +500,9 @@
     #parcelMap{ height:390px; }
     .map-search{ flex-wrap:wrap; }
     .map-search .input-field{ min-width:200px; flex:1; }
+    .service-btn-group{ grid-template-columns:1fr; }
+    .btn-action{ min-height:112px; }
+    .process-strip{ grid-template-columns:1fr; }
   }
 </style>
 </head>
@@ -540,19 +557,28 @@
     <p class="section-eyebrow" data-i18n="services">Serviços</p>
     <div class="service-btn-group">
       <button class="btn-action" onclick="togglePanel('pdmPanel', this)" aria-expanded="false">
-        <span data-i18n="landService">🔍 Saber o potencial do meu terreno</span>
+        <span class="service-title" data-i18n="landService">🔍 Saber o potencial do meu terreno</span>
+        <span class="service-copy" data-i18n="landServiceCopy">Selecione a parcela no mapa e receba um enquadramento técnico inicial.</span>
         <span class="btn-arrow">▼</span>
       </button>
 
       <button class="btn-action" onclick="togglePanel('meetingPanel', this)" aria-expanded="false">
-        <span data-i18n="meetingService">📅 Reunião de Consultoria</span>
+        <span class="service-title" data-i18n="meetingService">📅 Reunião de Consultoria</span>
+        <span class="service-copy" data-i18n="meetingServiceCopy">Esclareça a viabilidade, estratégia e próximos passos do seu processo.</span>
         <span class="btn-arrow">▼</span>
       </button>
 
       <button class="btn-action" onclick="togglePanel('quotePanel', this)" aria-expanded="false">
-        <span data-i18n="quoteService">📄 Pedir Orçamento de Projeto</span>
+        <span class="service-title" data-i18n="quoteService">📄 Pedir Orçamento de Projeto</span>
+        <span class="service-copy" data-i18n="quoteServiceCopy">Peça uma proposta informada para projetos, especialidades e estudos.</span>
         <span class="btn-arrow">▼</span>
       </button>
+    </div>
+
+    <div class="process-strip" aria-label="Como funciona">
+      <div class="process-step"><strong data-i18n="processOneTitle">01 · Localize</strong><span data-i18n="processOneText">Selecione o terreno ou indique a morada.</span></div>
+      <div class="process-step"><strong data-i18n="processTwoTitle">02 · Analise</strong><span data-i18n="processTwoText">Cruzamos cadastro, planos e informação territorial disponível.</span></div>
+      <div class="process-step"><strong data-i18n="processThreeTitle">03 · Decida</strong><span data-i18n="processThreeText">Receba um relatório e saiba quais são os próximos passos.</span></div>
     </div>
 
     <!-- PAINEL 1: PRÉ-ANÁLISE DOCUMENTAL -->
@@ -723,6 +749,10 @@
     de:['Vorhaben auswählen (empfohlen)','Ein Haus bauen','Mehrere Häuser bauen','Bestehendes Gebäude ändern oder erweitern','Parzellierung','Tourismus / Unterkunft','Nur das Grundstückspotenzial kennenlernen'],
     es:['Seleccione la intención (recomendado)','Construir una vivienda','Construir varias viviendas','Modificar o ampliar una construcción existente','Parcelación','Turismo / alojamiento','Solo conocer el potencial del terreno']
   };
+  Object.assign(translations.en, { landServiceCopy:'Select the parcel on the map and receive an initial technical framework.', meetingServiceCopy:'Clarify feasibility, strategy and next steps for your application.', quoteServiceCopy:'Request an informed proposal for projects, specialist disciplines and studies.', processOneTitle:'01 · Locate', processOneText:'Select the land or enter an address.', processTwoTitle:'02 · Analyse', processTwoText:'We cross-check cadastre, plans and available territorial data.', processThreeTitle:'03 · Decide', processThreeText:'Receive a report and know the next steps.' });
+  Object.assign(translations.fr, { landServiceCopy:'Sélectionnez la parcelle sur la carte et recevez un premier cadre technique.', meetingServiceCopy:'Clarifiez la faisabilité, la stratégie et les prochaines étapes de votre dossier.', quoteServiceCopy:'Demandez une proposition informée pour les projets, spécialités et études.', processOneTitle:'01 · Localiser', processOneText:'Sélectionnez le terrain ou indiquez une adresse.', processTwoTitle:'02 · Analyser', processTwoText:'Nous croisons cadastre, plans et données territoriales disponibles.', processThreeTitle:'03 · Décider', processThreeText:'Recevez un rapport et identifiez les prochaines étapes.' });
+  Object.assign(translations.de, { landServiceCopy:'Wählen Sie das Grundstück auf der Karte und erhalten Sie eine erste technische Einordnung.', meetingServiceCopy:'Klären Sie Machbarkeit, Strategie und die nächsten Schritte Ihres Vorhabens.', quoteServiceCopy:'Fordern Sie ein fundiertes Angebot für Projekte, Fachplanungen und Studien an.', processOneTitle:'01 · Lokalisieren', processOneText:'Grundstück auswählen oder Adresse eingeben.', processTwoTitle:'02 · Analysieren', processTwoText:'Wir gleichen Kataster, Pläne und verfügbare Gebietsdaten ab.', processThreeTitle:'03 · Entscheiden', processThreeText:'Erhalten Sie einen Bericht mit den nächsten Schritten.' });
+  Object.assign(translations.es, { landServiceCopy:'Seleccione la parcela en el mapa y reciba un encuadre técnico inicial.', meetingServiceCopy:'Aclare la viabilidad, estrategia y próximos pasos de su solicitud.', quoteServiceCopy:'Solicite una propuesta informada de proyectos, especialidades y estudios.', processOneTitle:'01 · Localizar', processOneText:'Seleccione el terreno o indique una dirección.', processTwoTitle:'02 · Analizar', processTwoText:'Cruzamos catastro, planes y datos territoriales disponibles.', processThreeTitle:'03 · Decidir', processThreeText:'Reciba un informe y conozca los próximos pasos.' });
   function t(key){ return (translations[document.documentElement.lang] || ptTranslations)[key] || ptTranslations[key] || key; }
   function setLanguage(language){
     const lang = translations[language] ? language : 'pt';
