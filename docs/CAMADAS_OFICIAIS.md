@@ -18,11 +18,41 @@ Base regulamentar preparada a partir da Revisão do PDM de Faro, Aviso n.º 2094
 - Organização do modelo territorial: <https://mapas.cm-faro.pt/geoportal/docs/pdm_2024/1_1.pdf>
 - Geoportal: <https://mapas.cm-faro.pt/geoportal/mapa/pmot>
 
-Para ativar o cruzamento automático, configurar na Netlify a variável `FARO_PDM_ORDERING_QUERY_URL` com o URL completo do endpoint `query` da camada de ordenamento (ArcGIS Feature/Map Service). A função acrescenta os parâmetros de consulta espacial necessários. O URL deve permitir `POST`/`GET` público, devolver JSON e disponibilizar os atributos da categoria de solo.
+Para ativar o cruzamento automático, configurar na Netlify **uma** destas ligações oficiais:
+
+- `FARO_PDM_WFS_URL` e `FARO_PDM_WFS_TYPENAME`: serviço WFS e nome técnico da camada. É a opção preferencial;
+- `FARO_PDM_ORDERING_QUERY_URL`: URL completo do endpoint `query` de uma camada ArcGIS Feature/Map Service.
+
+A função acrescenta os parâmetros de consulta espacial necessários e aceita atributos em `properties` (WFS) ou `attributes` (ArcGIS). O serviço deve ser público, devolver GeoJSON/JSON e disponibilizar uma designação textual de classe, categoria ou subcategoria; códigos isolados não são apresentados ao cliente como classificação urbanística.
 
 ### Estado de confirmação — 21-08-2026
 
-O geoportal municipal disponibiliza a Planta 1.1 — Modelo de Organização do Território como WMS `pdm2024:1_1_P_Ordenamento_MOT`, no endereço `https://mapas.cm-faro.pt/geoserver/wms`. A integração consulta agora o WMS por ponto (`GetFeatureInfo`) antes de recorrer a uma fonte externa. Quando a camada devolver a classe/categoria, o relatório associa-a às regras da base regulamentar e identifica o resultado como **interpretação cartográfica preliminar**. A confirmação vetorial continua a exigir uma camada WFS/GeoPackage/Shapefile/Feature Service do Município de Faro.
+O geoportal municipal disponibiliza a Planta 1.1 — Modelo de Organização do Território como WMS `pdm2024:1_1_P_Ordenamento_MOT`, no endereço `https://mapas.cm-faro.pt/geoserver/wms`. Esta camada é mantida apenas como apoio visual. A aplicação tenta primeiro a camada WFS/ArcGIS registada; só um atributo vetorial permite aplicar regras quantitativas. A confirmação vetorial exige uma camada WFS/GeoPackage/Shapefile/Feature Service do Município de Faro ou da DGT/IntelIGT.
+
+## Loulé — planos eficazes e parâmetros específicos
+
+O Município de Loulé publica uma camada **vetorial consultável por ponto** com os
+planos territoriais em vigor. A aplicação consulta-a antes da classificação PDM,
+para detetar quando uma parcela está abrangida por PU ou PP:
+
+- Serviço: <https://geoloule.cm-loule.pt/arcgisnprot/rest/services/Siteadmin/eploc_pmots_vigor/MapServer/0>
+- Campos publicados: `NOME`, `REGULAMENTO`, `ORDENAMENTO` e `CONDICIONANTES`.
+- O mesmo serviço identifica, entre outros, o **PU de Quarteira Norte-Nordeste**.
+
+Para o PU de Quarteira Norte-Nordeste, a aplicação mantém o cruzamento com as
+camadas municipais de zonamento que devolvem categoria, pisos, cércea, ICM e CCM.
+Fora das áreas com esses atributos vetoriais, o PDM de Loulé em vigor é hoje
+publicado no geoportal como cartografia raster: é uma fonte visual, não uma base
+segura para calcular índices automaticamente. A revisão do PDM em discussão
+pública não é aplicada como regulamento em vigor.
+
+## Fontes nacionais já incorporadas
+
+- **Cadastro Predial (SNIC/DGT)**: polígono e referência cadastral;
+- **CAOP (DGT)**: concelho administrativo;
+- **CRUS (DGT)**: classificação e qualificação harmonizada de solo. É usada como enquadramento de base e nunca para atribuir índices específicos do PDM;
+- **PDM vetorial municipal ou IntelIGT**: única fonte usada para associar a categoria de espaço às regras quantitativas;
+- **SRUP/REN/RAN e condicionantes setoriais**: a acrescentar por serviço vetorial oficial, com diploma e data de vigência guardados em cada resultado.
 
 Exemplo de formato esperado:
 

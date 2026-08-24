@@ -1,7 +1,9 @@
 import { regulatoryContextFor } from './lib/territorial-data.js';
 
 const DGT_API = 'https://ogcapi.dgterritorio.gov.pt';
-const LOULÉ_PLANS = 'https://geoloule.cm-loule.pt/arcgisnprot/rest/services/Siteadmin/eploc_pmots_vigor/MapServer/15/query';
+// Camada vetorial municipal de planos eficazes. É consultada antes do PDM,
+// pois um PU ou PP pode prevalecer sobre o regulamento geral do PDM.
+const LOULÉ_PLANS = 'https://geoloule.cm-loule.pt/arcgisnprot/rest/services/Siteadmin/eploc_pmots_vigor/MapServer/0/query';
 const LOULÉ_ZONING = 'https://geoloule.cm-loule.pt/arcgisnprot/rest/services/MapasOnline/PMOT_vigor_ZONAM_MO/MapServer';
 const FARO_WMS = 'https://mapas.cm-faro.pt/geoserver/wms';
 const FARO_ORDERING_LAYER = 'pdm2024:1_1_P_Ordenamento_MOT';
@@ -89,11 +91,22 @@ function propertyValue(properties = {}, names = []) {
 }
 
 function readableValue(properties = {}) {
-  const preferred = ['designacao', 'designação', 'descricao', 'descrição', 'classe_designacao', 'categoria_designacao', 'uso_designacao', 'nome', 'name', 'tipologia'];
-  const entries = Object.entries(properties).map(([key, value]) => [key.toLowerCase(), value]);
-  const match = preferred.map((key) => entries.find(([property]) => property === key)).find(Boolean);
-  const value = match?.[1] ? String(match[1]).trim() : null;
-  return value && !/^\d+$/.test(value) ? value : null;
+  // A CRUS e os serviços municipais não usam todos o mesmo nome de campo.
+  // Privilegia-se sempre uma designação textual e nunca se apresenta ao cliente
+  // um código isolado (por exemplo 9998) como se fosse uma classe urbanística.
+  const preferred = ['designacao', 'designação', 'descricao', 'descrição', 'classe_designacao', 'categoria_designacao', 'subcategoria_designacao', 'uso_designacao', 'nome', 'name', 'tipologia'];
+  const entries = Object.entries(properties).map(([key, value]) => [normalizedKey(key).replace(/[^a-z0-9]/g, ''), value]);
+  const exact = preferred.map((key) => entries.find(([property]) => property === normalizedKey(key).replace(/[^a-z0-9]/g, ''))).find(Boolean);
+  const descriptive = entries.find(([property, value]) => /design|descr|denomin|classe|categoria|subcategoria|tipologia|usosolo|uso/.test(property) && value !== null && value !== undefined && !/^\d+$/.test(String(value).trim()));
+  const value = (exact || descriptive)?.[1];
+  const text = value === undefined || value === null ? null : String(value).trim();
+  return text && !/^\d+$/.test(text) ? text : null;
+}
+
+function technicalCode(properties = {}) {
+  const entries = Object.entries(properties);
+  const match = entries.find(([key, value]) => /cod|code|idclasse|idcategoria|iduso|classeid|categoriaid/.test(normalizedKey(key)) && value !== null && value !== undefined && String(value).trim());
+  return match ? { campo: match[0], valor: String(match[1]).trim() } : null;
 }
 
 function cadastralIdentification(properties = {}, fallbackId = null) {
@@ -147,6 +160,21 @@ async function municipalOrderingFeatures(queryUrl, lat, lng) {
   const separator = queryUrl.includes('?') ? '&' : '?';
   const response = await fetchJson(`${queryUrl}${separator}${params}`);
   return response.features || [];
+}
+
+async function municipalWfsFeatures(serviceUrl, typeName, lat, lng) {
+  if (!serviceUrl || !typeName) return [];
+  const delta = 0.00002;
+  const separator = serviceUrl.includes('?') ? '&' : '?';
+  const params = new URLSearchParams({
+    service: 'WFS', version: '2.0.0', request: 'GetFeature',
+    typeNames: typeName, outputFormat: 'application/json', srsName: 'EPSG:4326',
+    bbox: `${lng - delta},${lat - delta},${lng + delta},${lat + delta},EPSG:4326`, count: '20',
+  });
+  const payload = await fetchJson(`${serviceUrl}${separator}${params}`);
+  const features = payload.features || [];
+  // Em caso de limites de geometria, dá-se preferência ao polígono que contém o ponto.
+  return features.filter((feature) => !feature.geometry || containsPoint(feature, [lng, lat]));
 }
 
 function textFromHtml(value = '') {
@@ -238,11 +266,15 @@ export const handler = async (event) => {
     const faroOrdering = municipality?.nome === 'Faro'
       ? await municipalOrderingFeatures(process.env.FARO_PDM_ORDERING_QUERY_URL, lat, lng).catch((error) => { console.warn('faro_ordering_unavailable', error.message); return []; })
       : [];
+    const faroWfsOrdering = municipality?.nome === 'Faro'
+      ? await municipalWfsFeatures(process.env.FARO_PDM_WFS_URL, process.env.FARO_PDM_WFS_TYPENAME, lat, lng).catch((error) => { console.warn('faro_wfs_ordering_unavailable', error.message); return []; })
+      : [];
     const faroVisualOrdering = municipality?.nome === 'Faro'
       ? await faroVisualOrderingAt(lat, lng).catch((error) => { console.warn('faro_visual_ordering_unavailable', error.message); return null; })
       : null;
-    const faroClassification = officialClassification(faroOrdering[0]?.attributes || {}) || faroVisualOrdering?.label || null;
-    const faroClassificationMethod = faroOrdering.length ? 'camada vetorial oficial' : faroVisualOrdering?.label ? 'leitura por ponto da planta de ordenamento WMS' : null;
+    const faroVectorFeature = faroOrdering[0] || faroWfsOrdering[0] || null;
+    const faroClassification = officialClassification(faroVectorFeature?.attributes || faroVectorFeature?.properties || {}) || faroVisualOrdering?.label || null;
+    const faroClassificationMethod = faroOrdering.length ? 'camada vetorial oficial ArcGIS' : faroWfsOrdering.length ? 'camada vetorial oficial WFS' : faroVisualOrdering?.label ? 'leitura por ponto da planta de ordenamento WMS' : null;
     const regulatoryContext = regulatoryContextFor(municipality?.nome, faroClassification);
     const landUseLabel = use ? readableValue(use.properties) : null;
     const parcelArea = propertyValue(parcel?.properties || {}, ['area', 'area_m2', 'area_ha', 'area_parcela']);
@@ -251,7 +283,7 @@ export const handler = async (event) => {
       ...(municipality ? [{ camada: 'Cobertura da pré-análise', valor: municipality.estado }] : []),
       ...(landUseLabel ? [{ camada: 'Regime de uso do solo (DGT)', valor: landUseLabel, atributos: use.properties || {} }] : []),
       ...pdmRulesForLandUse(landUseLabel, parcelArea),
-      ...(faroClassification ? [{ camada: `Classificação do solo — PDM de Faro (${faroClassificationMethod})`, valor: faroClassification, atributos: faroOrdering[0]?.attributes || faroVisualOrdering?.properties || {} }] : []),
+      ...(faroClassification ? [{ camada: `Classificação do solo — PDM de Faro (${faroClassificationMethod})`, valor: faroClassification, atributos: faroVectorFeature?.attributes || faroVectorFeature?.properties || faroVisualOrdering?.properties || {} }] : []),
       ...regulatoryContext.rules.map((rule) => ({ camada: rule.camada, valor: rule.valor, artigo: rule.artigo, pagina: rule.pagina, fonte: rule.fonte?.documento || 'Regulamento municipal' })),
       ...planFeatures.map((feature) => ({ camada: 'Plano municipal em vigor (CML)', valor: feature.attributes?.NOME || feature.attributes?.TIPO || null, atributos: feature.attributes || {} })),
       ...zoning.flatMap(zoningResult),
@@ -262,15 +294,15 @@ export const handler = async (event) => {
         ...(cadastre.status === 'rejected' ? ['A fonte do Cadastro Predial da DGT não respondeu nesta tentativa. Tente novamente dentro de alguns segundos; não foi selecionado qualquer polígono por aproximação.'] : []),
         ...(cadastre.status === 'fulfilled' && !parcel ? ['A Carta Cadastral Digital não devolveu uma parcela para este ponto. Pode tratar-se de cobertura incompleta, limite impreciso ou de prédio não representado na fonte pública.'] : []),
         ...(!use ? ['Não foi possível obter uma classificação de uso do solo vetorial neste ponto.'] : []),
-        ...(use && !landUseLabel ? ['O regime de uso do solo foi encontrado, mas a fonte pública devolveu apenas um código técnico sem designação legível. Esse código não é apresentado ao cliente.'] : []),
+        ...(use && !landUseLabel ? [`O regime de uso do solo foi encontrado, mas a fonte pública devolveu apenas ${technicalCode(use.properties || {}) ? `o código técnico ${technicalCode(use.properties || {}).valor}` : 'um código técnico'} sem designação legível. Esse código não é apresentado ao cliente como classificação urbanística.`] : []),
         ...(municipality?.nome === 'Faro' && faroClassificationMethod === 'leitura por ponto da planta de ordenamento WMS' ? ['A classe foi obtida por consulta da planta de ordenamento visual publicada pelo Município de Faro. A categoria e as regras são uma interpretação cartográfica preliminar e exigem confirmação municipal ou acesso à camada vetorial oficial.'] : []),
-        ...(municipality?.nome === 'Faro' && !faroClassification ? ['A Planta de Ordenamento do PDM de Faro respondeu sem atributo de categoria neste ponto. A leitura automática por cor/legenda será tratada como preliminar até ser disponibilizada a camada vetorial municipal.'] : []),
+        ...(municipality?.nome === 'Faro' && !faroClassification ? ['Ainda não está configurado um serviço vetorial com atributos da Planta 1.1 do PDM de Faro. A aplicação não inventa uma categoria por cor; a análise fica limitada à CRUS e às restantes condicionantes oficiais até ser registado o WFS/ArcGIS oficial.'] : []),
         ...(municipality?.geoportal ? [`Consulte também o geoportal municipal de ${municipality.nome} para confirmação das plantas e legendas em vigor: ${municipality.geoportal}`] : []),
         'A classificação cartográfica do plano é cruzada automaticamente quando a camada vetorial oficial estiver disponível. A aplicação final do regulamento depende da geometria exata da propriedade e da pretensão apresentada.',
         'O resultado é preliminar e deve ser confirmado pelos diplomas, regulamentos e representações gráficas oficiais.',
       ],
       municipio: municipality,
-      fontes: ['Direção-Geral do Território — OGC API: Cadastro Predial, CAOP e Carta do Regime de Uso do Solo (CC-BY 4.0)', ...(municipality?.geoportal ? [`Município de ${municipality.nome} — Geoportal/planos municipais`] : []), ...regulatoryContext.sources.map((source) => `${source.documento} (${source.versao}) — ${source.url}`), ...(hasQuarteiraNorthEastPlan ? ['Câmara Municipal de Loulé — PU de Quarteira Norte-Nordeste: categorias de espaço e parâmetros cartográficos'] : [])], consultadoEm: new Date().toISOString(),
+      fontes: ['Direção-Geral do Território — OGC API: Cadastro Predial, CAOP e Carta do Regime de Uso do Solo (CC-BY 4.0)', ...(municipality?.geoportal ? [`Município de ${municipality.nome} — Geoportal/planos municipais`] : []), ...(faroWfsOrdering.length ? ['Município de Faro — Planta 1.1 do PDM, serviço vetorial WFS'] : []), ...(faroOrdering.length ? ['Município de Faro — Planta 1.1 do PDM, serviço vetorial ArcGIS'] : []), ...regulatoryContext.sources.map((source) => `${source.documento} (${source.versao}) — ${source.url}`), ...(hasQuarteiraNorthEastPlan ? ['Câmara Municipal de Loulé — PU de Quarteira Norte-Nordeste: categorias de espaço e parâmetros cartográficos'] : [])], consultadoEm: new Date().toISOString(),
     });
   } catch (error) { console.error('parcel_lookup_error', error); return json(502, { error: 'Não foi possível consultar as fontes geográficas oficiais neste momento.' }); }
 };
