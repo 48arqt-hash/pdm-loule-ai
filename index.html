@@ -62,6 +62,14 @@
     pointer-events:none;
     opacity:.55;
   }
+  .language-switcher{
+    position:absolute;
+    top:28px;
+    right:30px;
+    z-index:3;
+  }
+  .language-switcher label{ display:block; font-size:.64rem; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:4px; }
+  .language-switcher select{ appearance:none; border:1px solid var(--line); border-radius:6px; background:#fff; color:var(--ink); padding:7px 28px 7px 9px; font:600 .75rem 'Inter',sans-serif; cursor:pointer; }
 
   /* LOGO — clicável, revela nota do atelier */
   .logo-btn{
@@ -471,6 +479,8 @@
   }
 
   @media (max-width:620px){
+    .language-switcher{ position:static; display:flex; align-items:center; justify-content:flex-end; gap:7px; margin:-10px 0 14px; }
+    .language-switcher label{ margin:0; }
     body{ padding:12px 8px 36px; }
     main.card{ padding:28px 18px 24px; }
     #parcelMap{ height:390px; }
@@ -482,25 +492,35 @@
 <body>
 
 <main class="card">
+  <div class="language-switcher">
+    <label for="siteLanguage" data-i18n="languageLabel">Idioma</label>
+    <select id="siteLanguage" onchange="setLanguage(this.value)" aria-label="Selecionar idioma">
+      <option value="pt">Português</option>
+      <option value="en">English</option>
+      <option value="fr">Français</option>
+      <option value="de">Deutsch</option>
+      <option value="es">Español</option>
+    </select>
+  </div>
 
   <button class="logo-btn" type="button" onclick="toggleAbout()" aria-expanded="false" aria-controls="aboutPanel">
     <img src="images/logo.png" alt="Leonel Mendes">
   </button>
-  <p class="logo-hint">Sobre o atelier</p>
+  <p class="logo-hint" data-i18n="aboutHint">Sobre o atelier</p>
 
   <div id="aboutPanel" class="about-panel">
-    <strong>Arq. Leonel Mendes</strong> — Atelier de arquitetura e engenharia sediado em Loulé, dedicado a consultoria técnica especial e a projetos residenciais no Algarve. Acompanhamos cada processo desde o enquadramento urbanístico até à obra, com especial atenção ao território e aos planos aplicáveis.
+    <strong>Arq. Leonel Mendes</strong> <span data-i18n="aboutText">— Atelier de arquitetura e engenharia sediado em Loulé, dedicado a consultoria técnica especial e a projetos residenciais no Algarve. Acompanhamos cada processo desde o enquadramento urbanístico até à obra, com especial atenção ao território e aos planos aplicáveis.</span>
   </div>
 
   <div class="header-branding">
     <h1>Arq. Leonel Mendes</h1>
-    <h2>Arquitetura &amp; Engenharia</h2>
+    <h2 data-i18n="brandSubtitle">Arquitetura &amp; Engenharia</h2>
   </div>
 
   <div class="hero-summary">
-    <p>Antes de comprar, projetar ou investir, perceba melhor o seu terreno.</p>
-    <small>Pré-análise urbanística para o Algarve, seguida de apoio técnico humano quando necessário.</small>
-    <div class="result-steps"><span>Documentos organizados</span><span>Alertas de divergência</span><span>Próximos passos claros</span></div>
+    <p data-i18n="heroTitle">Antes de comprar, projetar ou investir, perceba melhor o seu terreno.</p>
+    <small data-i18n="heroText">Pré-análise urbanística para o Algarve, seguida de apoio técnico humano quando necessário.</small>
+    <div class="result-steps"><span data-i18n="stepDocs">Documentos organizados</span><span data-i18n="stepAlerts">Alertas de divergência</span><span data-i18n="stepNext">Próximos passos claros</span></div>
   </div>
 
   <div class="divider"></div>
@@ -517,58 +537,58 @@
   </div>
 
   <div class="services-section">
-    <p class="section-eyebrow">Serviços</p>
+    <p class="section-eyebrow" data-i18n="services">Serviços</p>
     <div class="service-btn-group">
       <button class="btn-action" onclick="togglePanel('pdmPanel', this)" aria-expanded="false">
-        <span>🔍 Saber o potencial do meu terreno</span>
+        <span data-i18n="landService">🔍 Saber o potencial do meu terreno</span>
         <span class="btn-arrow">▼</span>
       </button>
 
       <button class="btn-action" onclick="togglePanel('meetingPanel', this)" aria-expanded="false">
-        <span>📅 Reunião de Consultoria</span>
+        <span data-i18n="meetingService">📅 Reunião de Consultoria</span>
         <span class="btn-arrow">▼</span>
       </button>
 
       <button class="btn-action" onclick="togglePanel('quotePanel', this)" aria-expanded="false">
-        <span>📄 Pedir Orçamento de Projeto</span>
+        <span data-i18n="quoteService">📄 Pedir Orçamento de Projeto</span>
         <span class="btn-arrow">▼</span>
       </button>
     </div>
 
     <!-- PAINEL 1: PRÉ-ANÁLISE DOCUMENTAL -->
     <div id="pdmPanel" class="feature-panel">
-      <h3>Descubra o potencial do seu terreno</h3>
-      <div class="price-tag">Pré-análise documental — acesso de teste gratuito</div>
-      <p>Comece no mapa: selecione uma parcela e veja o cruzamento preliminar com as fontes geográficas oficiais. Depois, complemente com documentos para uma leitura mais rica.</p>
+      <h3 data-i18n="landTitle">Descubra o potencial do seu terreno</h3>
+      <div class="price-tag" data-i18n="trial">Pré-análise documental — acesso de teste gratuito</div>
+      <p data-i18n="landIntro">Comece no mapa: selecione uma parcela e veja o cruzamento preliminar com as fontes geográficas oficiais. Depois, complemente com documentos para uma leitura mais rica.</p>
 
       <div class="chat-history" id="pdmChat" aria-live="polite">
-        <div class="chat-msg system">Comece por localizar o terreno no mapa. Pode reforçar a análise com a caderneta, registo predial, levantamento topográfico ou Planta de Localização.</div>
+        <div class="chat-msg system" data-i18n="mapStart">Comece por localizar o terreno no mapa. Pode reforçar a análise com a caderneta, registo predial, levantamento topográfico ou Planta de Localização.</div>
       </div>
 
       <div id="pdmStep1">
-        <h4>1. Encontre e confirme o terreno</h4>
+        <h4 data-i18n="findLand">1. Encontre e confirme o terreno</h4>
         <div class="map-search">
-          <input id="mapSearch" class="input-field" placeholder="Pesquise localidade ou morada no Algarve">
-          <button class="btn-submit secondary" type="button" onclick="pesquisarNoMapa()">Procurar</button>
+          <input id="mapSearch" class="input-field" data-i18n-placeholder="searchPlaceholder" placeholder="Pesquise localidade ou morada no Algarve">
+          <button class="btn-submit secondary" type="button" onclick="pesquisarNoMapa()" data-i18n="search">Procurar</button>
         </div>
         <div id="parcelMap" aria-label="Mapa para selecionar o terreno"></div>
-        <p id="mapStatus" class="map-status">Clique dentro do terreno no mapa. Consultaremos o Cadastro Predial e a Carta do Regime de Uso do Solo da DGT, além dos planos municipais em vigor.</p>
+        <p id="mapStatus" class="map-status" data-i18n="mapStatus">Clique dentro do terreno no mapa. Consultaremos o Cadastro Predial e a Carta do Regime de Uso do Solo da DGT, além dos planos municipais em vigor.</p>
         <div id="mapResult" class="map-result"></div>
 
-        <h4>2. Documentos do terreno</h4>
+        <h4 data-i18n="documents">2. Documentos do terreno</h4>
         <div class="upload-zone" onclick="document.getElementById('pdmPdfInput').click()">
-        <span id="pdmUploadText">📁 Planta de Localização (opcional, PDF)</span>
+        <span id="pdmUploadText" data-i18n="locationPlan">📁 Planta de Localização (opcional, PDF)</span>
           <input type="file" id="pdmPdfInput" accept="application/pdf" style="display:none;" onchange="updateDocuments()">
         </div>
         <div class="upload-zone" onclick="document.getElementById('pdmOptionalDocsInput').click()">
-          <span id="pdmOptionalDocsText">＋ Caderneta, registo predial ou levantamento (opcionais, até 3 PDFs)</span>
+          <span id="pdmOptionalDocsText" data-i18n="optionalDocuments">＋ Caderneta, registo predial ou levantamento (opcionais, até 3 PDFs)</span>
           <input type="file" id="pdmOptionalDocsInput" multiple accept="application/pdf" style="display:none;" onchange="updateDocuments()">
         </div>
-        <p class="secure-note">O mapa e o cadastro são suficientes para iniciar a pré-análise. Os documentos são opcionais; para envio online, o conjunto tem o limite técnico de 4 MB. Uma Planta de Localização maior não impede a análise geográfica no mapa.</p>
+        <p class="secure-note" data-i18n="docsNote">O mapa e o cadastro são suficientes para iniciar a pré-análise. Os documentos são opcionais; para envio online, o conjunto tem o limite técnico de 4 MB. Uma Planta de Localização maior não impede a análise geográfica no mapa.</p>
 
-        <h4>3. O que pretende fazer?</h4>
+        <h4 data-i18n="purpose">3. O que pretende fazer?</h4>
         <select id="pdmObjetivo" class="input-field">
-          <option value="">Selecione a intenção (recomendado)</option>
+          <option value="" data-i18n="purposePlaceholder">Selecione a intenção (recomendado)</option>
           <option>Construir uma moradia</option>
           <option>Construir várias moradias</option>
           <option>Alterar ou ampliar construção existente</option>
@@ -576,17 +596,17 @@
           <option>Turismo / alojamento</option>
           <option>Apenas conhecer o potencial do terreno</option>
         </select>
-        <textarea id="pdmUserMsg" class="textarea-field" placeholder="Ex.: Moradia T4 com cerca de 300 m² e piscina. Indique dúvidas ou dados relevantes."></textarea>
+        <textarea id="pdmUserMsg" class="textarea-field" data-i18n-placeholder="analysisDescription" placeholder="Ex.: Moradia T4 com cerca de 300 m² e piscina. Indique dúvidas ou dados relevantes."></textarea>
 
-        <h4>4. Contacto</h4>
-        <input type="email" id="pdmEmail" class="input-field" placeholder="E-mail para receber o relatório" required>
-        <label class="checkbox-container"><input type="checkbox" id="pdmConsent"> <span>Autorizo o tratamento destes documentos exclusivamente para esta pré-análise.</span></label>
+        <h4 data-i18n="contact">4. Contacto</h4>
+        <input type="email" id="pdmEmail" class="input-field" data-i18n-placeholder="reportEmail" placeholder="E-mail para receber o relatório" required>
+        <label class="checkbox-container"><input type="checkbox" id="pdmConsent"> <span data-i18n="consent">Autorizo o tratamento destes documentos exclusivamente para esta pré-análise.</span></label>
         <p class="form-error" id="pdmError"></p>
 
-        <button class="btn-submit" id="pdmSubmitBtn" onclick="pedirAnalisePdm()">Gerar pré-análise documental →</button>
-        <p class="secure-note">A análise é preliminar. A confirmação de viabilidade requer validação técnica e, quando aplicável, resposta da Câmara.</p>
+        <button class="btn-submit" id="pdmSubmitBtn" onclick="pedirAnalisePdm()" data-i18n="generateReport">Gerar pré-análise documental →</button>
+        <p class="secure-note" data-i18n="preliminaryNote">A análise é preliminar. A confirmação de viabilidade requer validação técnica e, quando aplicável, resposta da Câmara.</p>
         <div id="pdmReportOutput" aria-live="polite"></div>
-        <button class="btn-submit secondary" type="button" onclick="mostrarAcessoProfissional()">Acesso profissional</button>
+        <button class="btn-submit secondary" type="button" onclick="mostrarAcessoProfissional()" data-i18n="professionalAccess">Acesso profissional</button>
         <div id="professionalAccess" style="display:none; margin-top:10px;">
           <input id="professionalCode" type="password" class="input-field" autocomplete="current-password" placeholder="Código de acesso profissional">
           <button class="btn-submit secondary" type="button" onclick="validarAcessoProfissional()">Validar código</button>
@@ -597,22 +617,22 @@
 
     <!-- PAINEL 2: REUNIÃO DE CONSULTORIA -->
     <div id="meetingPanel" class="feature-panel">
-      <h3>Agendar Reunião de Consultoria</h3>
-      <div class="price-tag">Valor do serviço: 100,00 €</div>
-      <p>Sessão presencial no gabinete em Loulé ou por videochamada.</p>
+      <h3 data-i18n="meetingTitle">Agendar Reunião de Consultoria</h3>
+      <div class="price-tag" data-i18n="servicePrice">Valor do serviço: 100,00 €</div>
+      <p data-i18n="meetingIntro">Sessão presencial no gabinete em Loulé ou por videochamada.</p>
 
-      <h4>1. Preferência de data e hora</h4>
-      <p style="font-size:.78rem; color:var(--ink-faint); margin-top:-4px;">ℹ️ Disponível a partir de 2 dias úteis. O agendamento final é confirmado pelo gabinete.</p>
+      <h4 data-i18n="datePreference">1. Preferência de data e hora</h4>
+      <p style="font-size:.78rem; color:var(--ink-faint); margin-top:-4px;" data-i18n="availabilityNote">ℹ️ Disponível a partir de 2 dias úteis. O agendamento final é confirmado pelo gabinete.</p>
 
       <div class="input-grid">
         <div>
-          <label style="font-size:.75rem; color:var(--ink-faint);">Data pretendida:</label>
+          <label style="font-size:.75rem; color:var(--ink-faint);" data-i18n="preferredDate">Data pretendida:</label>
           <input type="date" id="meetingDate" class="input-field" required>
         </div>
         <div>
-          <label style="font-size:.75rem; color:var(--ink-faint);">Horário preferencial:</label>
+          <label style="font-size:.75rem; color:var(--ink-faint);" data-i18n="preferredTime">Horário preferencial:</label>
           <select id="meetingTimeSelect" class="input-field" required>
-            <option value="">Selecione a hora...</option>
+            <option value="" data-i18n="selectTime">Selecione a hora...</option>
             <option value="09:30">09:30</option>
             <option value="11:00">11:00</option>
             <option value="14:30">14:30</option>
@@ -622,36 +642,36 @@
         </div>
       </div>
 
-      <h4>2. Dados de contacto</h4>
-      <input type="text" id="meetingName" placeholder="Seu nome completo" class="input-field" required>
+      <h4 data-i18n="contactDetails">2. Dados de contacto</h4>
+      <input type="text" id="meetingName" data-i18n-placeholder="fullName" placeholder="Seu nome completo" class="input-field" required>
       <div class="input-grid">
-        <input type="tel" id="meetingPhone" placeholder="Contacto telefónico" class="input-field" required>
-        <input type="email" id="meetingEmail" placeholder="Seu email" class="input-field" required>
+        <input type="tel" id="meetingPhone" data-i18n-placeholder="phone" placeholder="Contacto telefónico" class="input-field" required>
+        <input type="email" id="meetingEmail" data-i18n-placeholder="email" placeholder="Seu email" class="input-field" required>
       </div>
 
-      <button class="btn-submit" id="meetingSubmitBtn" onclick="processMeetingBooking()">Solicitar agendamento</button>
+      <button class="btn-submit" id="meetingSubmitBtn" onclick="processMeetingBooking()" data-i18n="requestBooking">Solicitar agendamento</button>
     </div>
 
     <!-- PAINEL 3: PEDIR ORÇAMENTO -->
     <div id="quotePanel" class="feature-panel">
-      <h3>Pedir Orçamento de Projeto</h3>
-      <div class="price-tag">Valor do serviço: 100,00 €</div>
-      <p>O custo imputado corresponde à análise técnica de viabilidade necessária para enquadrar o pedido e preparar uma proposta de orçamento informada. A proposta indicará os projetos, especialidades e estudos previsivelmente necessários para instruir o processo pretendido.</p>
+      <h3 data-i18n="quoteTitle">Pedir Orçamento de Projeto</h3>
+      <div class="price-tag" data-i18n="servicePrice">Valor do serviço: 100,00 €</div>
+      <p data-i18n="quoteIntro">O custo imputado corresponde à análise técnica de viabilidade necessária para enquadrar o pedido e preparar uma proposta de orçamento informada. A proposta indicará os projetos, especialidades e estudos previsivelmente necessários para instruir o processo pretendido.</p>
 
-      <h4>Contacto &amp; faturação</h4>
-      <input type="text" id="quoteName" placeholder="Nome completo" class="input-field" required>
+      <h4 data-i18n="billing">Contacto &amp; faturação</h4>
+      <input type="text" id="quoteName" data-i18n-placeholder="fullName" placeholder="Nome completo" class="input-field" required>
       <div class="input-grid">
-        <input type="email" id="quoteEmail" placeholder="Email" class="input-field" required>
-        <input type="tel" id="quotePhone" placeholder="Contacto telefónico" class="input-field" required>
+        <input type="email" id="quoteEmail" data-i18n-placeholder="email" placeholder="Email" class="input-field" required>
+        <input type="tel" id="quotePhone" data-i18n-placeholder="phone" placeholder="Contacto telefónico" class="input-field" required>
       </div>
-      <textarea id="quoteDescription" class="textarea-field" placeholder="Descreva o projeto (ex: moradia unifamiliar, reabilitação, ampliação...)" required></textarea>
+      <textarea id="quoteDescription" class="textarea-field" data-i18n-placeholder="quoteDescription" placeholder="Descreva o projeto (ex: moradia unifamiliar, reabilitação, ampliação...)" required></textarea>
 
       <div class="upload-zone" onclick="document.getElementById('quoteDocsInput').click()">
-        <span id="quoteUploadText">📁 Anexar documentos ou projetos (PDF/Fotos)</span>
+        <span id="quoteUploadText" data-i18n="quoteDocuments">📁 Anexar documentos ou projetos (PDF/Fotos)</span>
         <input type="file" id="quoteDocsInput" multiple accept="application/pdf,image/*" style="display:none;" onchange="updateFileName(this,'quoteUploadText')">
       </div>
 
-      <button class="btn-submit" id="quoteSubmitBtn" onclick="submitQuoteRequest()">Solicitar proposta de orçamento</button>
+      <button class="btn-submit" id="quoteSubmitBtn" onclick="submitQuoteRequest()" data-i18n="requestQuote">Solicitar proposta de orçamento</button>
     </div>
   </div>
 
@@ -679,6 +699,43 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
+  const translations = {
+    en: {
+      languageLabel:'Language', aboutHint:'About the studio', aboutText:'— Architecture and engineering studio based in Loulé, dedicated to specialist technical consultancy and residential projects in the Algarve. We support each process from planning assessment to construction, with careful attention to the territory and applicable plans.', brandSubtitle:'Architecture & Engineering', heroTitle:'Before buying, designing or investing, understand your land better.', heroText:'Urban planning pre-assessment for the Algarve, followed by human technical support whenever needed.', stepDocs:'Organised documents', stepAlerts:'Discrepancy alerts', stepNext:'Clear next steps', services:'Services', landService:'🔍 Discover my land potential', meetingService:'📅 Consultancy meeting', quoteService:'📄 Request a project quote', landTitle:'Discover your land potential', trial:'Document pre-assessment — free trial access', landIntro:'Start on the map: select a parcel and see a preliminary cross-check with official geographic sources. Then add documents for a richer assessment.', mapStart:'Start by locating the land on the map. You can strengthen the assessment with the property record, land registry, topographic survey or location plan.', findLand:'1. Find and confirm the land', searchPlaceholder:'Search a town or address in the Algarve', search:'Search', mapStatus:'Click within the land on the map. We will consult the DGT cadastral record and land-use regime map, as well as municipal plans in force.', documents:'2. Land documents', locationPlan:'📁 Location plan (optional, PDF)', optionalDocuments:'＋ Property record, land registry or survey (optional, up to 3 PDFs)', docsNote:'The map and cadastre are sufficient to begin the pre-assessment. Documents are optional; online submission has a technical total limit of 4 MB. A larger location plan does not prevent geographic analysis on the map.', purpose:'3. What would you like to do?', purposePlaceholder:'Select your intention (recommended)', analysisDescription:'E.g.: a four-bedroom house of around 300 m² with a pool. Add questions or relevant details.', contact:'4. Contact', reportEmail:'Email to receive the report', consent:'I authorise the processing of these documents solely for this pre-assessment.', generateReport:'Generate document pre-assessment →', preliminaryNote:'The assessment is preliminary. Feasibility requires technical validation and, where applicable, a municipal response.', professionalAccess:'Professional access', meetingTitle:'Book a consultancy meeting', servicePrice:'Service fee: €100.00', meetingIntro:'In-person session at our Loulé office or by video call.', datePreference:'1. Preferred date and time', availabilityNote:'ℹ️ Available from 2 business days. Final booking is confirmed by the studio.', preferredDate:'Preferred date:', preferredTime:'Preferred time:', selectTime:'Select a time…', contactDetails:'2. Contact details', fullName:'Full name', phone:'Phone number', email:'Your email', requestBooking:'Request booking', quoteTitle:'Request a project quote', quoteIntro:'The stated fee covers the technical viability assessment needed to frame the request and prepare an informed quotation. The proposal will identify the projects, specialist disciplines and studies likely required for the intended application.', billing:'Contact & billing', quoteDescription:'Describe the project (e.g. detached house, refurbishment, extension…)', quoteDocuments:'📁 Attach documents or designs (PDF/photos)', requestQuote:'Request quotation'
+    },
+    fr: {
+      languageLabel:'Langue', aboutHint:'À propos de l’atelier', aboutText:'— Atelier d’architecture et d’ingénierie situé à Loulé, spécialisé dans le conseil technique et les projets résidentiels en Algarve. Nous accompagnons chaque dossier de l’analyse urbanistique au chantier, avec une attention particulière au territoire et aux plans applicables.', brandSubtitle:'Architecture & Ingénierie', heroTitle:'Avant d’acheter, de concevoir ou d’investir, comprenez mieux votre terrain.', heroText:'Pré-analyse urbanistique pour l’Algarve, suivie d’un accompagnement technique humain si nécessaire.', stepDocs:'Documents organisés', stepAlerts:'Alertes de divergence', stepNext:'Prochaines étapes claires', services:'Services', landService:'🔍 Connaître le potentiel de mon terrain', meetingService:'📅 Réunion de conseil', quoteService:'📄 Demander un devis de projet', landTitle:'Découvrez le potentiel de votre terrain', trial:'Pré-analyse documentaire — accès d’essai gratuit', landIntro:'Commencez sur la carte : sélectionnez une parcelle et consultez le croisement préliminaire avec les sources géographiques officielles. Ajoutez ensuite des documents pour une lecture plus complète.', mapStart:'Commencez par localiser le terrain sur la carte. Vous pouvez compléter l’analyse avec la matrice, le registre foncier, le relevé topographique ou le plan de localisation.', findLand:'1. Trouvez et confirmez le terrain', searchPlaceholder:'Rechercher une localité ou une adresse en Algarve', search:'Rechercher', mapStatus:'Cliquez dans le terrain sur la carte. Nous consulterons le cadastre DGT, la carte du régime d’occupation du sol et les plans municipaux en vigueur.', documents:'2. Documents du terrain', locationPlan:'📁 Plan de localisation (facultatif, PDF)', optionalDocuments:'＋ Matrice, registre foncier ou relevé (facultatif, jusqu’à 3 PDF)', docsNote:'La carte et le cadastre suffisent pour commencer la pré-analyse. Les documents sont facultatifs ; l’envoi en ligne est limité à 4 Mo au total.', purpose:'3. Que souhaitez-vous faire ?', purposePlaceholder:'Sélectionnez votre intention (recommandé)', analysisDescription:'Ex. : maison T4 d’environ 300 m² avec piscine. Indiquez vos questions ou informations utiles.', contact:'4. Contact', reportEmail:'E-mail pour recevoir le rapport', consent:'J’autorise le traitement de ces documents exclusivement pour cette pré-analyse.', generateReport:'Générer la pré-analyse documentaire →', preliminaryNote:'L’analyse est préliminaire. La faisabilité exige une validation technique et, si applicable, une réponse municipale.', professionalAccess:'Accès professionnel', meetingTitle:'Planifier une réunion de conseil', servicePrice:'Valeur du service : 100,00 €', meetingIntro:'Séance en personne au bureau de Loulé ou par visioconférence.', datePreference:'1. Date et heure souhaitées', availabilityNote:'ℹ️ Disponible à partir de 2 jours ouvrables. La réservation finale est confirmée par l’atelier.', preferredDate:'Date souhaitée :', preferredTime:'Heure souhaitée :', selectTime:'Sélectionnez une heure…', contactDetails:'2. Coordonnées', fullName:'Nom complet', phone:'Téléphone', email:'Votre e-mail', requestBooking:'Demander une réservation', quoteTitle:'Demander un devis de projet', quoteIntro:'Le coût indiqué correspond à l’analyse technique de faisabilité nécessaire pour cadrer la demande et préparer un devis informé. La proposition indiquera les projets, spécialités et études probablement nécessaires.', billing:'Contact & facturation', quoteDescription:'Décrivez le projet (ex. maison individuelle, réhabilitation, extension…)', quoteDocuments:'📁 Joindre des documents ou projets (PDF/photos)', requestQuote:'Demander un devis'
+    },
+    de: {
+      languageLabel:'Sprache', aboutHint:'Über das Büro', aboutText:'— Architektur- und Ingenieurbüro in Loulé für technische Beratung und Wohnprojekte an der Algarve. Wir begleiten jedes Vorhaben von der planungsrechtlichen Einordnung bis zur Ausführung.', brandSubtitle:'Architektur & Ingenieurwesen', heroTitle:'Bevor Sie kaufen, planen oder investieren: Verstehen Sie Ihr Grundstück besser.', heroText:'Städtebauliche Voranalyse für die Algarve mit persönlicher technischer Betreuung bei Bedarf.', stepDocs:'Geordnete Dokumente', stepAlerts:'Hinweise auf Abweichungen', stepNext:'Klare nächste Schritte', services:'Leistungen', landService:'🔍 Potenzial meines Grundstücks', meetingService:'📅 Beratungstermin', quoteService:'📄 Projektangebot anfragen', landTitle:'Entdecken Sie das Potenzial Ihres Grundstücks', trial:'Dokumentenvoranalyse — kostenloser Testzugang', landIntro:'Beginnen Sie auf der Karte: Wählen Sie ein Grundstück und sehen Sie die vorläufige Abfrage offizieller geografischer Quellen.', mapStart:'Lokalisieren Sie das Grundstück auf der Karte. Sie können die Analyse mit Katasterunterlagen, Grundbuch, Vermessung oder Lageplan ergänzen.', findLand:'1. Grundstück finden und bestätigen', searchPlaceholder:'Ort oder Adresse an der Algarve suchen', search:'Suchen', mapStatus:'Klicken Sie auf das Grundstück. Wir prüfen DGT-Kataster, Bodennutzungsdaten und geltende kommunale Pläne.', documents:'2. Grundstücksdokumente', locationPlan:'📁 Lageplan (optional, PDF)', optionalDocuments:'＋ Katasterunterlagen, Grundbuch oder Vermessung (optional, bis zu 3 PDFs)', docsNote:'Karte und Kataster reichen für den Beginn der Voranalyse. Dokumente sind optional; die Online-Übermittlung ist insgesamt auf 4 MB begrenzt.', purpose:'3. Was möchten Sie tun?', purposePlaceholder:'Vorhaben auswählen (empfohlen)', analysisDescription:'Z. B.: Einfamilienhaus mit ca. 300 m² und Pool. Ergänzen Sie Fragen oder relevante Angaben.', contact:'4. Kontakt', reportEmail:'E-Mail für den Bericht', consent:'Ich stimme der Verarbeitung dieser Dokumente ausschließlich für diese Voranalyse zu.', generateReport:'Dokumentenvoranalyse erstellen →', preliminaryNote:'Die Analyse ist vorläufig. Die Machbarkeit erfordert eine technische Prüfung und gegebenenfalls eine kommunale Stellungnahme.', professionalAccess:'Professioneller Zugang', meetingTitle:'Beratungstermin vereinbaren', servicePrice:'Servicegebühr: 100,00 €', meetingIntro:'Persönlicher Termin im Büro in Loulé oder per Videoanruf.', datePreference:'1. Wunschtermin', availabilityNote:'ℹ️ Verfügbar ab 2 Werktagen. Die endgültige Buchung wird vom Büro bestätigt.', preferredDate:'Wunschdatum:', preferredTime:'Wunschzeit:', selectTime:'Uhrzeit auswählen…', contactDetails:'2. Kontaktdaten', fullName:'Vollständiger Name', phone:'Telefonnummer', email:'Ihre E-Mail', requestBooking:'Termin anfragen', quoteTitle:'Projektangebot anfragen', quoteIntro:'Die Gebühr deckt die technische Machbarkeitsanalyse ab, die für eine fundierte Angebotsvorbereitung erforderlich ist.', billing:'Kontakt & Abrechnung', quoteDescription:'Beschreiben Sie das Projekt (z. B. Einfamilienhaus, Sanierung, Erweiterung…)', quoteDocuments:'📁 Dokumente oder Pläne anhängen (PDF/Fotos)', requestQuote:'Angebot anfragen'
+    },
+    es: {
+      languageLabel:'Idioma', aboutHint:'Sobre el estudio', aboutText:'— Estudio de arquitectura e ingeniería con sede en Loulé, dedicado a la consultoría técnica y a proyectos residenciales en el Algarve. Acompañamos cada proceso desde el encuadre urbanístico hasta la obra.', brandSubtitle:'Arquitectura e Ingeniería', heroTitle:'Antes de comprar, proyectar o invertir, conozca mejor su terreno.', heroText:'Preanálisis urbanístico para el Algarve, con apoyo técnico humano cuando sea necesario.', stepDocs:'Documentos organizados', stepAlerts:'Alertas de discrepancias', stepNext:'Próximos pasos claros', services:'Servicios', landService:'🔍 Conocer el potencial de mi terreno', meetingService:'📅 Reunión de consultoría', quoteService:'📄 Solicitar presupuesto de proyecto', landTitle:'Descubra el potencial de su terreno', trial:'Preanálisis documental — acceso de prueba gratuito', landIntro:'Comience en el mapa: seleccione una parcela y vea el cruce preliminar con fuentes geográficas oficiales. Después, añada documentos para un análisis más completo.', mapStart:'Empiece localizando el terreno en el mapa. Puede reforzar el análisis con la cédula catastral, registro, levantamiento topográfico o plano de localización.', findLand:'1. Encuentre y confirme el terreno', searchPlaceholder:'Busque una localidad o dirección en el Algarve', search:'Buscar', mapStatus:'Haga clic dentro del terreno. Consultaremos el catastro DGT, el régimen de uso del suelo y los planes municipales vigentes.', documents:'2. Documentos del terreno', locationPlan:'📁 Plano de localización (opcional, PDF)', optionalDocuments:'＋ Cédula catastral, registro o levantamiento (opcional, hasta 3 PDF)', docsNote:'El mapa y el catastro son suficientes para iniciar el preanálisis. Los documentos son opcionales; el envío en línea tiene un límite técnico total de 4 MB.', purpose:'3. ¿Qué desea hacer?', purposePlaceholder:'Seleccione la intención (recomendado)', analysisDescription:'Ej.: vivienda de 4 dormitorios de unos 300 m² y piscina. Indique dudas o datos relevantes.', contact:'4. Contacto', reportEmail:'Correo electrónico para recibir el informe', consent:'Autorizo el tratamiento de estos documentos exclusivamente para este preanálisis.', generateReport:'Generar preanálisis documental →', preliminaryNote:'El análisis es preliminar. La viabilidad requiere validación técnica y, cuando corresponda, respuesta municipal.', professionalAccess:'Acceso profesional', meetingTitle:'Programar reunión de consultoría', servicePrice:'Valor del servicio: 100,00 €', meetingIntro:'Sesión presencial en la oficina de Loulé o por videollamada.', datePreference:'1. Fecha y hora preferidas', availabilityNote:'ℹ️ Disponible a partir de 2 días laborables. La cita final la confirma el estudio.', preferredDate:'Fecha preferida:', preferredTime:'Horario preferido:', selectTime:'Seleccione una hora…', contactDetails:'2. Datos de contacto', fullName:'Nombre completo', phone:'Teléfono', email:'Su correo electrónico', requestBooking:'Solicitar cita', quoteTitle:'Solicitar presupuesto de proyecto', quoteIntro:'El coste indicado corresponde al análisis técnico de viabilidad necesario para encuadrar la solicitud y preparar un presupuesto informado.', billing:'Contacto y facturación', quoteDescription:'Describa el proyecto (ej.: vivienda unifamiliar, rehabilitación, ampliación…)', quoteDocuments:'📁 Adjuntar documentos o proyectos (PDF/fotos)', requestQuote:'Solicitar presupuesto'
+    }
+  };
+  const ptTranslations = {};
+  document.querySelectorAll('[data-i18n]').forEach((element) => { ptTranslations[element.dataset.i18n] = element.textContent.trim(); });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach((element) => { ptTranslations[element.dataset.i18nPlaceholder] = element.placeholder; });
+  const purposeOptions = {
+    pt:['Selecione a intenção (recomendado)','Construir uma moradia','Construir várias moradias','Alterar ou ampliar construção existente','Loteamento','Turismo / alojamento','Apenas conhecer o potencial do terreno'],
+    en:['Select your intention (recommended)','Build one home','Build several homes','Alter or extend an existing building','Subdivision','Tourism / accommodation','Only learn about the land potential'],
+    fr:['Sélectionnez votre intention (recommandé)','Construire une maison','Construire plusieurs maisons','Modifier ou agrandir une construction existante','Lotissement','Tourisme / hébergement','Connaître seulement le potentiel du terrain'],
+    de:['Vorhaben auswählen (empfohlen)','Ein Haus bauen','Mehrere Häuser bauen','Bestehendes Gebäude ändern oder erweitern','Parzellierung','Tourismus / Unterkunft','Nur das Grundstückspotenzial kennenlernen'],
+    es:['Seleccione la intención (recomendado)','Construir una vivienda','Construir varias viviendas','Modificar o ampliar una construcción existente','Parcelación','Turismo / alojamiento','Solo conocer el potencial del terreno']
+  };
+  function t(key){ return (translations[document.documentElement.lang] || ptTranslations)[key] || ptTranslations[key] || key; }
+  function setLanguage(language){
+    const lang = translations[language] ? language : 'pt';
+    document.documentElement.lang = lang;
+    document.querySelectorAll('[data-i18n]').forEach((element) => { element.textContent = t(element.dataset.i18n); });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach((element) => { element.placeholder = t(element.dataset.i18nPlaceholder); });
+    [...document.getElementById('pdmObjetivo').options].forEach((option, index) => { option.textContent = purposeOptions[lang][index]; });
+    document.title = lang === 'pt' ? 'Leonel Mendes — Arquitetura e Engenharia | Algarve' : 'Leonel Mendes — Architecture & Engineering | Algarve';
+    document.querySelector('meta[name="description"]').content = lang === 'pt' ? 'Atelier de Arquitetura e Engenharia no Algarve. Pré-análise urbanística assistida por IA, consultoria e projetos.' : 'Architecture and engineering studio in the Algarve. AI-assisted urban-planning pre-assessment, consultancy and projects.';
+    document.getElementById('siteLanguage').value = lang;
+    localStorage.setItem('siteLanguage', lang);
+  }
+  document.addEventListener('DOMContentLoaded', () => setLanguage(localStorage.getItem('siteLanguage') || 'pt'));
   let pdmDocuments = [];
   let map;
   let selectedMarker;
@@ -898,7 +955,7 @@
       if (data.emailError) addMsg(`⚠ ${escapeText(data.emailError)} Pode tentar o envio manual abaixo.`, 'system');
     } catch (err) {
       loading.remove(); erroEl.textContent = err.message || 'Não foi possível processar a análise.'; erroEl.style.display = 'block';
-    } finally { btn.disabled = false; btn.textContent = 'Gerar pré-análise documental →'; }
+    } finally { btn.disabled = false; btn.textContent = t('generateReport'); }
   }
 
   function mostrarAcessoProfissional(){
@@ -980,7 +1037,7 @@
     copy.querySelector('.report-actions')?.remove();
     const previous = button.textContent;
     button.disabled = true;
-    button.textContent = 'A enviar PDF…';
+      button.textContent = document.documentElement.lang === 'pt' ? 'A enviar PDF…' : 'Sending PDF…';
     try {
       const response = await fetch('/.netlify/functions/enviar-relatorio', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -1034,7 +1091,7 @@
       if (!availabilityResponse.ok) throw new Error(availability.error || 'Não foi possível consultar o calendário.');
       if (!availability.available) throw new Error('Esse horário já não está disponível. Escolha outra data ou hora.');
 
-      button.textContent = 'A enviar pedido…';
+      button.textContent = document.documentElement.lang === 'pt' ? 'A enviar pedido…' : 'Sending request…';
       const response = await fetch('/.netlify/functions/enviar-pedido-reuniao', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ date, time, name, phone, email })
       });
@@ -1067,7 +1124,7 @@
 
     const button = document.getElementById('quoteSubmitBtn');
     const previous = button.textContent;
-    button.disabled = true; button.textContent = 'A enviar pedido…';
+    button.disabled = true; button.textContent = document.documentElement.lang === 'pt' ? 'A enviar pedido…' : 'Sending request…';
     try {
       const response = await fetch('/.netlify/functions/enviar-pedido-orcamento', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
