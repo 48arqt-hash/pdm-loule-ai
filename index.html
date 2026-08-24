@@ -138,9 +138,10 @@
     overflow:hidden;
   }
   .hero-summary::after{ content:""; position:absolute; width:230px; height:230px; border:1px solid rgba(255,255,255,.16); border-radius:50%; right:-75px; top:-120px; }
-  .hero-summary p{ margin:0; font-family:'Fraunces', serif; font-size:clamp(1.25rem, 2.6vw, 1.7rem); line-height:1.22; max-width:720px; position:relative; z-index:1; }
-  .hero-summary small{ display:block; color:rgba(255,255,255,.8); line-height:1.5; margin-top:10px; max-width:620px; position:relative; z-index:1; }
-  .result-steps{ display:flex; gap:6px; flex-wrap:wrap; margin-top:12px; }
+  .hero-summary{ text-align:center; }
+  .hero-summary p{ margin:0 auto; font-family:'Fraunces', serif; font-size:clamp(1.25rem, 2.6vw, 1.7rem); line-height:1.22; max-width:720px; position:relative; z-index:1; }
+  .hero-summary small{ display:block; color:rgba(255,255,255,.8); line-height:1.5; margin:10px auto 0; max-width:620px; position:relative; z-index:1; }
+  .result-steps{ display:flex; gap:6px; flex-wrap:wrap; justify-content:center; margin-top:16px; }
   .result-steps span{ color:#fff; background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.16); border-radius:20px; font-size:.7rem; font-weight:600; padding:6px 9px; position:relative; z-index:1; }
 
   .divider{ border:none; border-top:1px solid var(--line); margin:22px 0; }
@@ -225,10 +226,10 @@
     display:flex;
     flex-direction:column;
     justify-content:flex-start;
-    align-items:flex-start;
+    align-items:center;
     gap:10px;
     transition:background .18s ease, transform .18s ease, box-shadow .18s ease;
-    text-align:left;
+    text-align:center;
     width:100%;
   }
   .btn-action:hover{ background:var(--teal-deep); transform:translateY(-3px); box-shadow:0 14px 24px rgba(18,50,83,.18); }
@@ -244,7 +245,7 @@
     white-space:nowrap;
   }
   .btn-action .service-title{ font-size:1rem; line-height:1.3; }
-  .btn-action .service-copy{ font-size:.78rem; line-height:1.45; color:rgba(255,255,255,.75); font-weight:400; }
+  .btn-action .service-copy{ font-size:.78rem; line-height:1.45; color:rgba(255,255,255,.75); font-weight:400; max-width:250px; }
   .btn-arrow{ font-size:.75rem; opacity:.75; transition:transform .2s ease; position:absolute; top:16px; right:16px; }
   .btn-action{ position:relative; min-height:150px; }
   .btn-action[aria-expanded="true"] .btn-arrow{ transform:rotate(180deg); }
@@ -535,8 +536,8 @@
   </div>
 
   <div class="hero-summary">
-    <p data-i18n="heroTitle">Antes de comprar, projetar ou investir, perceba melhor o seu terreno.</p>
-    <small data-i18n="heroText">Pré-análise urbanística para o Algarve, seguida de apoio técnico humano quando necessário.</small>
+    <p data-i18n="heroTitle">Avalie a viabilidade urbanística do seu terreno antes de avançar.</p>
+    <small data-i18n="heroText">Selecione a parcela, obtenha um enquadramento técnico preliminar e saiba quais são os próximos passos.</small>
     <div class="result-steps"><span data-i18n="stepDocs">Documentos organizados</span><span data-i18n="stepAlerts">Alertas de divergência</span><span data-i18n="stepNext">Próximos passos claros</span></div>
   </div>
 
@@ -557,8 +558,8 @@
     <p class="section-eyebrow" data-i18n="services">Serviços</p>
     <div class="service-btn-group">
       <button class="btn-action" onclick="togglePanel('pdmPanel', this)" aria-expanded="false">
-        <span class="service-title" data-i18n="landService">🔍 Saber o potencial do meu terreno</span>
-        <span class="service-copy" data-i18n="landServiceCopy">Selecione a parcela no mapa e receba um enquadramento técnico inicial.</span>
+        <span class="service-title" data-i18n="landService">🔍 Análise urbanística do terreno</span>
+        <span class="service-copy" data-i18n="landServiceCopy">Selecione a parcela no mapa e receba um enquadramento técnico preliminar.</span>
         <span class="btn-arrow">▼</span>
       </button>
 
@@ -753,6 +754,10 @@
   Object.assign(translations.fr, { landServiceCopy:'Sélectionnez la parcelle sur la carte et recevez un premier cadre technique.', meetingServiceCopy:'Clarifiez la faisabilité, la stratégie et les prochaines étapes de votre dossier.', quoteServiceCopy:'Demandez une proposition informée pour les projets, spécialités et études.', processOneTitle:'01 · Localiser', processOneText:'Sélectionnez le terrain ou indiquez une adresse.', processTwoTitle:'02 · Analyser', processTwoText:'Nous croisons cadastre, plans et données territoriales disponibles.', processThreeTitle:'03 · Décider', processThreeText:'Recevez un rapport et identifiez les prochaines étapes.' });
   Object.assign(translations.de, { landServiceCopy:'Wählen Sie das Grundstück auf der Karte und erhalten Sie eine erste technische Einordnung.', meetingServiceCopy:'Klären Sie Machbarkeit, Strategie und die nächsten Schritte Ihres Vorhabens.', quoteServiceCopy:'Fordern Sie ein fundiertes Angebot für Projekte, Fachplanungen und Studien an.', processOneTitle:'01 · Lokalisieren', processOneText:'Grundstück auswählen oder Adresse eingeben.', processTwoTitle:'02 · Analysieren', processTwoText:'Wir gleichen Kataster, Pläne und verfügbare Gebietsdaten ab.', processThreeTitle:'03 · Entscheiden', processThreeText:'Erhalten Sie einen Bericht mit den nächsten Schritten.' });
   Object.assign(translations.es, { landServiceCopy:'Seleccione la parcela en el mapa y reciba un encuadre técnico inicial.', meetingServiceCopy:'Aclare la viabilidad, estrategia y próximos pasos de su solicitud.', quoteServiceCopy:'Solicite una propuesta informada de proyectos, especialidades y estudios.', processOneTitle:'01 · Localizar', processOneText:'Seleccione el terreno o indique una dirección.', processTwoTitle:'02 · Analizar', processTwoText:'Cruzamos catastro, planes y datos territoriales disponibles.', processThreeTitle:'03 · Decidir', processThreeText:'Reciba un informe y conozca los próximos pasos.' });
+  Object.assign(translations.en, { heroTitle:'Assess the urban-planning feasibility of your land before proceeding.', heroText:'Select the parcel, obtain a preliminary technical framework and understand the next steps.', landService:'🔍 Urban-planning land assessment', landServiceCopy:'Select the parcel on the map and receive a preliminary technical framework.' });
+  Object.assign(translations.fr, { heroTitle:'Évaluez la faisabilité urbanistique de votre terrain avant d’avancer.', heroText:'Sélectionnez la parcelle, obtenez un premier cadre technique et identifiez les prochaines étapes.', landService:'🔍 Analyse urbanistique du terrain', landServiceCopy:'Sélectionnez la parcelle sur la carte et recevez un premier cadre technique.' });
+  Object.assign(translations.de, { heroTitle:'Prüfen Sie die planungsrechtliche Machbarkeit Ihres Grundstücks, bevor Sie fortfahren.', heroText:'Wählen Sie das Grundstück, erhalten Sie eine erste technische Einordnung und kennen Sie die nächsten Schritte.', landService:'🔍 Städtebauliche Grundstücksanalyse', landServiceCopy:'Wählen Sie das Grundstück auf der Karte und erhalten Sie eine vorläufige technische Einordnung.' });
+  Object.assign(translations.es, { heroTitle:'Evalúe la viabilidad urbanística de su terreno antes de avanzar.', heroText:'Seleccione la parcela, obtenga un encuadre técnico preliminar y conozca los próximos pasos.', landService:'🔍 Análisis urbanístico del terreno', landServiceCopy:'Seleccione la parcela en el mapa y reciba un encuadre técnico preliminar.' });
   function t(key){ return (translations[document.documentElement.lang] || ptTranslations)[key] || ptTranslations[key] || key; }
   function setLanguage(language){
     const lang = translations[language] ? language : 'pt';
