@@ -10,20 +10,30 @@ function escapeHtml(value = '') {
   return String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
 }
 
-export async function sendReportEmail({ to, reportText, reportHtml, location = null }) {
+export async function sendReportEmail({
+  to,
+  reportText,
+  reportHtml,
+  location = null,
+  documentTitle = 'Relatório de Pré-Análise Urbanística',
+  documentLabel = 'PRÉ-ANÁLISE URBANÍSTICA',
+  attachmentFilename = 'relatorio-pre-analise-urbanistica.pdf',
+  disclaimer = 'Pré-análise assistida por IA. Não constitui parecer municipal nem decisão de licenciamento.',
+  emailIntro = 'Este documento foi produzido com apoio de inteligência artificial e dados geográficos oficiais. É uma pré-análise e requer validação técnica antes de qualquer decisão, projeto ou licenciamento.',
+}) {
   const recipient = String(to || '').trim();
   if (!validEmail(recipient)) throw new Error('Indique um e-mail de destino válido.');
   if (!reportText || typeof reportText !== 'string' || reportText.length > 70000) throw new Error('O relatório a enviar é inválido ou demasiado extenso.');
   if (!process.env.RESEND_API_KEY || !process.env.REPORT_FROM_EMAIL) throw new Error('O envio por e-mail ainda não está configurado.');
 
   const owner = validEmail(process.env.REPORT_OWNER_EMAIL || '') ? process.env.REPORT_OWNER_EMAIL.trim() : OWNER_EMAIL;
-  const pdf = await createProfessionalPdf({ reportHtml, reportText, location });
+  const pdf = await createProfessionalPdf({ reportHtml, reportText, location, documentTitle, documentLabel, disclaimer });
   const payload = {
     from: process.env.REPORT_FROM_EMAIL,
     to: [recipient],
-    subject: 'Relatório de Pré-Análise Urbanística - Arq. Leonel Mendes',
-    html: `<p>Exmo.(a) Cliente,</p><p>Segue em anexo o seu <strong>Relatório de Pré-Análise Urbanística</strong>.</p><p>Este documento foi produzido com apoio de inteligência artificial e dados geográficos oficiais. É uma pré-análise e requer validação técnica antes de qualquer decisão, projeto ou licenciamento.</p><hr><pre style="white-space:pre-wrap;font-family:Arial,sans-serif;font-size:12px;color:#17201f">${escapeHtml(reportText)}</pre>`,
-    attachments: [{ filename: 'relatorio-pre-analise-urbanistica.pdf', content: pdf.toString('base64') }],
+    subject: `${documentTitle} - Arq. Leonel Mendes`,
+    html: `<p>Exmo.(a) Cliente,</p><p>Segue em anexo a sua <strong>${escapeHtml(documentTitle)}</strong>.</p><p>${escapeHtml(emailIntro)}</p><hr><pre style="white-space:pre-wrap;font-family:Arial,sans-serif;font-size:12px;color:#17201f">${escapeHtml(reportText)}</pre>`,
+    attachments: [{ filename: attachmentFilename, content: pdf.toString('base64') }],
   };
   if (owner.toLowerCase() !== recipient.toLowerCase()) payload.bcc = [owner];
 

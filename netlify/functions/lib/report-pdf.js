@@ -19,7 +19,7 @@ function cellsFromRow(row) {
   return [...row.matchAll(/<(th|td)[^>]*>([\s\S]*?)<\/\1>/gi)].map((match) => decodeHtml(match[2]));
 }
 
-function parseReport(reportHtml = '', reportText = '') {
+function parseReport(reportHtml = '', reportText = '', title = 'Relatório de Pré-Análise Urbanística') {
   const html = String(reportHtml || '');
   const beforeFirstSection = html.split(/<h5[^>]*>/i)[0];
   const paragraphs = [...beforeFirstSection.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)].map((match) => decodeHtml(match[1])).filter(Boolean);
@@ -31,18 +31,18 @@ function parseReport(reportHtml = '', reportText = '') {
     return { title: decodeHtml(match[1]), rows, items, paragraphs: bodyParagraphs };
   });
   return {
-    title: 'Relatório de Pré-Análise Urbanística',
+    title,
     summary: paragraphs.slice(0, 2),
     sections,
     fallback: decodeHtml(reportText),
   };
 }
 
-function drawHeader(doc) {
+function drawHeader(doc, documentLabel = 'PRÉ-ANÁLISE URBANÍSTICA') {
   doc.image(Buffer.from(LOGO_PNG, 'base64'), 22, 16, { fit: [72, 72] });
   doc.font('Helvetica-Bold').fontSize(10).fillColor(COLORS.navy).text('Arq. Leonel Mendes', 97, 45);
   doc.font('Helvetica').fontSize(7.5).fillColor(COLORS.muted).text('ARQUITETURA + INTELIGÊNCIA', 97, 59);
-  doc.font('Helvetica-Bold').fontSize(7.5).fillColor(COLORS.gold).text('PRÉ-ANÁLISE URBANÍSTICA', 398, 48, { width: 150, align: 'right' });
+  doc.font('Helvetica-Bold').fontSize(7.5).fillColor(COLORS.gold).text(documentLabel, 360, 48, { width: 188, align: 'right' });
   doc.strokeColor(COLORS.line).lineWidth(1).moveTo(47, 82).lineTo(548, 82).stroke();
   doc.y = 104;
 }
@@ -109,11 +109,11 @@ function drawBullets(doc, items) {
   });
 }
 
-function drawFooter(doc, pageNumber) {
+function drawFooter(doc, pageNumber, disclaimer = 'Pré-análise assistida por IA. Não constitui parecer municipal nem decisão de licenciamento.') {
   doc.save();
   // O aviso integra o conteúdo do relatório, não o rodapé administrativo.
   doc.font('Helvetica-Oblique').fontSize(6.7).fillColor(COLORS.muted)
-    .text('Pré-análise assistida por IA. Não constitui parecer municipal nem decisão de licenciamento.', 47, FOOTER_Y - 15, { width: 501, align: 'center' });
+    .text(disclaimer, 47, FOOTER_Y - 15, { width: 501, align: 'center' });
   doc.strokeColor(COLORS.line).lineWidth(0.8).moveTo(47, FOOTER_Y).lineTo(548, FOOTER_Y).stroke();
   doc.font('Helvetica').fontSize(7).fillColor(COLORS.muted)
     .text('Morada: Av. José da Costa Mealha, n.º 133, 8100-500 Loulé - Telefone: 96 0010 870 - E-mail: geral@leonelmendes.com', 47, FOOTER_Y + 9, { width: 501, align: 'center' });
@@ -252,18 +252,25 @@ function drawCartographicEvidence(doc, location) {
   doc.moveDown(1.1);
 }
 
-export async function createProfessionalPdf({ reportHtml, reportText, location = null }) {
+export async function createProfessionalPdf({
+  reportHtml,
+  reportText,
+  location = null,
+  documentTitle = 'Relatório de Pré-Análise Urbanística',
+  documentLabel = 'PRÉ-ANÁLISE URBANÍSTICA',
+  disclaimer = 'Pré-análise assistida por IA. Não constitui parecer municipal nem decisão de licenciamento.',
+}) {
   const aerial = await aerialContext(location);
   return new Promise((resolve, reject) => {
-    const doc = new PDFDocument({ size: 'A4', margin: 47, bufferPages: true, info: { Title: 'Relatório de Pré-Análise Urbanística - Leonel Mendes' } });
+    const doc = new PDFDocument({ size: 'A4', margin: 47, bufferPages: true, info: { Title: `${documentTitle} - Leonel Mendes` } });
     const chunks = [];
     doc.on('data', (chunk) => chunks.push(chunk));
     doc.on('error', reject);
     doc.on('end', () => resolve(Buffer.concat(chunks)));
-    doc.on('pageAdded', () => drawHeader(doc));
+    doc.on('pageAdded', () => drawHeader(doc, documentLabel));
 
-    const report = parseReport(reportHtml, reportText);
-    drawHeader(doc);
+    const report = parseReport(reportHtml, reportText, documentTitle);
+    drawHeader(doc, documentLabel);
     doc.font('Helvetica-Bold').fontSize(20).fillColor(COLORS.navy).text(report.title, 47, doc.y);
     doc.font('Helvetica').fontSize(9).fillColor(COLORS.muted).text(`Gerado em ${new Date().toLocaleString('pt-PT')}`, 47, doc.y + 5);
     doc.moveDown(1.4);
@@ -297,7 +304,7 @@ export async function createProfessionalPdf({ reportHtml, reportText, location =
     const range = doc.bufferedPageRange();
     for (let index = 0; index < range.count; index += 1) {
       doc.switchToPage(index);
-      drawFooter(doc, index + 1);
+      drawFooter(doc, index + 1, disclaimer);
     }
     doc.end();
   });

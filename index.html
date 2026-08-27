@@ -211,7 +211,7 @@
     color:var(--ink-faint);
     margin:0 0 12px;
   }
-  .service-btn-group{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin-bottom:6px; }
+  .service-btn-group{ display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:12px; margin-bottom:6px; }
 
   .btn-action{
     background:var(--teal);
@@ -486,6 +486,22 @@
     .feature-panel{ padding:28px 30px; }
     .map-search{ max-width:760px; }
   }
+
+  .cost-estimator{ display:grid; grid-template-columns:minmax(0,1.25fr) minmax(260px,.75fr); gap:22px; align-items:start; }
+  .cost-estimator label{ display:block; font-size:.75rem; font-weight:600; color:var(--ink-soft); margin:0 0 4px; }
+  .cost-estimator .input-field{ margin-top:5px; }
+  .cost-fieldset{ border:1px solid var(--line); border-radius:8px; padding:13px; margin:12px 0; background:#fff; }
+  .cost-fieldset legend{ color:var(--teal-deep); font-size:.75rem; font-weight:700; padding:0 5px; }
+  .cost-fieldset p{ font-size:.76rem; margin:0 0 10px; }
+  .cost-checks{ display:flex; flex-wrap:wrap; gap:14px; margin-top:7px; }
+  .cost-checks label,.cost-consent{ display:flex; align-items:flex-start; gap:7px; font-weight:400; line-height:1.35; }
+  .cost-checks input,.cost-consent input{ margin-top:2px; }
+  .cost-result{ position:sticky; top:18px; background:var(--teal-deep); color:#fff; padding:20px; border-radius:10px; }
+  .cost-result .result-eyebrow{ display:block; font-size:.7rem; text-transform:uppercase; letter-spacing:.1em; opacity:.72; margin-bottom:10px; }
+  .cost-result strong{ display:block; font-family:'Fraunces',serif; font-size:1.45rem; line-height:1.25; font-weight:500; }
+  .cost-result p{ color:rgba(255,255,255,.8); font-size:.78rem; margin:12px 0 0; }
+  .cost-result hr{ border:0; border-top:1px solid rgba(255,255,255,.2); margin:14px 0; }
+  .cost-note{ font-size:.72rem!important; }
   #pdmReportOutput{ margin-top:18px; }
 
   @media (max-width:380px){
@@ -504,6 +520,8 @@
     .service-btn-group{ grid-template-columns:1fr; }
     .btn-action{ min-height:112px; }
     .process-strip{ grid-template-columns:1fr; }
+    .cost-estimator{ grid-template-columns:1fr; }
+    .cost-result{ position:static; }
   }
 </style>
 </head>
@@ -572,6 +590,12 @@
       <button class="btn-action" onclick="togglePanel('quotePanel', this)" aria-expanded="false">
         <span class="service-title" data-i18n="quoteService">📄 Pedir Orçamento de Projeto</span>
         <span class="service-copy" data-i18n="quoteServiceCopy">Peça uma proposta informada para projetos, especialidades e estudos.</span>
+        <span class="btn-arrow">▼</span>
+      </button>
+
+      <button class="btn-action" onclick="togglePanel('costPanel', this)" aria-expanded="false">
+        <span class="service-title" data-i18n="costService">🧮 Simulador de custo de obra</span>
+        <span class="service-copy" data-i18n="costServiceCopy">Obtenha um intervalo indicativo para construção, ampliação ou reabilitação.</span>
         <span class="btn-arrow">▼</span>
       </button>
     </div>
@@ -694,6 +718,62 @@
 
       <button class="btn-submit" id="quoteSubmitBtn" onclick="submitQuoteRequest()" data-i18n="requestQuote">Solicitar proposta de orçamento</button>
     </div>
+
+    <!-- PAINEL 4: ESTIMATIVA DE CUSTO DE OBRA -->
+    <div id="costPanel" class="feature-panel">
+      <h3 data-i18n="costTitle">Simulador de custo de obra</h3>
+      <div class="price-tag" data-i18n="costTrial">Acesso gratuito durante a fase de testes</div>
+      <p data-i18n="costIntro">Obtenha uma estimativa orientativa para apoiar a decisão inicial. O resultado inclui execução, projetos e uma reserva para imprevistos; não substitui medições, projeto ou orçamento de empreiteiro.</p>
+      <div class="cost-estimator">
+        <div>
+          <div class="input-grid">
+            <div><label for="costLocation" data-i18n="costLocation">Localização da obra *</label><input id="costLocation" class="input-field" data-i18n-placeholder="costLocationPlaceholder" placeholder="Morada, localidade ou referência cadastral"></div>
+            <div><label for="costWorkType" data-i18n="costWorkType">Tipo de intervenção</label><select id="costWorkType" class="input-field" onchange="updateCostEstimate()"><option value="nova">Construção nova</option><option value="ampliacao">Ampliação</option><option value="reabilitacao">Reabilitação</option></select></div>
+          </div>
+          <div class="input-grid">
+            <div><label for="costQuality" data-i18n="costQuality">Padrão de construção</label><select id="costQuality" class="input-field" onchange="updateCostEstimate()"><option value="economica">Económico</option><option value="media">Médio</option><option value="media_alta" selected>Médio-alto</option><option value="superior">Superior</option><option value="luxo">Luxo</option></select></div>
+            <div><label for="costPlotArea" data-i18n="costPlotArea">Área do terreno (m²)</label><input id="costPlotArea" class="input-field" type="number" min="0" value="800" oninput="updateCostEstimate()"></div>
+          </div>
+          <fieldset class="cost-fieldset">
+            <legend data-i18n="costDetails">Programa de áreas do projeto</legend>
+            <p data-i18n="costProgrammeHelp">Descreva o que pretende estudar. Introduza apenas as quantidades previstas.</p>
+            <div class="input-grid">
+              <div><label for="costHabitable" data-i18n="costHabitable">Habitação interior (m²) *</label><input id="costHabitable" class="input-field" type="number" min="0" value="200" oninput="updateCostEstimate()"></div>
+              <div><label for="costTerraces" data-i18n="costTerraces">Terraços e alpendres cobertos (m²)</label><input id="costTerraces" class="input-field" type="number" min="0" value="30" oninput="updateCostEstimate()"></div>
+              <div><label for="costGarage" data-i18n="costGarage">Garagem coberta (m²)</label><input id="costGarage" class="input-field" type="number" min="0" value="30" oninput="updateCostEstimate()"></div>
+              <div><label for="costBasement" data-i18n="costBasement">Cave (m²)</label><input id="costBasement" class="input-field" type="number" min="0" value="0" oninput="updateCostEstimate()"></div>
+              <div><label for="costTechnical" data-i18n="costTechnical">Áreas técnicas e arrumos (m²)</label><input id="costTechnical" class="input-field" type="number" min="0" value="10" oninput="updateCostEstimate()"></div>
+              <div><label for="costPool" data-i18n="costPool">Piscina - espelho de água (m²)</label><input id="costPool" class="input-field" type="number" min="0" value="0" oninput="updateCostEstimate()"></div>
+              <div><label for="costExterior" data-i18n="costExterior">Arranjos exteriores tratados (m²)</label><input id="costExterior" class="input-field" type="number" min="0" value="0" oninput="updateCostEstimate()"></div>
+              <div><label for="costWalls" data-i18n="costWalls">Muros e vedações (ml)</label><input id="costWalls" class="input-field" type="number" min="0" value="0" oninput="updateCostEstimate()"></div>
+            </div>
+            <div class="input-grid"><div><label for="costFloors" data-i18n="costFloors">Pisos</label><input id="costFloors" class="input-field" type="number" min="1" max="8" value="2" oninput="updateCostEstimate()"></div></div>
+            <div class="cost-checks"><label><input id="costSlope" type="checkbox" onchange="updateCostEstimate()"><span data-i18n="costSlope">Terreno inclinado</span></label><label><input id="costDifficultAccess" type="checkbox" onchange="updateCostEstimate()"><span data-i18n="costAccess">Acesso difícil</span></label></div>
+          </fieldset>
+          <fieldset class="cost-fieldset">
+            <legend data-i18n="costVat">Simulação opcional de IVA</legend>
+            <p data-i18n="costVatHelp">A taxa é apenas uma simulação indicativa. A elegibilidade deve ser confirmada pelo cliente junto de profissional habilitado ou Autoridade Tributária.</p>
+            <select id="costVatMode" class="input-field" onchange="updateCostEstimate()"><option value="none" data-i18n="costVatNone">Sem IVA - custo-base</option><option value="vat6" data-i18n="costVat6">IVA a 6%</option><option value="vat23" data-i18n="costVat23">IVA a 23%</option><option value="mixed" data-i18n="costVatMixed">Repartição entre 6% e 23%</option></select>
+            <div id="costReducedShareWrap" style="display:none"><label for="costReducedShare" data-i18n="costReducedShare">Parcela sujeita a 6% (%)</label><input id="costReducedShare" class="input-field" type="number" min="0" max="100" value="50" oninput="updateCostEstimate()"></div>
+            <label class="cost-consent"><input id="costTaxResponsibility" type="checkbox"><span data-i18n="costTaxConsent">Confirmo que devo validar o enquadramento fiscal aplicável.</span></label>
+          </fieldset>
+          <h4 data-i18n="costContact">Receber a estimativa em PDF</h4>
+          <div class="input-grid"><input id="costName" class="input-field" data-i18n-placeholder="fullName" placeholder="Nome completo"><input id="costEmail" class="input-field" type="email" data-i18n-placeholder="reportEmail" placeholder="E-mail para receber o relatório"></div>
+          <label class="cost-consent"><input id="costConsent" type="checkbox"><span data-i18n="costConsent">Autorizo o tratamento destes dados para gerar e enviar esta estimativa.</span></label>
+          <input id="costCompany" type="text" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true">
+          <p class="form-error" id="costError"></p>
+          <button class="btn-submit" id="costSubmitBtn" type="button" onclick="sendCostEstimate()" data-i18n="costSend">Gerar e enviar estimativa em PDF</button>
+        </div>
+        <aside class="cost-result" aria-live="polite">
+          <span class="result-eyebrow" data-i18n="costResultEyebrow">Estimativa indicativa</span>
+          <strong id="costRange">€ 0 a € 0</strong>
+          <p id="costResultLabel" data-i18n="costWithoutVat">Custo estimado sem IVA</p>
+          <hr>
+          <p id="costBreakdown">Inclui execução da obra, projetos/acompanhamento e reserva para imprevistos.</p>
+          <p class="cost-note" data-i18n="costDisclaimer">Não inclui aquisição do terreno, licenças, taxas, impostos, mobiliário ou validação fiscal. O valor final depende do projeto, medições e propostas de empreiteiros.</p>
+        </aside>
+      </div>
+    </div>
   </div>
 
   <div class="contact">
@@ -752,6 +832,10 @@
   Object.assign(translations.fr, { heroTitle:'Évaluez la faisabilité urbanistique de votre terrain avant d’avancer.', heroText:'Sélectionnez la parcelle, obtenez un premier cadre technique et identifiez les prochaines étapes.', landService:'🔍 Analyse urbanistique du terrain', landServiceCopy:'Sélectionnez la parcelle sur la carte et recevez un premier cadre technique.' });
   Object.assign(translations.de, { heroTitle:'Prüfen Sie die planungsrechtliche Machbarkeit Ihres Grundstücks, bevor Sie fortfahren.', heroText:'Wählen Sie das Grundstück, erhalten Sie eine erste technische Einordnung und kennen Sie die nächsten Schritte.', landService:'🔍 Städtebauliche Grundstücksanalyse', landServiceCopy:'Wählen Sie das Grundstück auf der Karte und erhalten Sie eine vorläufige technische Einordnung.' });
   Object.assign(translations.es, { heroTitle:'Evalúe la viabilidad urbanística de su terreno antes de avanzar.', heroText:'Seleccione la parcela, obtenga un encuadre técnico preliminar y conozca los próximos pasos.', landService:'🔍 Análisis urbanístico del terreno', landServiceCopy:'Seleccione la parcela en el mapa y reciba un encuadre técnico preliminar.' });
+  Object.assign(translations.en, { costService:'🧮 Construction cost simulator', costServiceCopy:'Get an indicative range for a new build, extension or refurbishment.', costTitle:'Construction cost simulator', costTrial:'Free access during the testing phase', costIntro:'Get an indicative estimate to support an initial decision. The result includes construction, design/support and a contingency allowance; it does not replace quantities, design or a contractor quote.', costLocation:'Project location *', costLocationPlaceholder:'Address, locality or cadastral reference', costWorkType:'Type of intervention', costQuality:'Construction standard', costArea:'Gross construction area (m²) *', costFloors:'Floors', costPlotArea:'Land area (m²)', costDetails:'Items to consider (optional)', costBasement:'Basement (m²)', costPool:'Pool (m²)', costExterior:'External works (m²)', costWalls:'Walls / fencing (linear m)', costSlope:'Sloping land', costAccess:'Difficult access', costVat:'Optional VAT simulation', costVatHelp:'The rate is only an indicative simulation. Eligibility must be confirmed by the client with a qualified professional or the tax authority.', costVatNone:'No VAT - base cost', costVat6:'VAT at 6%', costVat23:'VAT at 23%', costVatMixed:'Split between 6% and 23%', costReducedShare:'Share subject to 6% (%)', costTaxConsent:'I confirm that I must validate the applicable tax framework.', costContact:'Receive the estimate as a PDF', costConsent:'I authorise the processing of these data to generate and send this estimate.', costSend:'Generate and send PDF estimate', costResultEyebrow:'Indicative estimate', costWithoutVat:'Estimated cost excluding VAT', costDisclaimer:'It excludes land acquisition, licences, fees, taxes, furniture and tax validation. The final value depends on the design, quantities and contractor proposals.' });
+  Object.assign(translations.fr, { costService:'🧮 Estimateur de coût des travaux', costServiceCopy:'Obtenez une fourchette indicative pour une construction, extension ou réhabilitation.', costTitle:'Estimation du coût des travaux', costTrial:'Accès gratuit pendant la phase de test', costIntro:'Obtenez une estimation indicative pour soutenir une première décision. Le résultat inclut les travaux, les études/suivi et une provision pour imprévus ; il ne remplace pas un métré, un projet ou un devis d’entreprise.', costLocation:'Localisation du projet *', costLocationPlaceholder:'Adresse, localité ou référence cadastrale', costWorkType:'Type d’intervention', costQuality:'Niveau de construction', costArea:'Surface brute construite (m²) *', costFloors:'Étages', costPlotArea:'Surface du terrain (m²)', costDetails:'Éléments à considérer (facultatif)', costBasement:'Sous-sol (m²)', costPool:'Piscine (m²)', costExterior:'Aménagements extérieurs (m²)', costWalls:'Murs / clôtures (m)', costSlope:'Terrain en pente', costAccess:'Accès difficile', costVat:'Simulation optionnelle de TVA', costVatHelp:'Le taux est seulement une simulation indicative. L’éligibilité doit être confirmée par le client auprès d’un professionnel compétent ou de l’administration fiscale.', costVatNone:'Sans TVA - coût de base', costVat6:'TVA à 6%', costVat23:'TVA à 23%', costVatMixed:'Répartition entre 6% et 23%', costReducedShare:'Part soumise à 6% (%)', costTaxConsent:'Je confirme devoir valider le régime fiscal applicable.', costContact:'Recevoir l’estimation en PDF', costConsent:'J’autorise le traitement de ces données afin de générer et envoyer cette estimation.', costSend:'Générer et envoyer l’estimation PDF', costResultEyebrow:'Estimation indicative', costWithoutVat:'Coût estimé hors TVA', costDisclaimer:'N’inclut pas l’acquisition du terrain, licences, taxes, mobilier ou validation fiscale. La valeur finale dépend du projet, des métrés et des offres d’entreprises.' });
+  Object.assign(translations.de, { costService:'🧮 Baukostenrechner', costServiceCopy:'Erhalten Sie eine unverbindliche Spanne für Neubau, Erweiterung oder Sanierung.', costTitle:'Baukostenschätzung', costTrial:'Kostenloser Zugang während der Testphase', costIntro:'Erhalten Sie eine unverbindliche Schätzung für eine erste Entscheidung. Das Ergebnis umfasst Bau, Planung/Begleitung und einen Risikopuffer; es ersetzt keine Mengenberechnung, Planung oder Unternehmerangebot.', costLocation:'Projektstandort *', costLocationPlaceholder:'Adresse, Ort oder Katasterreferenz', costWorkType:'Art der Maßnahme', costQuality:'Ausbaustandard', costArea:'Bruttogeschossfläche (m²) *', costFloors:'Geschosse', costPlotArea:'Grundstücksfläche (m²)', costDetails:'Zu berücksichtigende Elemente (optional)', costBasement:'Untergeschoss (m²)', costPool:'Pool (m²)', costExterior:'Außenanlagen (m²)', costWalls:'Mauern / Zäune (lfm)', costSlope:'Hanglage', costAccess:'Schwierige Zufahrt', costVat:'Optionale MwSt.-Simulation', costVatHelp:'Der Satz dient nur als unverbindliche Simulation. Die Berechtigung muss vom Kunden mit einer fachkundigen Person oder Steuerbehörde geprüft werden.', costVatNone:'Ohne MwSt. - Basiskosten', costVat6:'MwSt. 6%', costVat23:'MwSt. 23%', costVatMixed:'Aufteilung zwischen 6% und 23%', costReducedShare:'Anteil mit 6% (%)', costTaxConsent:'Ich bestätige, dass ich die steuerliche Einordnung prüfen muss.', costContact:'Schätzung als PDF erhalten', costConsent:'Ich stimme der Verarbeitung dieser Daten zur Erstellung und Zusendung dieser Schätzung zu.', costSend:'PDF-Schätzung erstellen und senden', costResultEyebrow:'Unverbindliche Schätzung', costWithoutVat:'Geschätzte Kosten ohne MwSt.', costDisclaimer:'Nicht enthalten sind Grundstückserwerb, Genehmigungen, Gebühren, Steuern, Einrichtung oder steuerliche Prüfung. Der Endwert hängt von Planung, Mengen und Angeboten ab.' });
+  Object.assign(translations.es, { costService:'🧮 Estimador de coste de obra', costServiceCopy:'Obtenga un intervalo indicativo para obra nueva, ampliación o rehabilitación.', costTitle:'Estimación de coste de obra', costTrial:'Acceso gratuito durante la fase de pruebas', costIntro:'Obtenga una estimación orientativa para apoyar una decisión inicial. El resultado incluye obra, proyectos/seguimiento y una reserva de imprevistos; no sustituye mediciones, proyecto ni presupuesto de contratista.', costLocation:'Ubicación de la obra *', costLocationPlaceholder:'Dirección, localidad o referencia catastral', costWorkType:'Tipo de intervención', costQuality:'Nivel de construcción', costArea:'Superficie bruta construida (m²) *', costFloors:'Plantas', costPlotArea:'Superficie del terreno (m²)', costDetails:'Elementos a considerar (opcionales)', costBasement:'Sótano (m²)', costPool:'Piscina (m²)', costExterior:'Urbanización exterior (m²)', costWalls:'Muros / cerramientos (m)', costSlope:'Terreno inclinado', costAccess:'Acceso difícil', costVat:'Simulación opcional de IVA', costVatHelp:'El tipo es solo una simulación orientativa. La elegibilidad debe ser confirmada por el cliente ante profesional cualificado o administración tributaria.', costVatNone:'Sin IVA - coste base', costVat6:'IVA al 6%', costVat23:'IVA al 23%', costVatMixed:'Reparto entre 6% y 23%', costReducedShare:'Parte sujeta al 6% (%)', costTaxConsent:'Confirmo que debo validar el encuadre fiscal aplicable.', costContact:'Recibir la estimación en PDF', costConsent:'Autorizo el tratamiento de estos datos para generar y enviar esta estimación.', costSend:'Generar y enviar estimación en PDF', costResultEyebrow:'Estimación orientativa', costWithoutVat:'Coste estimado sin IVA', costDisclaimer:'No incluye adquisición del terreno, licencias, tasas, impuestos, mobiliario ni validación fiscal. El valor final depende del proyecto, mediciones y ofertas de contratistas.' });
   function t(key){ return (translations[document.documentElement.lang] || ptTranslations)[key] || ptTranslations[key] || key; }
   function setLanguage(language){
     const lang = translations[language] ? language : 'pt';
@@ -809,7 +893,7 @@
 
   /* ---------- Painéis de serviços ---------- */
   function togglePanel(panelId, btn){
-    const panels = ['pdmPanel', 'meetingPanel', 'quotePanel'];
+    const panels = ['pdmPanel', 'meetingPanel', 'quotePanel', 'costPanel'];
     document.querySelectorAll('.btn-action').forEach(b => b.setAttribute('aria-expanded','false'));
     panels.forEach(id => {
       const el = document.getElementById(id);
@@ -1166,6 +1250,87 @@
       alert(`Não foi possível enviar o pedido de orçamento: ${error.message || 'tente novamente.'}`);
     } finally { button.disabled = false; button.textContent = previous; }
   }
+
+  /* ---------- Estimativa de custo de obra ---------- */
+  const COST_RATES = { economica:[1800,2200], media:[2100,2600], media_alta:[2400,3200], superior:[3100,4300], luxo:[4200,6000] };
+  const euro = new Intl.NumberFormat('pt-PT', { style:'currency', currency:'EUR', maximumFractionDigits:0 });
+  function costNumber(id, fallback = 0){
+    const value = Number(document.getElementById(id)?.value);
+    return Number.isFinite(value) ? Math.max(0, value) : fallback;
+  }
+  function calculateCostEstimate(){
+    const habitable = costNumber('costHabitable', 200), terraces = costNumber('costTerraces', 30), garage = costNumber('costGarage', 30), basement = costNumber('costBasement'), technical = costNumber('costTechnical', 10), pool = costNumber('costPool'), exterior = costNumber('costExterior'), walls = costNumber('costWalls');
+    const area = habitable + terraces + garage + basement + technical;
+    const floors = Math.min(8, Math.max(1, costNumber('costFloors', 2)));
+    const workType = document.getElementById('costWorkType').value;
+    const quality = document.getElementById('costQuality').value;
+    const [baseLow, baseHigh] = COST_RATES[quality] || COST_RATES.media_alta;
+    const typeFactor = workType === 'reabilitacao' ? 1.15 : workType === 'ampliacao' ? 1.08 : 1;
+    const complexity = 1 + (floors - 1) * .025 + (document.getElementById('costSlope').checked ? .06 : 0) + (document.getElementById('costDifficultAccess').checked ? .04 : 0);
+    const qualityFactor = quality === 'economica' ? .82 : quality === 'media' ? .94 : quality === 'media_alta' ? 1 : quality === 'superior' ? 1.22 : 1.55;
+    const coreLow = (habitable * baseLow + terraces * baseLow * .45 + garage * baseLow * .55 + technical * baseLow * .60) * typeFactor * complexity;
+    const coreHigh = (habitable * baseHigh + terraces * baseHigh * .45 + garage * baseHigh * .55 + technical * baseHigh * .60) * typeFactor * complexity;
+    const extrasLow = (basement * 900 + pool * 1050 + exterior * 140 + walls * 280) * qualityFactor;
+    const extrasHigh = (basement * 1400 + pool * 1600 + exterior * 240 + walls * 480) * qualityFactor;
+    const worksLow = coreLow + extrasLow;
+    const worksHigh = coreHigh + extrasHigh;
+    const feesLow = worksLow * .08, feesHigh = worksHigh * .13;
+    const contingencyLow = worksLow * .08, contingencyHigh = worksHigh * .15;
+    const netLow = worksLow + feesLow + contingencyLow, netHigh = worksHigh + feesHigh + contingencyHigh;
+    const vatMode = document.getElementById('costVatMode').value;
+    const share = Math.min(100, costNumber('costReducedShare', 50));
+    const vatRate = vatMode === 'vat23' ? .23 : vatMode === 'vat6' ? .06 : vatMode === 'mixed' ? share / 100 * .06 + (1 - share / 100) * .23 : 0;
+    return { habitable, terraces, garage, basement, technical, pool, exterior, walls, area, floors, netLow, netHigh, totalLow:netLow * (1 + vatRate), totalHigh:netHigh * (1 + vatRate), vatMode };
+  }
+  function updateCostEstimate(){
+    const result = calculateCostEstimate();
+    const vatWrap = document.getElementById('costReducedShareWrap');
+    vatWrap.style.display = result.vatMode === 'mixed' ? 'block' : 'none';
+    const hasVat = result.vatMode !== 'none';
+    document.getElementById('costRange').textContent = `${euro.format(hasVat ? result.totalLow : result.netLow)} a ${euro.format(hasVat ? result.totalHigh : result.netHigh)}`;
+    document.getElementById('costResultLabel').textContent = hasVat ? (document.documentElement.lang === 'pt' ? 'Total com a simulação de IVA escolhida' : 'Total with selected VAT simulation') : t('costWithoutVat');
+    document.getElementById('costBreakdown').textContent = document.documentElement.lang === 'pt'
+      ? `Baseado num programa de ${result.area.toLocaleString('pt-PT')} m² de área construída descrita, incluindo execução, projetos/acompanhamento e reserva para imprevistos.`
+      : `Based on a described construction programme of ${result.area.toLocaleString('pt-PT')} m², including construction, design/support and contingency.`;
+  }
+  async function sendCostEstimate(){
+    const name = document.getElementById('costName').value.trim();
+    const email = document.getElementById('costEmail').value.trim();
+    const location = document.getElementById('costLocation').value.trim();
+    const error = document.getElementById('costError');
+    const button = document.getElementById('costSubmitBtn');
+    error.style.display = 'none';
+    if (!name || !email.includes('@') || !location || costNumber('costHabitable') <= 0 || calculateCostEstimate().area < 30) { error.textContent = 'Indique o nome, e-mail, localização e um programa de áreas válido (mínimo 30 m²).'; error.style.display = 'block'; return; }
+    if (!document.getElementById('costTaxResponsibility').checked || !document.getElementById('costConsent').checked) { error.textContent = 'Confirme as declarações de enquadramento fiscal e de tratamento dos dados.'; error.style.display = 'block'; return; }
+    const result = calculateCostEstimate();
+    const previous = button.textContent;
+    button.disabled = true; button.textContent = document.documentElement.lang === 'pt' ? 'A gerar e enviar PDF…' : 'Generating and sending PDF…';
+    try {
+      const response = await fetch('/.netlify/functions/enviar-estimativa-custo', {
+        method:'POST', headers:{ 'Content-Type':'application/json' },
+        body: JSON.stringify({
+          name, email, location, floors:result.floors,
+          workType:document.getElementById('costWorkType').value, quality:document.getElementById('costQuality').value,
+          plotArea:costNumber('costPlotArea'), habitable:result.habitable, terraces:result.terraces, garage:result.garage,
+          basement:result.basement, technical:result.technical, pool:result.pool, exterior:result.exterior, walls:result.walls,
+          slope:document.getElementById('costSlope').checked,
+          difficultAccess:document.getElementById('costDifficultAccess').checked, vatMode:result.vatMode,
+          reducedShare:costNumber('costReducedShare',50), taxResponsibility:true, consent:true,
+          company:document.getElementById('costCompany').value,
+        }),
+      });
+      const data = await readJsonResponse(response, 'A estimativa não devolveu uma resposta válida');
+      if (!response.ok) throw new Error(data.error || 'Não foi possível enviar a estimativa.');
+      error.style.color = 'var(--teal-deep)';
+      error.textContent = `✓ Estimativa enviada para ${email} e registada no atelier.`;
+      error.style.display = 'block';
+    } catch (err) {
+      error.style.color = '';
+      error.textContent = err.message || 'Não foi possível gerar a estimativa.';
+      error.style.display = 'block';
+    } finally { button.disabled = false; button.textContent = previous; }
+  }
+  document.addEventListener('DOMContentLoaded', updateCostEstimate);
 </script>
 
 </body>
