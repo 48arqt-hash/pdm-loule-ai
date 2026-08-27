@@ -64,12 +64,21 @@
   }
   .language-switcher{
     position:absolute;
-    top:28px;
-    right:30px;
+    top:22px;
+    right:24px;
     z-index:3;
+    display:flex;
+    gap:3px;
+    padding:5px;
+    border:1px solid var(--line);
+    border-radius:999px;
+    background:rgba(255,255,255,.94);
+    box-shadow:0 8px 20px rgba(22,31,29,.09);
+    backdrop-filter:blur(8px);
   }
-  .language-switcher label{ display:block; font-size:.64rem; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:4px; }
-  .language-switcher select{ appearance:none; border:1px solid var(--line); border-radius:6px; background:#fff; color:var(--ink); padding:7px 28px 7px 9px; font:600 .75rem 'Inter',sans-serif; cursor:pointer; }
+  .language-switcher button{ min-width:34px; padding:8px 7px; border:0; border-radius:999px; background:transparent; color:var(--ink-faint); font:800 .65rem 'Inter',sans-serif; text-align:center; cursor:pointer; }
+  .language-switcher button:hover{ color:var(--teal-deep); background:var(--sand-soft); }
+  .language-switcher button.active{ color:#fff; background:var(--ink); }
 
   /* LOGO — clicável, revela nota do atelier */
   .logo-btn{
@@ -510,8 +519,7 @@
   }
 
   @media (max-width:620px){
-    .language-switcher{ position:static; display:flex; align-items:center; justify-content:flex-end; gap:7px; margin:-10px 0 14px; }
-    .language-switcher label{ margin:0; }
+    .language-switcher{ position:static; width:max-content; margin:-10px 0 14px auto; }
     body{ padding:12px 8px 36px; }
     main.card{ padding:28px 18px 24px; }
     #parcelMap{ height:390px; }
@@ -528,16 +536,13 @@
 <body>
 
 <main class="card">
-  <div class="language-switcher">
-    <label for="siteLanguage" data-i18n="languageLabel">Idioma</label>
-    <select id="siteLanguage" onchange="setLanguage(this.value)" aria-label="Selecionar idioma">
-      <option value="pt">Português</option>
-      <option value="en">English</option>
-      <option value="fr">Français</option>
-      <option value="de">Deutsch</option>
-      <option value="es">Español</option>
-    </select>
-  </div>
+  <nav class="language-switcher" aria-label="Selecionar idioma">
+    <button type="button" data-language="pt" onclick="setLanguage('pt')" aria-label="Português">PT</button>
+    <button type="button" data-language="en" onclick="setLanguage('en')" aria-label="English">EN</button>
+    <button type="button" data-language="fr" onclick="setLanguage('fr')" aria-label="Français">FR</button>
+    <button type="button" data-language="de" onclick="setLanguage('de')" aria-label="Deutsch">DE</button>
+    <button type="button" data-language="es" onclick="setLanguage('es')" aria-label="Español">ES</button>
+  </nav>
 
   <button class="logo-btn" type="button" onclick="toggleAbout()" aria-expanded="false" aria-controls="aboutPanel">
     <img src="images/logo.png" alt="Leonel Mendes">
@@ -845,7 +850,11 @@
     [...document.getElementById('pdmObjetivo').options].forEach((option, index) => { option.textContent = purposeOptions[lang][index]; });
     document.title = lang === 'pt' ? 'Leonel Mendes — Arquitetura e Engenharia | Algarve' : 'Leonel Mendes — Architecture & Engineering | Algarve';
     document.querySelector('meta[name="description"]').content = lang === 'pt' ? 'Atelier de Arquitetura e Engenharia no Algarve. Pré-análise urbanística assistida por IA, consultoria e projetos.' : 'Architecture and engineering studio in the Algarve. AI-assisted urban-planning pre-assessment, consultancy and projects.';
-    document.getElementById('siteLanguage').value = lang;
+    document.querySelectorAll('.language-switcher [data-language]').forEach((button) => {
+      const active = button.dataset.language === lang;
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-current', active ? 'true' : 'false');
+    });
     localStorage.setItem('siteLanguage', lang);
   }
   document.addEventListener('DOMContentLoaded', () => setLanguage(localStorage.getItem('siteLanguage') || 'pt'));
