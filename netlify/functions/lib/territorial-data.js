@@ -36,6 +36,28 @@ export const MUNICIPAL_DATA = {
         { elemento: 'Coeficiente de ocupação do solo (COS) máximo', resultado: '0,30.', artigo: 'Artigo 14.º, n.º 3', pagina: '13' },
         { elemento: 'Número máximo de pisos', resultado: '3 pisos acima do nível da cota de soleira.', artigo: 'Artigo 14.º, n.º 3', pagina: '13' },
       ],
+      'area de reserva agricola nacional': [
+        { elemento: 'Condicionante RAN', resultado: 'A utilização não agrícola de solos integrados na RAN só pode ser admitida nos termos do Regime Jurídico da RAN. Não decorre da classificação uma autorização automática para construir.', artigo: 'Artigos 38.º, n.os 1 e 2, e 67.º', pagina: '17 e 22' },
+        { elemento: 'Regra geral de edificação em solo rural', resultado: 'A edificação em solo rural é proibida, exceto nas situações expressamente previstas no regulamento; as condições abaixo são cumulativas e mantêm-se sujeitas ao regime da RAN.', artigo: 'Artigo 88.º, n.os 1 e 2', pagina: '25' },
+        { elemento: 'Moradia nova - condição de princípio', resultado: 'Uma moradia isolada só pode enquadrar-se como habitação do agricultor, integrada numa exploração agrícola ou agroflorestal economicamente viável, comprovada pela entidade competente. Não é admissível como moradia comum apenas pela área ou pela existência de acesso.', artigo: 'Artigo 88.º-A, alíneas a), b) e e)', pagina: '25-26' },
+        { elemento: 'Moradia nova - área mínima da propriedade', resultado: 'Exige propriedade com pelo menos 10 ha na Unidade Territorial Litoral Sul e Barrocal, ou 5 ha nas restantes Unidades Territoriais. A área cadastral isolada inferior a estes limiares não demonstra o cumprimento da condição.', artigo: 'Artigo 88.º-A, alínea a)', pagina: '25-26' },
+        { elemento: 'Parâmetros da habitação do agricultor', resultado: 'Área máxima de construção 500 m²; cércea máxima 7,5 m; máximo 2 pisos, incluindo semienterrados; acesso público e afastamento mínimo de 5 m aos extremos da parcela, sem prejuízo de outras servidões.', artigo: 'Artigo 88.º-A, alíneas f), g) e h)', pagina: '25-26' },
+      ],
+      'area de agricultura condicionada i': [
+        { elemento: 'Uso e salvaguarda hidrogeológica', resultado: 'Área destinada sobretudo a culturas arvenses de sequeiro, devendo os aquíferos subterrâneos ser salvaguardados. Aterros, escavações ou despedregas que possam comprometer o regime hídrico subterrâneo não são permitidos; os restantes casos exigem análise específica.', artigo: 'Artigo 40.º, n.os 1 e 2', pagina: '17' },
+        { elemento: 'Regra geral de edificação em solo rural', resultado: 'A edificação só é admitida nas exceções previstas para solo rural. Uma moradia nova não resulta automaticamente desta categoria agrícola.', artigo: 'Artigos 40.º, n.º 3, e 88.º', pagina: '17 e 25' },
+        { elemento: 'Moradia nova - condições cumulativas', resultado: 'A habitação isolada só se enquadra como habitação do agricultor, integrada numa exploração agrícola ou agroflorestal economicamente viável e comprovada, sem alternativa aceitável em solo urbano e sem outra habitação na mesma exploração.', artigo: 'Artigo 88.º-A, alíneas b) e e)', pagina: '25-26' },
+        { elemento: 'Moradia nova - área mínima e parâmetros', resultado: 'Exige propriedade com pelo menos 10 ha no Litoral Sul e Barrocal ou 5 ha nas restantes Unidades Territoriais; área máxima de construção 500 m², cércea 7,5 m e máximo 2 pisos, incluindo semienterrados.', artigo: 'Artigo 88.º-A, alíneas a) e f)', pagina: '25-26' },
+        { elemento: 'Acesso e afastamentos', resultado: 'Exige acesso público e afastamento mínimo de 5 m aos extremos da parcela, sem prejuízo de afastamentos a vias e outras servidões aplicáveis.', artigo: 'Artigo 88.º-A, alíneas g) e h)', pagina: '25-26' },
+      ],
+      'area de agricultura condicionada ii': [
+        { elemento: 'Condicionantes cumulativas', resultado: 'Área RAN coincidente com zonas ameaçadas pelas cheias; uso, ocupação e transformação do solo ficam sujeitos aos regimes legais específicos aplicáveis.', artigo: 'Artigo 41.º, n.º 1', pagina: '17' },
+        { elemento: 'Moradia nova', resultado: 'Não é admissível concluir viabilidade para nova moradia apenas pela categoria. Aplicam-se cumulativamente o Regime Jurídico da RAN, as restrições de cheia e as exceções de edificação em solo rural.', artigo: 'Artigos 38.º, 41.º e 88.º', pagina: '17 e 25' },
+      ],
+      'area de uso predominantemente agricola': [
+        { elemento: 'Regra de edificabilidade', resultado: 'A edificação, quando permitida, obedece ao regime de edificação em solo rural; esta categoria não confere por si só direito a nova moradia.', artigo: 'Artigo 39.º, n.º 3, e Artigo 88.º', pagina: '17 e 25' },
+        { elemento: 'Moradia nova - condições cumulativas', resultado: 'Para habitação do agricultor, exige-se propriedade com área mínima aplicável, exploração agrícola ou agroflorestal economicamente viável comprovada, inexistência de alternativa aceitável em solo urbano e inexistência de outra habitação na mesma exploração.', artigo: 'Artigo 88.º-A, alíneas a), b) e e)', pagina: '25-26' },
+      ],
     },
   },
   faro: {
