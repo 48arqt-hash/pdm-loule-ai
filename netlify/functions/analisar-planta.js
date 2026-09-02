@@ -258,6 +258,10 @@ export const handler = async (event) => {
 
   try {
     const body = JSON.parse(event.body || '{}');
+    if (body.privacyConsent !== true || !validEmail(body.email)) {
+      return json(400, { error: 'Indique um e-mail válido e aceite a Política de Privacidade para pedir a pré-análise.' });
+    }
+    console.info('privacy_consent_recorded', JSON.stringify({ service: 'pre-analise', policyVersion: body.privacyPolicyVersion || 'não indicado', at: new Date().toISOString() }));
     const documents = Array.isArray(body.documentos) ? body.documentos : [];
     const hasLocation = body.localizacao?.coordenadas && Number.isFinite(Number(body.localizacao.coordenadas.latitude)) && Number.isFinite(Number(body.localizacao.coordenadas.longitude));
     if (documents.length > MAX_DOCUMENTS) {

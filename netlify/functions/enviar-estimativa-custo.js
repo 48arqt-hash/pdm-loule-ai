@@ -35,6 +35,7 @@ export const handler = async (event) => {
     if (!name || !validEmail(email) || !location || area < 30 || floors < 1 || data.consent !== true || data.taxResponsibility !== true) {
       return json(400, { error: 'Preencha corretamente os campos obrigatórios e confirme as declarações.' });
     }
+    console.info('privacy_consent_recorded', JSON.stringify({ service: 'estimativa-custo', policyVersion: data.privacyPolicyVersion || 'não indicado', at: new Date().toISOString() }));
     const quality = Object.hasOwn(rates, data.quality) ? data.quality : 'media_alta';
     const workType = Object.hasOwn(labels, data.workType) ? data.workType : 'nova';
     const [baseLow, baseHigh] = rates[quality];

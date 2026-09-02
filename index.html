@@ -458,6 +458,16 @@
     font-size:.82rem; margin-bottom:12px; color:var(--ink-soft); line-height:1.4;
   }
   .checkbox-container input{ margin-top:2px; }
+  .privacy-link{ color:var(--teal-deep); text-decoration:underline; font-weight:600; cursor:pointer; background:none; border:0; padding:0; font:inherit; }
+  .privacy-link:hover{ color:var(--teal); }
+  .privacy-modal{ position:fixed; inset:0; z-index:5000; display:none; padding:24px; background:rgba(18,32,34,.58); overflow:auto; }
+  .privacy-dialog{ position:relative; max-width:780px; margin:28px auto; padding:28px; border-radius:12px; background:var(--paper); color:var(--ink); box-shadow:0 20px 60px rgba(0,0,0,.26); }
+  .privacy-dialog h2{ color:var(--teal-deep); margin:0 38px 12px 0; }
+  .privacy-dialog h3{ margin:20px 0 6px; font-size:1rem; }
+  .privacy-dialog p,.privacy-dialog li{ font-size:.86rem; line-height:1.55; color:var(--ink-soft); }
+  .privacy-dialog ul{ padding-left:20px; }
+  .privacy-close{ position:absolute; top:14px; right:14px; width:34px; height:34px; border:1px solid var(--line); border-radius:50%; background:#fff; color:var(--teal-deep); font-size:1.25rem; cursor:pointer; }
+  .privacy-close:hover{ background:var(--sand-soft); }
 
   .secure-note{
     display:flex; align-items:center; gap:6px;
@@ -650,7 +660,7 @@
 
         <h4 data-i18n="contact">4. Contacto</h4>
         <input type="email" id="pdmEmail" class="input-field" data-i18n-placeholder="reportEmail" placeholder="E-mail para receber o relatório" required>
-        <label class="checkbox-container"><input type="checkbox" id="pdmConsent"> <span data-i18n="consent">Autorizo o tratamento destes documentos exclusivamente para esta pré-análise.</span></label>
+        <div class="checkbox-container"><input type="checkbox" id="pdmConsent"> <span>Li e aceito a <button type="button" class="privacy-link" onclick="openPrivacyPolicy()">Política de Privacidade</button>, incluindo o tratamento e conservação dos dados e documentos para esta pré-análise.</span></div>
         <p class="form-error" id="pdmError"></p>
 
         <button class="btn-submit" id="pdmSubmitBtn" onclick="pedirAnalisePdm()" data-i18n="generateReport">Gerar pré-análise documental →</button>
@@ -699,6 +709,7 @@
         <input type="email" id="meetingEmail" data-i18n-placeholder="email" placeholder="Seu email" class="input-field" required>
       </div>
 
+      <div class="checkbox-container"><input type="checkbox" id="meetingConsent"> <span>Li e aceito a <button type="button" class="privacy-link" onclick="openPrivacyPolicy()">Política de Privacidade</button> para tratamento dos meus dados no pedido de reunião.</span></div>
       <button class="btn-submit" id="meetingSubmitBtn" onclick="processMeetingBooking()" data-i18n="requestBooking">Solicitar agendamento</button>
     </div>
 
@@ -721,6 +732,7 @@
         <input type="file" id="quoteDocsInput" multiple accept="application/pdf,image/*" style="display:none;" onchange="updateFileName(this,'quoteUploadText')">
       </div>
 
+      <div class="checkbox-container"><input type="checkbox" id="quoteConsent"> <span>Li e aceito a <button type="button" class="privacy-link" onclick="openPrivacyPolicy()">Política de Privacidade</button> para tratamento dos meus dados e ficheiros neste pedido.</span></div>
       <button class="btn-submit" id="quoteSubmitBtn" onclick="submitQuoteRequest()" data-i18n="requestQuote">Solicitar proposta de orçamento</button>
     </div>
 
@@ -764,7 +776,7 @@
           </fieldset>
           <h4 data-i18n="costContact">Receber a estimativa em PDF</h4>
           <div class="input-grid"><input id="costName" class="input-field" data-i18n-placeholder="fullName" placeholder="Nome completo"><input id="costEmail" class="input-field" type="email" data-i18n-placeholder="reportEmail" placeholder="E-mail para receber o relatório"></div>
-          <label class="cost-consent"><input id="costConsent" type="checkbox"><span data-i18n="costConsent">Autorizo o tratamento destes dados para gerar e enviar esta estimativa.</span></label>
+          <div class="cost-consent"><input id="costConsent" type="checkbox"><span>Li e aceito a <button type="button" class="privacy-link" onclick="openPrivacyPolicy()">Política de Privacidade</button>, incluindo o tratamento destes dados para gerar e enviar esta estimativa.</span></div>
           <input id="costCompany" type="text" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true">
           <p class="form-error" id="costError"></p>
           <button class="btn-submit" id="costSubmitBtn" type="button" onclick="sendCostEstimate()" data-i18n="costSend">Gerar e enviar estimativa em PDF</button>
@@ -799,7 +811,27 @@
     <a href="https://www.instagram.com/by_arq_leonel_mendes" target="_blank"><img src="images/instagram.svg" alt="Instagram"></a>
   </div>
 
-  <footer>© 2026 Arq. Leonel Mendes — Arquitetura &amp; Engenharia</footer>
+  <footer>© 2026 Arq. Leonel Mendes — Arquitetura &amp; Engenharia<br><button type="button" class="privacy-link" onclick="openPrivacyPolicy()">Política de Privacidade</button></footer>
+
+  <div id="privacyModal" class="privacy-modal" role="dialog" aria-modal="true" aria-labelledby="privacyTitle" onclick="if(event.target === this) closePrivacyPolicy()">
+    <section class="privacy-dialog">
+      <button class="privacy-close" type="button" aria-label="Fechar" onclick="closePrivacyPolicy()">×</button>
+      <h2 id="privacyTitle">Política de Privacidade</h2>
+      <p><strong>Versão: 2 de setembro de 2026.</strong> Esta política explica como são tratados os dados enviados através deste site.</p>
+      <h3>Responsável pelo tratamento</h3>
+      <p>Arq. Leonel Mendes, Av. José da Costa Mealha, n.º 133, 8100-500 Loulé. Contacto: <a href="mailto:geral@leonelmendes.com">geral@leonelmendes.com</a> · +351 960 010 870.</p>
+      <h3>Dados e finalidades</h3>
+      <p>Tratamos nome, e-mail, telefone, localização do prédio, elementos do pedido, documentos que decida anexar e os resultados produzidos para responder a pedidos de reunião ou orçamento, elaborar e enviar pré-análises urbanísticas e estimativas de custo, e assegurar o respetivo acompanhamento técnico.</p>
+      <h3>Fundamento e conservação</h3>
+      <p>O tratamento baseia-se no seu consentimento, dado através da caixa própria em cada serviço, e nas diligências pré-contratuais solicitadas por si. Os elementos são conservados pelo Atelier por até 24 meses após o pedido, salvo se iniciar uma relação profissional, pedir eliminação antes desse prazo ou existir obrigação legal de conservação.</p>
+      <h3>Partilha limitada com fornecedores</h3>
+      <p>Os dados são tratados nos sistemas necessários ao serviço: alojamento Netlify, envio de e-mail Resend, Google Calendar para confirmar disponibilidade de reuniões e Google Gemini para gerar a pré-análise assistida por IA. Os documentos não são publicados no site nem vendidos ou cedidos para fins de marketing.</p>
+      <h3>Os seus direitos</h3>
+      <p>Pode pedir acesso, retificação, apagamento, limitação ou oposição ao tratamento, bem como retirar o consentimento, escrevendo para <a href="mailto:geral@leonelmendes.com">geral@leonelmendes.com</a>. Pode também apresentar reclamação à CNPD. A retirada do consentimento não afeta o tratamento já realizado, mas pode impedir a prestação do serviço solicitado.</p>
+      <h3>Segurança e limites do serviço</h3>
+      <p>Aplicamos medidas técnicas razoáveis de acesso restrito. Não envie documentos que não sejam necessários ao pedido. As pré-análises são informativas e não constituem parecer municipal, decisão de licenciamento ou aconselhamento jurídico.</p>
+    </section>
+  </div>
 
 </main>
 
@@ -858,6 +890,17 @@
     localStorage.setItem('siteLanguage', lang);
   }
   document.addEventListener('DOMContentLoaded', () => setLanguage(localStorage.getItem('siteLanguage') || 'pt'));
+  function openPrivacyPolicy(){
+    const modal = document.getElementById('privacyModal');
+    modal.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+    modal.querySelector('.privacy-close').focus();
+  }
+  function closePrivacyPolicy(){
+    document.getElementById('privacyModal').style.display = 'none';
+    document.body.style.overflow = '';
+  }
+  document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && document.getElementById('privacyModal')?.style.display === 'block') closePrivacyPolicy(); });
   let pdmDocuments = [];
   let map;
   let selectedMarker;
@@ -1067,7 +1110,7 @@
     try {
       const resp = await fetch('/.netlify/functions/analisar-planta', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, documentos: documentsForAnalysis, localizacao: selectedLocation, objetivo: document.getElementById('pdmObjetivo').value, descricao: document.getElementById('pdmUserMsg').value.trim() })
+        body: JSON.stringify({ email, documentos: documentsForAnalysis, localizacao: selectedLocation, objetivo: document.getElementById('pdmObjetivo').value, descricao: document.getElementById('pdmUserMsg').value.trim(), privacyConsent: true, privacyPolicyVersion: '2026-09-02' })
       });
       const data = await readJsonResponse(resp, 'A análise não devolveu uma resposta válida');
       if (!resp.ok) throw new Error(data.error || `Não foi possível concluir a análise (resposta ${resp.status} do servidor).`);
@@ -1153,6 +1196,7 @@
   async function enviarRelatorioPorEmail(button){
     const email = document.getElementById('pdmEmail').value.trim();
     if (!email || !email.includes('@')) { alert('Introduza primeiro o e-mail do destinatário no formulário.'); return; }
+    if (!document.getElementById('pdmConsent').checked) { alert('Confirme a Política de Privacidade antes de enviar o relatório.'); return; }
     const report = button.closest('.chat-msg.report');
     if (!report) return;
     const copy = report.cloneNode(true);
@@ -1163,7 +1207,7 @@
     try {
       const response = await fetch('/.netlify/functions/enviar-relatorio', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ to: email, reportText: copy.innerText, reportHtml: copy.innerHTML, location: selectedLocation }),
+        body: JSON.stringify({ to: email, reportText: copy.innerText, reportHtml: copy.innerHTML, location: selectedLocation, privacyConsent: true, privacyPolicyVersion: '2026-09-02' }),
       });
       const data = await readJsonResponse(response, 'O serviço de envio de e-mail não devolveu uma resposta válida');
       if (!response.ok) throw new Error(data.error || 'Não foi possível enviar o relatório.');
@@ -1201,6 +1245,7 @@
 
     if (!date || !time){ alert('Selecione a data e o horário preferencial para a reunião.'); return; }
     if (!name || !phone || !email || !email.includes('@')){ alert('Preencha os seus dados de contacto com um e-mail válido.'); return; }
+    if (!document.getElementById('meetingConsent').checked){ alert('Confirme a Política de Privacidade para enviar o pedido de reunião.'); return; }
 
     const button = document.getElementById('meetingSubmitBtn');
     const previous = button.textContent;
@@ -1215,7 +1260,7 @@
 
       button.textContent = document.documentElement.lang === 'pt' ? 'A enviar pedido…' : 'Sending request…';
       const response = await fetch('/.netlify/functions/enviar-pedido-reuniao', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ date, time, name, phone, email })
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ date, time, name, phone, email, privacyConsent: true, privacyPolicyVersion: '2026-09-02' })
       });
       const data = await readJsonResponse(response, 'O pedido de reunião não devolveu uma resposta válida');
       if (!response.ok) {
@@ -1243,6 +1288,7 @@
     const description = document.getElementById('quoteDescription').value.trim();
     const documents = [...(document.getElementById('quoteDocsInput').files || [])].map((file) => file.name);
     if (!name || !phone || !description || !email.includes('@')) { alert('Preencha o nome, e-mail, telefone e descrição do projeto.'); return; }
+    if (!document.getElementById('quoteConsent').checked) { alert('Confirme a Política de Privacidade para enviar o pedido de orçamento.'); return; }
 
     const button = document.getElementById('quoteSubmitBtn');
     const previous = button.textContent;
@@ -1250,7 +1296,7 @@
     try {
       const response = await fetch('/.netlify/functions/enviar-pedido-orcamento', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, phone, description, documents })
+        body: JSON.stringify({ name, email, phone, description, documents, privacyConsent: true, privacyPolicyVersion: '2026-09-02' })
       });
       const data = await readJsonResponse(response, 'O pedido de orçamento não devolveu uma resposta válida');
       if (!response.ok) throw new Error(data.error || `resposta ${response.status} do servidor`);
@@ -1324,7 +1370,7 @@
           basement:result.basement, technical:result.technical, pool:result.pool, exterior:result.exterior, walls:result.walls,
           slope:document.getElementById('costSlope').checked,
           difficultAccess:document.getElementById('costDifficultAccess').checked, vatMode:result.vatMode,
-          reducedShare:costNumber('costReducedShare',50), taxResponsibility:true, consent:true,
+          reducedShare:costNumber('costReducedShare',50), taxResponsibility:true, consent:true, privacyPolicyVersion:'2026-09-02',
           company:document.getElementById('costCompany').value,
         }),
       });
