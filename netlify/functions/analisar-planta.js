@@ -1,5 +1,5 @@
 import { hasProfessionalAccess } from './lib/access.js';
-import { sendReportEmail } from './lib/report-email.js';
+import { sendReportEmail, validEmail } from './lib/report-email.js';
 import { regulatoryRuleCatalogFor } from './lib/territorial-data.js';
 
 const MAX_DOCUMENTS = 4;
