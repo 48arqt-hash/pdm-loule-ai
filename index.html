@@ -420,6 +420,12 @@
     box-shadow:0 2px 6px rgba(22,31,29,.05);
   }
   .chat-msg.report h4{ margin-top:0; }
+  .report-decision{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:1px; margin:12px 0 16px; border:1px solid var(--line); border-radius:8px; overflow:hidden; background:var(--line); }
+  .report-decision > div{ background:var(--sand-soft); padding:11px; min-height:88px; }
+  .report-decision strong{ display:block; color:var(--teal-deep); font-size:.66rem; letter-spacing:.08em; margin-bottom:6px; }
+  .report-decision span{ display:block; color:var(--ink-soft); font-size:.76rem; line-height:1.42; }
+  .report-status{ display:inline-block; padding:4px 8px; border-radius:20px; background:var(--sand); color:var(--teal-deep); font-size:.74rem; font-weight:700; margin-bottom:8px; }
+  @media(max-width:640px){ .report-decision{ grid-template-columns:1fr; } .report-decision > div{ min-height:auto; } }
   .chat-msg.report h5{ margin:18px 0 7px; font-size:.78rem; letter-spacing:.05em; text-transform:uppercase; color:var(--teal-deep); }
   .chat-msg.report table{ width:100%; border-collapse:collapse; font-size:.82rem; margin:8px 0; }
   .chat-msg.report td, .chat-msg.report th{ border:1px solid var(--line); padding:6px 8px; text-align:left; }
@@ -1231,8 +1237,21 @@
     const output = document.getElementById('pdmReportOutput');
     const div = document.createElement('div');
     div.className = 'chat-msg report';
+    const source = document.createElement('div');
+    source.innerHTML = content;
+    const result = source.querySelector('p strong')?.parentElement?.textContent?.replace(/^Resultado preliminar:\s*/i, '').trim() || 'Necessita validação técnica';
+    const identification = [...source.querySelectorAll('h5')].find(item => /documentação e identificação/i.test(item.textContent))?.nextElementSibling;
+    const location = identification?.querySelector('tr td')?.textContent?.trim() || 'Localização e parcela indicadas no mapa';
+    const rules = [...source.querySelectorAll('h5')].find(item => /regras urbanísticas/i.test(item.textContent))?.nextElementSibling;
+    const orientation = rules?.querySelector('tbody tr td:nth-child(2)')?.textContent?.trim() || 'Consultar regras e limitações na secção seguinte.';
     div.innerHTML = `
       <h4>📋 Relatório de Pré-Análise Urbanística — Algarve</h4>
+      <span class="report-status">${escapeText(result)}</span>
+      <div class="report-decision" aria-label="Síntese para decisão">
+        <div><strong>LOCALIZAÇÃO</strong><span>${escapeText(location)}</span></div>
+        <div><strong>ORIENTAÇÃO</strong><span>${escapeText(orientation)}</span></div>
+        <div><strong>PRÓXIMO PASSO</strong><span>Confirme os elementos assinalados antes de qualquer decisão ou pedido municipal.</span></div>
+      </div>
       <div style="color:var(--ink-soft); line-height:1.55;">${content}</div>
       <p style="font-size:.76rem; color:var(--ink-faint); margin-top:10px; margin-bottom:0;">Guarde esta pré-análise e contacte-nos para validação técnica, pedido de informação prévia ou projeto.</p>
       <div class="report-actions">

@@ -57,11 +57,47 @@ function textHeight(doc, text, width, size = 9) {
 
 function drawStatus(doc, text) {
   const label = String(text || 'Necessita validação técnica');
+  const isFavourable = /coerente|vi[aá]vel em princ/i.test(label);
+  const isCritical = /diverg|n[aã]o vi[aá]vel|n[aã]o demonstrada/i.test(label);
+  const fill = isFavourable ? '#E7F1EC' : isCritical ? '#F8E9E5' : COLORS.paleGold;
+  const color = isFavourable ? '#1E624A' : isCritical ? '#9A3628' : COLORS.navy;
   const width = Math.min(235, doc.font('Helvetica-Bold').fontSize(8.5).widthOfString(label) + 22);
   const y = doc.y;
-  doc.roundedRect(47, y, width, 22, 11).fill(COLORS.paleGold);
-  doc.font('Helvetica-Bold').fontSize(8.5).fillColor(COLORS.navy).text(label, 58, y + 7, { width: width - 20, align: 'center' });
+  doc.roundedRect(47, y, width, 22, 11).fill(fill);
+  doc.font('Helvetica-Bold').fontSize(8.5).fillColor(color).text(label, 58, y + 7, { width: width - 20, align: 'center' });
   doc.y = y + 31;
+}
+
+function firstUsefulRule(report) {
+  const rules = report.sections.find((section) => /regime|regras urban/i.test(section.title))?.rows?.slice(1) || [];
+  const direct = rules.find((row) => /viabilidade preliminar|pretens[aã]o/i.test(row[0] || ''));
+  return direct || rules[0] || null;
+}
+
+function drawExecutiveSummary(doc, report, location) {
+  const reference = location?.parcela?.declaracao || location?.parcela?.referencia || 'Parcela não identificada';
+  const municipality = location?.municipio?.nome || 'Concelho não confirmado';
+  const implantation = location?.implantacao?.confirmada ? 'Ponto de implantação indicado' : 'Sem ponto de implantação indicado';
+  const rule = firstUsefulRule(report);
+  const verification = report.sections.find((section) => /informa[cç][aã]o n[aã]o confirmada|divergências/i.test(section.title));
+  const pending = (verification?.items || []).slice(0, 2);
+  ensureSpace(doc, 155);
+  const y = doc.y;
+  doc.roundedRect(47, y, 501, 142, 8).fill(COLORS.wash);
+  doc.font('Helvetica-Bold').fontSize(11).fillColor(COLORS.navy).text('Síntese para decisão', 61, y + 15);
+  doc.font('Helvetica').fontSize(7.5).fillColor(COLORS.muted).text('Leitura rápida da pré-análise. Consulte as secções seguintes para evidência, fontes e condições.', 61, y + 31, { width: 470 });
+  const columns = [61, 224, 387];
+  const blocks = [
+    { title: 'LOCALIZAÇÃO', value: `${municipality}\n${reference}\n${implantation}` },
+    { title: 'ORIENTAÇÃO', value: rule ? String(rule[1] || '-').slice(0, 260) : 'Ainda não há regra urbanística confirmada para a localização.' },
+    { title: 'A CONFIRMAR', value: pending.length ? pending.join('\n') : 'Limites, servidões e parâmetros aplicáveis à operação.' },
+  ];
+  blocks.forEach((block, index) => {
+    if (index) doc.strokeColor(COLORS.line).lineWidth(.7).moveTo(columns[index] - 13, y + 56).lineTo(columns[index] - 13, y + 126).stroke();
+    doc.font('Helvetica-Bold').fontSize(6.8).fillColor(COLORS.gold).text(block.title, columns[index], y + 57, { width: 135 });
+    doc.font('Helvetica').fontSize(7.4).fillColor(COLORS.ink).text(block.value, columns[index], y + 70, { width: 140, height: 53, ellipsis: true, lineGap: 1.4 });
+  });
+  doc.y = y + 158;
 }
 
 function drawSectionTitle(doc, title) {
@@ -317,6 +353,8 @@ export async function createProfessionalPdf({
       doc.font('Helvetica').fontSize(10).fillColor(COLORS.ink).text(line, 47, doc.y, { width: 501, lineGap: 2.5 });
       doc.moveDown(0.9);
     });
+
+    drawExecutiveSummary(doc, report, location);
 
     drawLocationMap(doc, aerial, location);
     drawCartographicEvidence(doc, location);
