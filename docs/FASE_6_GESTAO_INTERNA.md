@@ -23,6 +23,7 @@ que é o canal de tratamento operacional.
 
 ## Necessário na Netlify
 
-A variável `NETLIFY_DATABASE_URL` tem de estar ativa para o painel apresentar
-dados. Enquanto não estiver, o site e os e-mails funcionam normalmente; apenas
-o painel mostrará que as métricas ainda não estão disponíveis.
+A variável `ENABLE_OPERATION_METRICS` deve manter-se em `false` enquanto não
+existir uma base válida. Assim, o site e os e-mails não tentam ligar à base
+antiga Neon. Quando for criada e ligada uma nova base, definir
+`ENABLE_OPERATION_METRICS=true` e disponibilizar novamente o botão no painel.

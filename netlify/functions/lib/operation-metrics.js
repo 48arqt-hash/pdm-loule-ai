@@ -9,6 +9,9 @@ let schemaPromise;
 // para compatibilidade com uma base Neon ligada anteriormente ao projeto.
 function databaseUrl() { return process.env.NETLIFY_DB_URL || process.env.NETLIFY_DATABASE_URL || process.env.DATABASE_URL || ''; }
 function database() {
+  // Enquanto o painel interno não estiver em uso, não tentar ligar a uma base
+  // antiga/inválida. Assim a atividade principal do site não depende dela.
+  if (process.env.ENABLE_OPERATION_METRICS !== 'true') return null;
   if (!databaseUrl()) return null;
   if (!pool) pool = new Pool({ connectionString: databaseUrl(), ssl: { rejectUnauthorized: false }, max: 2, idleTimeoutMillis: 10_000 });
   return pool;
