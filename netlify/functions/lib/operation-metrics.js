@@ -69,6 +69,19 @@ export async function finishAnalysis(requestId, { status, model = null, promptTo
   await db.query(`UPDATE lm_operation_metrics SET status=$2, completed_at=NOW(), model=$3, prompt_tokens=$4, output_tokens=$5, duration_ms=$6 WHERE request_id=$1`, [requestId, status, model, promptTokens, outputTokens, durationMs]);
 }
 
+// Regista somente atividade agregada para o painel interno. Não são guardados
+// nome, telefone, conteúdo, documentos ou e-mail em claro.
+export async function recordOperation({ eventType, email = '', municipality = null, status = 'completed', documentsCount = 0 } = {}) {
+  const db = await ready();
+  if (!db || !eventType) return { tracking: false };
+  await db.query(
+    `INSERT INTO lm_operation_metrics (request_id,event_type,status,email_hash,municipality,documents_count,professional_access,completed_at)
+     VALUES ($1,$2,$3,$4,$5,$6,FALSE,NOW())`,
+    [randomUUID(), String(eventType).slice(0, 60), String(status).slice(0, 60), email ? hashedEmail(email) : null, municipality ? String(municipality).slice(0, 80) : null, Math.max(0, Number(documentsCount) || 0)],
+  );
+  return { tracking: true };
+}
+
 export async function operationSummary() {
   const db = await ready();
   if (!db) return { tracking: false };
@@ -84,5 +97,12 @@ export async function operationSummary() {
     FROM lm_operation_metrics
     WHERE created_at > NOW() - INTERVAL '30 days'
   `);
-  return { tracking: true, period: 'Últimos 30 dias', ...(rows[0] || {}) };
+  const activity = await db.query(`
+    SELECT event_type, COUNT(*)::int AS total, MAX(created_at) AS last_at
+    FROM lm_operation_metrics
+    WHERE created_at > NOW() - INTERVAL '30 days' AND event_type <> 'analysis'
+    GROUP BY event_type
+    ORDER BY last_at DESC
+  `);
+  return { tracking: true, period: 'Últimos 30 dias', ...(rows[0] || {}), service_activity: activity.rows || [] };
 }

@@ -1,3 +1,5 @@
+import { recordOperation } from './lib/operation-metrics.js';
+
 const OWNER_EMAIL = 'geral@leonelmendes.com';
 
 const json = (statusCode, payload) => ({
@@ -38,6 +40,7 @@ export const handler = async (event) => {
       return json(502, { error: 'O serviço de e-mail recusou o pedido. Confirme as variáveis RESEND_API_KEY e REPORT_FROM_EMAIL.' });
     }
     console.info('quote_request_sent', JSON.stringify({ id: data?.id || null, owner }));
+    await recordOperation({ eventType: 'quote_request', email, documentsCount: Array.isArray(documents) ? documents.length : 0 }).catch((error) => console.warn('quote_tracking_unavailable', error.message));
     console.info('privacy_consent_recorded', JSON.stringify({ service: 'pedido-orcamento', policyVersion: privacyPolicyVersion || 'não indicado', at: new Date().toISOString() }));
     return json(200, { sent: true });
   } catch (error) {

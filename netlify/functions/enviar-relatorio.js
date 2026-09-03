@@ -1,5 +1,6 @@
 import { hasProfessionalAccess } from './lib/access.js';
 import { sendReportEmail, validEmail } from './lib/report-email.js';
+import { recordOperation } from './lib/operation-metrics.js';
 
 const json = (statusCode, payload) => ({
   statusCode,
@@ -18,6 +19,7 @@ export const handler = async (event) => {
     if (!validEmail(to)) return json(400, { error: 'Indique um e-mail de destino válido.' });
     if (!reportText || typeof reportText !== 'string' || reportText.length > 70000) return json(400, { error: 'O relatório a enviar é inválido ou demasiado extenso.' });
     const sent = await sendReportEmail({ to, reportText, reportHtml, location });
+    await recordOperation({ eventType: 'report_resend', email: to, municipality: location?.municipio?.nome || null }).catch((error) => console.warn('report_resend_tracking_unavailable', error.message));
     console.info('privacy_consent_recorded', JSON.stringify({ service: 'reenvio-relatorio', policyVersion: privacyPolicyVersion || 'não indicado', at: new Date().toISOString() }));
     console.info('report_email_sent', JSON.stringify(sent));
     return json(200, { sent: true });

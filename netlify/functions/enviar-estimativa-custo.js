@@ -1,4 +1,5 @@
 import { sendReportEmail, validEmail } from './lib/report-email.js';
+import { recordOperation } from './lib/operation-metrics.js';
 
 const json = (statusCode, payload) => ({
   statusCode,
@@ -69,6 +70,7 @@ export const handler = async (event) => {
       disclaimer: 'Estimativa indicativa. Não constitui orçamento, proposta contratual ou determinação fiscal.',
       emailIntro: 'O intervalo apresentado é uma estimativa indicativa, com base nos elementos introduzidos. Para uma proposta de obra rigorosa são necessários projeto, medições e consulta ao mercado.',
     });
+    await recordOperation({ eventType: 'cost_estimate', email }).catch((error) => console.warn('cost_tracking_unavailable', error.message));
     return json(200, { sent: true, low: Math.round(netLow), high: Math.round(netHigh), totalLow: Math.round(totalLow), totalHigh: Math.round(totalHigh) });
   } catch (error) {
     console.error('cost_estimate_error', error);
