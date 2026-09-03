@@ -5,7 +5,9 @@ const { Pool } = pg;
 let pool;
 let schemaPromise;
 
-function databaseUrl() { return process.env.NETLIFY_DATABASE_URL || process.env.DATABASE_URL || ''; }
+// NETLIFY_DB_URL é a variável nativa atual. Mantêm-se os dois nomes antigos
+// para compatibilidade com uma base Neon ligada anteriormente ao projeto.
+function databaseUrl() { return process.env.NETLIFY_DB_URL || process.env.NETLIFY_DATABASE_URL || process.env.DATABASE_URL || ''; }
 function database() {
   if (!databaseUrl()) return null;
   if (!pool) pool = new Pool({ connectionString: databaseUrl(), ssl: { rejectUnauthorized: false }, max: 2, idleTimeoutMillis: 10_000 });
