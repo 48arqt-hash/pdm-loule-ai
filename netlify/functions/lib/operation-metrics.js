@@ -33,7 +33,12 @@ async function ready() {
     );
     CREATE INDEX IF NOT EXISTS lm_operation_metrics_email_time_idx ON lm_operation_metrics (email_hash, created_at DESC);
     CREATE INDEX IF NOT EXISTS lm_operation_metrics_time_idx ON lm_operation_metrics (created_at DESC);
-  `);
+  `).catch((error) => {
+    // Uma indisponibilidade momentânea não pode deixar a instância presa numa
+    // promessa rejeitada até ao próximo reinício da função.
+    schemaPromise = null;
+    throw error;
+  });
   await schemaPromise;
   return db;
 }
@@ -84,7 +89,7 @@ export async function recordOperation({ eventType, email = '', municipality = nu
 
 export async function operationSummary() {
   const db = await ready();
-  if (!db) return { tracking: false };
+  if (!db) return { tracking: false, message: 'A Netlify Database ainda não está ligada a este projeto. Ative-a em Project configuration → Database e faça novo deploy.' };
   const { rows } = await db.query(`
     SELECT
       COUNT(*) FILTER (WHERE event_type='analysis')::int AS total_analyses,

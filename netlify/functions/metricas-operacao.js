@@ -7,5 +7,8 @@ export const handler = async (event) => {
   if (event.httpMethod !== 'GET') return json(405, { error: 'Método não permitido.' });
   if (!hasProfessionalAccess(event.headers?.cookie || event.headers?.Cookie || '')) return json(403, { error: 'Valide o acesso profissional para consultar as métricas.' });
   try { return json(200, await operationSummary()); }
-  catch (error) { console.error('operation_metrics_error', error); return json(503, { error: 'Não foi possível consultar as métricas neste momento.' }); }
+  catch (error) {
+    console.error('operation_metrics_error', JSON.stringify({ message: error?.message || 'erro desconhecido', code: error?.code || null }));
+    return json(503, { error: 'A base de métricas não respondeu. Confirme na Netlify se a Database está ativa neste projeto e faça novo deploy. Se persistir, abra Functions → metricas-operacao nos logs da Netlify.' });
+  }
 };

@@ -1264,7 +1264,7 @@
       const data = await readJsonResponse(response, 'As métricas não devolveram uma resposta válida');
       if (!response.ok) throw new Error(data.error || 'Não foi possível consultar as métricas.');
       if (!data.tracking) {
-        target.innerHTML = '<strong>Métricas ainda não disponíveis</strong><br><small>Ative a base de dados do projeto na Netlify para começar a registar análises, consumos e contactos distintos sem guardar conteúdo dos pedidos.</small>';
+        target.innerHTML = `<strong>Métricas ainda não disponíveis</strong><br><small>${escapeText(data.message || 'Ative a base de dados do projeto na Netlify para começar a registar análises, consumos e contactos distintos sem guardar conteúdo dos pedidos.')}</small>`;
         return;
       }
       const seconds = Math.round(Number(data.average_duration_ms || 0) / 1000);
