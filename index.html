@@ -527,6 +527,9 @@
   .map-result summary{ cursor:pointer; color:var(--teal-deep); font-weight:600; }
   @media(max-width:640px){ .analysis-journey{ grid-template-columns:repeat(2,minmax(0,1fr)); } }
   .operation-metrics{ display:none; margin-top:10px; padding:12px; border:1px solid var(--line); border-radius:8px; background:var(--wash); }
+  .professional-active{ display:none; margin:12px 0; padding:12px 14px; border:1px solid #9CCCB8; border-radius:8px; background:#EAF6F0; color:#1E624A; }
+  .professional-active strong{ display:block; font-size:.82rem; margin-bottom:3px; }
+  .professional-active span{ display:block; font-size:.75rem; line-height:1.4; }
   .operation-metrics strong{ color:var(--teal-deep); }
   .operation-metrics-grid{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:7px; margin-top:9px; }
   .operation-metrics-grid span{ display:block; padding:8px; background:#fff; border:1px solid var(--line); border-radius:6px; font-size:.72rem; color:var(--ink-soft); }
@@ -706,6 +709,7 @@
 
         <button class="btn-submit" id="pdmSubmitBtn" onclick="pedirAnalisePdm()" data-i18n="generateReport">Gerar pré-análise documental →</button>
         <p class="secure-note" data-i18n="preliminaryNote">A análise é preliminar. A confirmação de viabilidade requer validação técnica e, quando aplicável, resposta da Câmara.</p>
+        <div id="professionalActive" class="professional-active" role="status" aria-live="polite"><strong>✓ Modo profissional ativo</strong><span>Acesso validado nesta sessão. Pode utilizar as funcionalidades profissionais do site.</span></div>
         <div id="pdmReportOutput" aria-live="polite"></div>
         <button class="btn-submit secondary" type="button" onclick="mostrarAcessoProfissional()" data-i18n="professionalAccess">Acesso profissional</button>
         <div id="professionalAccess" style="display:none; margin-top:10px;">
@@ -1250,6 +1254,8 @@
       const data = await readJsonResponse(response, 'O serviço de validação de acesso não devolveu uma resposta válida');
       if (!response.ok) throw new Error(data.error || 'Não foi possível validar o código.');
       document.getElementById('professionalCode').value = '';
+      document.getElementById('professionalActive').style.display = 'block';
+      document.getElementById('professionalAccess').style.display = 'none';
       addMsg('✓ Acesso profissional ativo nesta sessão. Pode gerar análises sem passar pelo pagamento. As métricas internas estão temporariamente desativadas.', 'system');
     } catch (err) { error.textContent = err.message; error.style.display = 'block'; }
   }
