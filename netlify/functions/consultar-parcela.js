@@ -293,15 +293,22 @@ function officialClassification(attributes = {}) {
 export const handler = async (event) => {
   if (event.httpMethod !== 'POST') return json(405, { error: 'Método não permitido.' });
   try {
-    const { latitude, longitude } = JSON.parse(event.body || '{}'); const lat = Number(latitude); const lng = Number(longitude);
+    const { latitude, longitude, implantationLatitude, implantationLongitude } = JSON.parse(event.body || '{}'); const lat = Number(latitude); const lng = Number(longitude);
     if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < ALGARVE.minLat || lat > ALGARVE.maxLat || lng < ALGARVE.minLng || lng > ALGARVE.maxLng) return json(400, { error: 'Selecione uma localização dentro do Algarve.' });
+    const requestedImplantation = Number.isFinite(Number(implantationLatitude)) && Number.isFinite(Number(implantationLongitude))
+      ? { latitude: Number(implantationLatitude), longitude: Number(implantationLongitude) } : null;
     const [cadastre, municipalityResult] = await Promise.allSettled([
       findCollection('cadastro', 'predial').then((id) => featureAt(id, lat, lng)),
       municipalityAt(lat, lng),
     ]);
     const municipality = municipalityResult.status === 'fulfilled' ? municipalityResult.value : null;
-    const plans = municipality?.nome === 'Loulé' ? await Promise.allSettled([municipalPlans(lat, lng)]).then(([result]) => result.status === 'fulfilled' ? result.value : []) : [];
     const parcel = cadastre.status === 'fulfilled' ? cadastre.value : null;
+    if (requestedImplantation && (!parcel?.geometry || !containsPoint(parcel, [requestedImplantation.longitude, requestedImplantation.latitude]))) {
+      return json(400, { error: 'O ponto de implantação deve estar dentro da parcela cadastral selecionada.' });
+    }
+    const analysisLat = requestedImplantation?.latitude || lat;
+    const analysisLng = requestedImplantation?.longitude || lng;
+    const plans = municipality?.nome === 'Loulé' ? await Promise.allSettled([municipalPlans(analysisLat, analysisLng)]).then(([result]) => result.status === 'fulfilled' ? result.value : []) : [];
     // A classificação CRUS deixa de ser escolhida apenas pelo pixel onde o
     // utilizador carregou. Quando existe parcela cadastral, pesquisamos todas
     // as feições que intersectam o seu polígono. Assim uma zona RAN parcial
@@ -316,17 +323,21 @@ export const handler = async (event) => {
     const useFeatures = landUse.status === 'fulfilled' ? landUse.value : [];
     const labelledUses = useFeatures.map((feature) => ({ feature, label: readableValue(feature.properties || {}) })).filter((item) => item.label);
     const landUseLabels = [...new Set(labelledUses.map((item) => item.label))];
+    const implantationUse = requestedImplantation
+      ? await findCollection('crus').then((id) => featureAt(id, analysisLat, analysisLng)).catch((error) => { console.warn('implantation_land_use_unavailable', error.message); return null; })
+      : null;
+    const implantationUseLabel = implantationUse ? readableValue(implantationUse.properties || {}) : null;
     const planFeatures = plans;
     const hasQuarteiraNorthEastPlan = planFeatures.some((feature) => /quarteira.*norte|norte.*nordeste/i.test(`${feature.attributes?.NOME || ''} ${feature.attributes?.TIPO || ''}`));
-    const zoning = hasQuarteiraNorthEastPlan ? await quarteiraNorthEastRules(lat, lng) : [];
+    const zoning = hasQuarteiraNorthEastPlan ? await quarteiraNorthEastRules(analysisLat, analysisLng) : [];
     const faroOrdering = municipality?.nome === 'Faro'
-      ? await municipalOrderingFeatures(process.env.FARO_PDM_ORDERING_QUERY_URL, lat, lng).catch((error) => { console.warn('faro_ordering_unavailable', error.message); return []; })
+      ? await municipalOrderingFeatures(process.env.FARO_PDM_ORDERING_QUERY_URL, analysisLat, analysisLng).catch((error) => { console.warn('faro_ordering_unavailable', error.message); return []; })
       : [];
     const faroWfsOrdering = municipality?.nome === 'Faro'
-      ? await municipalWfsFeatures(process.env.FARO_PDM_WFS_URL, process.env.FARO_PDM_WFS_TYPENAME, lat, lng).catch((error) => { console.warn('faro_wfs_ordering_unavailable', error.message); return []; })
+      ? await municipalWfsFeatures(process.env.FARO_PDM_WFS_URL, process.env.FARO_PDM_WFS_TYPENAME, analysisLat, analysisLng).catch((error) => { console.warn('faro_wfs_ordering_unavailable', error.message); return []; })
       : [];
     const faroVisualOrdering = municipality?.nome === 'Faro'
-      ? await faroVisualOrderingAt(lat, lng).catch((error) => { console.warn('faro_visual_ordering_unavailable', error.message); return null; })
+      ? await faroVisualOrderingAt(analysisLat, analysisLng).catch((error) => { console.warn('faro_visual_ordering_unavailable', error.message); return null; })
       : null;
     const faroVectorFeature = faroOrdering[0] || faroWfsOrdering[0] || null;
     const faroClassification = officialClassification(faroVectorFeature?.attributes || faroVectorFeature?.properties || {}) || faroVisualOrdering?.label || null;
@@ -335,7 +346,7 @@ export const handler = async (event) => {
     // Em Loulé, a CRUS da DGT devolve designações coincidentes com as
     // subcategorias do PDM em vigor. A regra é apresentada como pré-análise
     // e mantém a ressalva de confirmação pela planta de ordenamento.
-    const regulatoryClassifications = faroClassification ? [faroClassification] : municipality?.nome === 'Loulé' ? landUseLabels : [];
+    const regulatoryClassifications = faroClassification ? [faroClassification] : municipality?.nome === 'Loulé' ? (implantationUseLabel ? [implantationUseLabel] : landUseLabels) : [];
     const regulatoryContexts = regulatoryClassifications.map((classification) => regulatoryContextFor(municipality?.nome, classification));
     const regulatoryRules = regulatoryContexts.flatMap((context) => context.rules).filter((rule, index, rules) => rules.findIndex((other) => `${other.camada}|${other.valor}` === `${rule.camada}|${rule.valor}`) === index);
     const regulatorySources = regulatoryContexts.flatMap((context) => context.sources).filter((source, index, sources) => sources.findIndex((other) => other.url === source.url) === index);
@@ -345,19 +356,21 @@ export const handler = async (event) => {
       ...(municipality ? [{ camada: 'Cobertura da pré-análise', valor: municipality.estado }] : []),
       ...(landUseLabels.length === 1 ? [{ camada: parcel ? 'Regime de uso do solo (DGT) — interseção com a parcela' : 'Regime de uso do solo (DGT) — ponto selecionado', valor: landUseLabel, atributos: labelledUses[0].feature.properties || {} }] : []),
       ...(landUseLabels.length > 1 ? landUseLabels.map((label) => ({ camada: 'Regime de uso do solo (DGT) — classe que intersecta a parcela', valor: label, atributos: labelledUses.find((item) => item.label === label)?.feature.properties || {} })) : []),
+      ...(implantationUseLabel ? [{ camada: 'Regime de uso do solo (DGT) — ponto de implantação indicado', valor: implantationUseLabel, atributos: implantationUse.properties || {} }] : []),
       ...(faroClassification ? [{ camada: `Classificação do solo — PDM de Faro (${faroClassificationMethod})`, valor: faroClassification, atributos: faroVectorFeature?.attributes || faroVectorFeature?.properties || faroVisualOrdering?.properties || {} }] : []),
       ...regulatoryRules.map((rule) => ({ camada: rule.camada, valor: rule.valor, artigo: rule.artigo, pagina: rule.pagina, fonte: rule.fonte?.documento || 'Regulamento municipal' })),
       ...planFeatures.map((feature) => ({ camada: 'Plano municipal em vigor (CML)', valor: feature.attributes?.NOME || feature.attributes?.TIPO || null, atributos: feature.attributes || {} })),
       ...zoning.flatMap(zoningResult),
     ];
     return json(200, {
-      coordenadas: { latitude: lat, longitude: lng }, parcela: parcel ? { id: parcel.id || null, ...cadastralIdentification(parcel.properties || {}, parcel.id || null), propriedades: parcel.properties || {}, geometria: parcel.geometry || null } : null, pdm: results,
+      coordenadas: { latitude: lat, longitude: lng }, implantacao: requestedImplantation ? { ...requestedImplantation, confirmada: true, metodo: 'Ponto aproximado indicado pelo utilizador dentro da parcela cadastral' } : null, parcela: parcel ? { id: parcel.id || null, ...cadastralIdentification(parcel.properties || {}, parcel.id || null), propriedades: parcel.properties || {}, geometria: parcel.geometry || null } : null, pdm: results,
       avisos: [
         ...(cadastre.status === 'rejected' ? ['A fonte do Cadastro Predial da DGT não respondeu nesta tentativa. Tente novamente dentro de alguns segundos; não foi selecionado qualquer polígono por aproximação.'] : []),
         ...(cadastre.status === 'fulfilled' && !parcel ? ['A Carta Cadastral Digital não devolveu uma parcela para este ponto. Pode tratar-se de cobertura incompleta, limite impreciso ou de prédio não representado na fonte pública.'] : []),
         ...(!useFeatures.length ? ['Não foi possível obter uma classificação de uso do solo vetorial para esta localização.'] : []),
         ...(useFeatures.length && !landUseLabels.length ? [`O regime de uso do solo foi encontrado, mas a fonte pública devolveu apenas ${technicalCode(useFeatures[0].properties || {}) ? `o código técnico ${technicalCode(useFeatures[0].properties || {}).valor}` : 'um código técnico'} sem designação legível. Esse código não é apresentado ao cliente como classificação urbanística.`] : []),
         ...(parcel && landUseLabels.length > 1 ? ['A parcela intersecta mais do que uma classe de uso do solo. As regras e condicionantes são apresentadas para todas as classes identificadas; uma zona RAN ou outra condicionante parcial não pode ser excluída apenas pelo local do clique.'] : []),
+        ...(requestedImplantation ? ['A classificação do plano e as regras apresentadas foram relacionadas com o ponto de implantação indicado. O ponto é aproximado e deve ser confirmado por levantamento, projeto e cartografia oficial em vigor.'] : []),
         ...(!parcel && landUseLabels.length ? ['Sem polígono cadastral disponível, a classe apresentada resulta apenas do ponto selecionado e não confirma a totalidade do prédio.'] : []),
         ...(municipality?.nome === 'Faro' && faroClassificationMethod === 'leitura por ponto da planta de ordenamento WMS' ? ['A classe foi obtida por consulta da planta de ordenamento visual publicada pelo Município de Faro. A categoria e as regras são uma interpretação cartográfica preliminar e exigem confirmação municipal ou acesso à camada vetorial oficial.'] : []),
         ...(municipality?.nome === 'Faro' && !faroClassification ? ['Ainda não está configurado um serviço vetorial com atributos da Planta 1.1 do PDM de Faro. A aplicação não inventa uma categoria por cor; a análise fica limitada à CRUS e às restantes condicionantes oficiais até ser registado o WFS/ArcGIS oficial.'] : []),

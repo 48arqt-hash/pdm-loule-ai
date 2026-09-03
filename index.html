@@ -505,6 +505,11 @@
     .feature-panel{ padding:28px 30px; }
     .map-search{ max-width:760px; }
   }
+  .map-decision{ margin:10px 0 16px; padding:12px; border:1px solid var(--line); border-radius:8px; background:var(--wash); }
+  .map-decision strong{ display:block; color:var(--teal-deep); font-size:.82rem; margin-bottom:4px; }
+  .map-decision p{ margin:0 0 9px; font-size:.78rem; color:var(--ink-soft); line-height:1.45; }
+  .map-decision .btn-submit{ margin:0; font-size:.76rem; padding:8px 11px; }
+  .map-decision.ready{ border-color:rgba(36,86,93,.45); background:#eef5f3; }
 
   .cost-estimator{ display:grid; grid-template-columns:minmax(0,1.25fr) minmax(260px,.75fr); gap:22px; align-items:start; }
   .cost-estimator label{ display:block; font-size:.75rem; font-weight:600; color:var(--ink-soft); margin:0 0 4px; }
@@ -634,6 +639,11 @@
         <div id="parcelMap" aria-label="Mapa para selecionar o terreno"></div>
         <p id="mapStatus" class="map-status" data-i18n="mapStatus">Clique dentro do terreno no mapa. Consultaremos o Cadastro Predial e a Carta do Regime de Uso do Solo da DGT, além dos planos municipais em vigor.</p>
         <div id="mapResult" class="map-result"></div>
+        <div id="implantationControl" class="map-decision" style="display:none">
+          <strong>Localização aproximada da construção</strong>
+          <p id="implantationStatus">Se pretende construir ou ampliar, marque no mapa o ponto aproximado de implantação. Assim distinguimos a zona aplicável dentro da parcela.</p>
+          <button type="button" class="btn-submit secondary" id="implantationButton" onclick="ativarMarcacaoImplantacao()">Marcar implantação no mapa</button>
+        </div>
 
         <h4 data-i18n="documents">2. Documentos do terreno</h4>
         <div class="upload-zone" onclick="document.getElementById('pdmPdfInput').click()">
@@ -905,7 +915,10 @@
   let map;
   let selectedMarker;
   let selectedParcelLayer;
+  let implantationMarker;
   let selectedLocation = null;
+  let selectedParcelPoint = null;
+  let mapSelectionMode = 'parcel';
   let mapResizeObserver;
 
   /* ---------- Logo / Sobre ---------- */
@@ -997,7 +1010,10 @@
       });
       streetMap.addTo(map); cadastreLayer.addTo(map);
       L.control.layers({ 'Mapa': streetMap, 'Vista aérea': aerialMap }, { 'Limites cadastrais DGT': cadastreLayer }, { collapsed:false, position:'topright' }).addTo(map);
-      map.on('click', event => consultarLocalizacao(event.latlng.lat, event.latlng.lng));
+      map.on('click', event => {
+        if (mapSelectionMode === 'implantation') definirImplantacao(event.latlng.lat, event.latlng.lng);
+        else consultarLocalizacao(event.latlng.lat, event.latlng.lng);
+      });
       if ('ResizeObserver' in window){
         mapResizeObserver = new ResizeObserver(() => map.invalidateSize({ pan:false, debounceMoveend:true }));
         mapResizeObserver.observe(document.getElementById('parcelMap'));
@@ -1022,21 +1038,24 @@
     } catch (error) { status.textContent = error.message; }
   }
 
-  async function consultarLocalizacao(latitude, longitude){
+  async function consultarLocalizacao(latitude, longitude, implantation = null){
     const status = document.getElementById('mapStatus');
     const resultBox = document.getElementById('mapResult');
     status.textContent = 'A identificar a parcela e a consultar fontes vetoriais oficiais…';
     resultBox.style.display = 'none';
+    mapSelectionMode = 'parcel';
     if (selectedMarker) map.removeLayer(selectedMarker);
     if (selectedParcelLayer) map.removeLayer(selectedParcelLayer);
+    if (!implantation && implantationMarker) { map.removeLayer(implantationMarker); implantationMarker = null; }
     selectedMarker = L.marker([latitude, longitude]).addTo(map);
     try {
       const response = await fetch('/.netlify/functions/consultar-parcela', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ latitude, longitude })
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ latitude, longitude, implantationLatitude: implantation?.latitude, implantationLongitude: implantation?.longitude })
       });
       const data = await readJsonResponse(response, 'Não foi possível consultar esta localização');
       if (!response.ok) throw new Error(data.error || 'Não foi possível consultar esta localização.');
       selectedLocation = data;
+      selectedParcelPoint = { latitude, longitude };
       if (data.parcela?.geometria){
         selectedParcelLayer = L.geoJSON(data.parcela.geometria, { style: { color:'#B9954F', weight:3, fillColor:'#B9954F', fillOpacity:.12 } }).addTo(map);
         map.fitBounds(selectedParcelLayer.getBounds(), { padding:[18,18], maxZoom:19 });
@@ -1053,8 +1072,36 @@
       const municipality = data.municipio?.nome ? `<br><strong>Concelho:</strong> ${escapeText(data.municipio.nome)}${data.municipio.geoportal ? ` — <a href="${encodeURI(data.municipio.geoportal)}" target="_blank" rel="noopener">consultar geoportal municipal</a>` : ''}` : '';
       resultBox.innerHTML = `<strong>Localização selecionada</strong>${municipality}<br>${escapeText(cadastralId)}<ul>${layers}</ul><small>${escapeText(data.avisos.join(' '))}</small>`;
       resultBox.style.display = 'block';
-      status.textContent = 'Consulta geográfica concluída. Confirme se o limite destacado corresponde ao terreno pretendido e consulte as fontes indicadas.';
+      const implantationControl = document.getElementById('implantationControl');
+      implantationControl.style.display = data.parcela?.geometria ? 'block' : 'none';
+      if (implantation?.latitude && data.implantacao?.confirmada) {
+        if (implantationMarker) map.removeLayer(implantationMarker);
+        implantationMarker = L.circleMarker([implantation.latitude, implantation.longitude], { radius:8, color:'#A13B2B', weight:3, fillColor:'#FFF', fillOpacity:.95 }).addTo(map).bindTooltip('Implantação indicada', { permanent:false });
+        implantationControl.classList.add('ready');
+        document.getElementById('implantationStatus').textContent = 'Implantação indicada. As regras urbanísticas do relatório serão relacionadas com este ponto, sem substituir confirmação municipal.';
+        document.getElementById('implantationButton').textContent = 'Alterar implantação';
+        status.textContent = 'Consulta geográfica concluída com ponto de implantação. Confirme no mapa o limite e o ponto assinalado.';
+      } else {
+        implantationControl.classList.remove('ready');
+        document.getElementById('implantationStatus').textContent = 'Se pretende construir ou ampliar, marque no mapa o ponto aproximado de implantação. Assim distinguimos a zona aplicável dentro da parcela.';
+        document.getElementById('implantationButton').textContent = 'Marcar implantação no mapa';
+        status.textContent = 'Consulta geográfica concluída. Confirme se o limite destacado corresponde ao terreno pretendido e, se aplicável, marque a implantação aproximada.';
+      }
     } catch (error) { status.textContent = error.message; }
+  }
+
+  function ativarMarcacaoImplantacao(){
+    if (!selectedLocation?.parcela?.geometria || !selectedParcelPoint) return;
+    mapSelectionMode = 'implantation';
+    document.getElementById('implantationStatus').textContent = 'Clique agora dentro da parcela destacada, no local aproximado onde pretende implantar a obra.';
+    document.getElementById('implantationButton').textContent = 'A aguardar clique no mapa…';
+    document.getElementById('mapStatus').textContent = 'Modo de implantação ativo: clique no ponto aproximado da construção.';
+  }
+
+  async function definirImplantacao(latitude, longitude){
+    if (!selectedParcelPoint) return;
+    mapSelectionMode = 'parcel';
+    await consultarLocalizacao(selectedParcelPoint.latitude, selectedParcelPoint.longitude, { latitude, longitude });
   }
 
   function fileAsDocument(file, primary){

@@ -79,11 +79,14 @@ function drawTable(doc, rows) {
   const fourColumns = header.length >= 4;
   const widths = fourColumns ? [112, 191, 82, 116] : [152, 349];
   const x = 47;
-  const drawRow = (cells, isHeader = false) => {
+  const rowHeight = (cells, isHeader = false) => {
     const values = widths.map((_, index) => String(cells[index] || '-'));
     const heights = values.map((value, index) => textHeight(doc, value, widths[index] - 10, isHeader ? 7.6 : 8.5));
-    const height = Math.max(...heights, isHeader ? 20 : 24) + 10;
-    ensureSpace(doc, height + 4);
+    return Math.max(...heights, isHeader ? 20 : 24) + 10;
+  };
+  const drawRow = (cells, isHeader = false) => {
+    const values = widths.map((_, index) => String(cells[index] || '-'));
+    const height = rowHeight(cells, isHeader);
     const rowY = doc.y;
     let cursor = x;
     values.forEach((value, index) => {
@@ -94,8 +97,18 @@ function drawTable(doc, rows) {
     });
     doc.y = rowY + height;
   };
+  ensureSpace(rowHeight(header, true) + 28);
   drawRow(header, true);
-  data.forEach((row) => drawRow(row));
+  data.forEach((row) => {
+    const height = rowHeight(row);
+    // Mantém o título das colunas quando uma tabela atravessa páginas, evitando
+    // que o leitor perca o contexto de "Estado" e "Fonte".
+    if (doc.y + height + 4 > CONTENT_END_Y) {
+      doc.addPage();
+      drawRow(header, true);
+    }
+    drawRow(row);
+  });
   doc.moveDown(0.8);
 }
 
@@ -134,6 +147,12 @@ function locationPoints(location = {}) {
   const longitude = Number(location?.coordenadas?.longitude);
   if (!points.length && Number.isFinite(latitude) && Number.isFinite(longitude)) points.push([longitude, latitude]);
   return points;
+}
+
+function implantationPoint(location = {}) {
+  const latitude = Number(location?.implantacao?.latitude);
+  const longitude = Number(location?.implantacao?.longitude);
+  return Number.isFinite(latitude) && Number.isFinite(longitude) ? [longitude, latitude] : null;
 }
 
 async function aerialContext(location) {
@@ -224,10 +243,27 @@ function drawLocationMap(doc, aerial, location) {
     const [px, py] = toPoint(aerial.points[0]);
     doc.circle(px, py, 6).fillAndStroke(COLORS.gold, '#FFFFFF');
   }
+  const implementation = implantationPoint(location);
+  if (implementation) {
+    const [px, py] = toPoint(implementation);
+    doc.save().circle(px, py, 7).fillAndStroke('#A13B2B', '#FFFFFF').circle(px, py, 2.2).fill('#FFFFFF').restore();
+    doc.font('Helvetica-Bold').fontSize(6.6).fillColor('#FFFFFF').text('IMPLANTAÇÃO', Math.max(x + 4, px - 26), py - 22, { width: 54, align: 'center' });
+  }
+  // Elementos mínimos de orientação para que a imagem aérea seja interpretável.
+  doc.save().roundedRect(x + width - 31, y + 9, 22, 31, 4).fillOpacity(.85).fill('#FFFFFF').restore();
+  doc.font('Helvetica-Bold').fontSize(8).fillColor(COLORS.navy).text('N', x + width - 25, y + 13, { width: 10, align: 'center' });
+  doc.save().moveTo(x + width - 20, y + 27).lineTo(x + width - 20, y + 37).lineWidth(1.4).strokeColor(COLORS.navy).stroke(); doc.restore();
+  const midLat = (minLat + maxLat) / 2;
+  const widthMetres = Math.max(1, (maxLon - minLon) * 111320 * Math.cos((midLat * Math.PI) / 180));
+  const scaleMetres = widthMetres > 180 ? 100 : widthMetres > 80 ? 50 : 20;
+  const scaleWidth = Math.min(100, Math.max(28, (scaleMetres / widthMetres) * width));
+  doc.save().lineWidth(2).strokeColor('#FFFFFF').moveTo(x + 12, y + height - 15).lineTo(x + 12 + scaleWidth, y + height - 15).stroke(); doc.restore();
+  doc.font('Helvetica-Bold').fontSize(6.5).fillColor('#FFFFFF').text(`~${scaleMetres} m`, x + 12, y + height - 29, { width: scaleWidth, align: 'center' });
   doc.rect(x, y, width, height).lineWidth(0.8).strokeColor(COLORS.line).stroke();
   doc.y = y + height + 7;
   const reference = location?.parcela?.declaracao || location?.parcela?.referencia || 'localização selecionada';
-  doc.font('Helvetica').fontSize(7.2).fillColor(COLORS.muted).text(`Delimitação analisada: ${reference}. Vista aérea: Esri World Imagery; limite/seleção cadastral DGT, de caráter preliminar.`, x, doc.y, { width });
+  const implantationNote = implementation ? ' Ponto vermelho: implantação aproximada indicada pelo utilizador.' : ' Sem ponto de implantação indicado.';
+  doc.font('Helvetica').fontSize(7.2).fillColor(COLORS.muted).text(`Delimitação analisada: ${reference}. Vista aérea: Esri World Imagery; limite/seleção cadastral DGT, de caráter preliminar.${implantationNote}`, x, doc.y, { width });
   doc.moveDown(1.15);
 }
 
