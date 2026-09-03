@@ -516,6 +516,16 @@
   .map-decision p{ margin:0 0 9px; font-size:.78rem; color:var(--ink-soft); line-height:1.45; }
   .map-decision .btn-submit{ margin:0; font-size:.76rem; padding:8px 11px; }
   .map-decision.ready{ border-color:rgba(36,86,93,.45); background:#eef5f3; }
+  .analysis-journey{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:6px; margin:16px 0 18px; }
+  .journey-step{ padding:9px 8px; border:1px solid var(--line); border-radius:7px; background:#fff; color:var(--ink-faint); font-size:.69rem; line-height:1.3; }
+  .journey-step b{ display:block; color:var(--ink-soft); font-size:.64rem; letter-spacing:.07em; margin-bottom:3px; }
+  .journey-step.ready{ border-color:rgba(36,86,93,.45); background:#eef5f3; color:var(--teal-deep); }
+  .journey-step.ready b{ color:var(--teal-deep); }
+  .analysis-readiness{ margin:0 0 14px; padding:10px 12px; border-radius:7px; background:var(--sand-soft); color:var(--ink-soft); font-size:.78rem; line-height:1.45; }
+  .analysis-readiness.ready{ background:#eef5f3; color:var(--teal-deep); }
+  .map-result details{ margin-top:8px; font-size:.75rem; color:var(--ink-soft); }
+  .map-result summary{ cursor:pointer; color:var(--teal-deep); font-weight:600; }
+  @media(max-width:640px){ .analysis-journey{ grid-template-columns:repeat(2,minmax(0,1fr)); } }
   .operation-metrics{ display:none; margin-top:10px; padding:12px; border:1px solid var(--line); border-radius:8px; background:var(--wash); }
   .operation-metrics strong{ color:var(--teal-deep); }
   .operation-metrics-grid{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:7px; margin-top:9px; }
@@ -636,6 +646,13 @@
       <h3 data-i18n="landTitle">Descubra o potencial do seu terreno</h3>
       <div class="price-tag" data-i18n="trial">Pré-análise documental — acesso de teste gratuito</div>
       <p data-i18n="landIntro">Comece no mapa: selecione uma parcela e veja o cruzamento preliminar com as fontes geográficas oficiais. Depois, complemente com documentos para uma leitura mais rica.</p>
+      <div class="analysis-journey" aria-label="Etapas da pré-análise">
+        <div class="journey-step" id="journeyLocation"><b>1 · TERRENO</b>Localize a parcela</div>
+        <div class="journey-step" id="journeyPurpose"><b>2 · PRETENSÃO</b>Indique o objetivo</div>
+        <div class="journey-step" id="journeyContact"><b>3 · CONTACTO</b>Receba o relatório</div>
+        <div class="journey-step" id="journeyResult"><b>4 · RESULTADO</b>Análise e próximos passos</div>
+      </div>
+      <p class="analysis-readiness" id="analysisReadiness">Comece por selecionar o terreno. Os documentos são opcionais nesta fase.</p>
 
       <div class="chat-history" id="pdmChat" aria-live="polite">
         <div class="chat-msg system" data-i18n="mapStart">Comece por localizar o terreno no mapa. Pode reforçar a análise com a caderneta, registo predial, levantamento topográfico ou Planta de Localização.</div>
@@ -912,7 +929,12 @@
     });
     localStorage.setItem('siteLanguage', lang);
   }
-  document.addEventListener('DOMContentLoaded', () => setLanguage(localStorage.getItem('siteLanguage') || 'pt'));
+  document.addEventListener('DOMContentLoaded', () => {
+    setLanguage(localStorage.getItem('siteLanguage') || 'pt');
+    ['pdmObjetivo', 'pdmEmail', 'pdmConsent'].forEach((id) => document.getElementById(id)?.addEventListener('input', updateAnalysisJourney));
+    document.getElementById('pdmConsent')?.addEventListener('change', updateAnalysisJourney);
+    updateAnalysisJourney();
+  });
   function openPrivacyPolicy(){
     const modal = document.getElementById('privacyModal');
     modal.style.display = 'block';
@@ -1054,6 +1076,7 @@
   async function consultarLocalizacao(latitude, longitude, implantation = null){
     const status = document.getElementById('mapStatus');
     const resultBox = document.getElementById('mapResult');
+    document.getElementById('journeyResult')?.classList.remove('ready');
     status.textContent = 'A identificar a parcela e a consultar fontes vetoriais oficiais…';
     resultBox.style.display = 'none';
     mapSelectionMode = 'parcel';
@@ -1079,12 +1102,15 @@
           ? `Referência cadastral DGT: ${data.parcela.referencia}`
           : 'Parcela cadastral não identificada';
       const visibleLayers = (data.pdm || []).filter(item => !(/regime de uso do solo \(dgt\)/i.test(item.camada || '') && /^\d+$/.test(String(item.valor || '').trim())));
-      const layers = visibleLayers.length
-        ? visibleLayers.map(item => `<li><strong>${escapeText(item.camada)}:</strong> ${escapeText(item.valor)}</li>`).join('')
-        : '<li>Plano/uso do solo: informação técnica a confirmar no regulamento e nas plantas oficiais.</li>';
+      const keyLayers = visibleLayers.filter(item => /plano municipal|classificação do solo|condicionante territorial|classificação e uso dominante|cobertura da pré-análise/i.test(item.camada || '')).slice(0, 3);
+      const layers = keyLayers.length
+        ? keyLayers.map(item => `<li><strong>${escapeText(item.camada)}:</strong> ${escapeText(item.valor)}</li>`).join('')
+        : '<li>O enquadramento urbanístico será confirmado no relatório com base nas fontes disponíveis.</li>';
+      const details = visibleLayers.filter(item => !keyLayers.includes(item)).slice(0, 7).map(item => `<li><strong>${escapeText(item.camada)}:</strong> ${escapeText(item.valor)}</li>`).join('');
       const municipality = data.municipio?.nome ? `<br><strong>Concelho:</strong> ${escapeText(data.municipio.nome)}${data.municipio.geoportal ? ` — <a href="${encodeURI(data.municipio.geoportal)}" target="_blank" rel="noopener">consultar geoportal municipal</a>` : ''}` : '';
-      resultBox.innerHTML = `<strong>Localização selecionada</strong>${municipality}<br>${escapeText(cadastralId)}<ul>${layers}</ul><small>${escapeText(data.avisos.join(' '))}</small>`;
+      resultBox.innerHTML = `<strong>Terreno localizado</strong>${municipality}<br>${escapeText(cadastralId)}<ul>${layers}</ul>${details ? `<details><summary>Ver informação técnica complementar</summary><ul>${details}</ul></details>` : ''}<small>${escapeText(data.avisos.join(' '))}</small>`;
       resultBox.style.display = 'block';
+      updateAnalysisJourney();
       const implantationControl = document.getElementById('implantationControl');
       implantationControl.style.display = data.parcela?.geometria ? 'block' : 'none';
       if (implantation?.latitude && data.implantacao?.confirmada) {
@@ -1147,6 +1173,28 @@
       document.getElementById('pdmUploadText').textContent = primary ? `✓ ${primary.name}` : '📁 Planta de Localização (opcional, PDF)';
       document.getElementById('pdmOptionalDocsText').textContent = optional.length ? `✓ ${optional.length} documento(s) complementar(es) selecionado(s)` : '＋ Caderneta, registo predial ou levantamento (opcionais, até 3 PDFs)';
     } catch (err) { error.textContent = err.message; error.style.display = 'block'; }
+    updateAnalysisJourney();
+  }
+
+  function updateAnalysisJourney(){
+    const located = Boolean(selectedLocation);
+    const purpose = Boolean(document.getElementById('pdmObjetivo')?.value);
+    const contact = Boolean(document.getElementById('pdmEmail')?.value.trim() && document.getElementById('pdmConsent')?.checked);
+    document.getElementById('journeyLocation')?.classList.toggle('ready', located);
+    document.getElementById('journeyPurpose')?.classList.toggle('ready', purpose);
+    document.getElementById('journeyContact')?.classList.toggle('ready', contact);
+    const readiness = document.getElementById('analysisReadiness');
+    if (!readiness) return;
+    if (located && purpose && contact) {
+      readiness.textContent = 'Tudo pronto. Pode gerar a pré-análise; o relatório será também enviado para o seu e-mail.';
+      readiness.classList.add('ready');
+    } else if (located) {
+      readiness.textContent = 'Terreno confirmado. Indique a pretensão e o e-mail para receber o relatório.';
+      readiness.classList.remove('ready');
+    } else {
+      readiness.textContent = 'Comece por selecionar o terreno. Os documentos são opcionais nesta fase.';
+      readiness.classList.remove('ready');
+    }
   }
 
   async function pedirAnalisePdm(){
@@ -1260,6 +1308,7 @@
       </div>
     `;
     output.replaceChildren(div);
+    document.getElementById('journeyResult')?.classList.add('ready');
     div.scrollIntoView({ behavior:'smooth', block:'start' });
   }
 
