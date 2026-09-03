@@ -1,6 +1,7 @@
 import { hasProfessionalAccess } from './lib/access.js';
 import { sendReportEmail, validEmail } from './lib/report-email.js';
 import { regulatoryRuleCatalogFor } from './lib/territorial-data.js';
+import { beginAnalysis, finishAnalysis } from './lib/operation-metrics.js';
 
 const MAX_DOCUMENTS = 4;
 const MAX_DOCUMENT_BYTES = 10 * 1024 * 1024;
@@ -259,6 +260,8 @@ export const handler = async (event) => {
 
   try {
     const body = JSON.parse(event.body || '{}');
+    let trackingRequestId = null;
+    const startedAt = Date.now();
     if (body.privacyConsent !== true || !validEmail(body.email)) {
       return json(400, { error: 'Indique um e-mail válido e aceite a Política de Privacidade para pedir a pré-análise.' });
     }
@@ -285,6 +288,20 @@ export const handler = async (event) => {
     }
     if (totalDocumentBytes > MAX_TOTAL_DOCUMENT_BYTES) {
       return json(413, { error: 'Os documentos selecionados excedem o limite técnico de 4 MB para envio online. Remova-os e faça a pré-análise diretamente pelo terreno selecionado no mapa, cadastro e camadas do PDM.' });
+    }
+    try {
+      const tracking = await beginAnalysis({
+        email: body.email,
+        municipality: body.localizacao?.municipio?.nome || null,
+        documentsCount: documents.length,
+        professionalAccess,
+      });
+      trackingRequestId = tracking.requestId;
+    } catch (trackingError) {
+      if (trackingError?.code === 'TRIAL_LIMIT_REACHED') return json(429, { error: trackingError.message });
+      // O registo operacional não deve interromper o trial enquanto o limite
+      // estiver desligado; a falha fica visível apenas nos Function logs.
+      console.warn('analysis_tracking_unavailable', trackingError.message);
     }
 
     const regulationSources = officialRegulationSources(body.localizacao);
@@ -319,12 +336,14 @@ export const handler = async (event) => {
     const { response, payload: responseBody } = await requestGemini(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(process.env.GEMINI_API_KEY)}`, requestBody);
     if (!response.ok) {
       console.error('provider_error', JSON.stringify({ status: response.status, error: responseBody?.error || null }));
+      await finishAnalysis(trackingRequestId, { status: `provider_${response.status}`, model, durationMs: Date.now() - startedAt }).catch(() => {});
       return json(502, { error: providerMessage(response.status, responseBody) });
     }
 
     const modelText = responseBody.candidates?.[0]?.content?.parts?.map((part) => part.text || '').join('') || '';
     if (!modelText.trim()) {
       console.error('provider_empty_response', JSON.stringify({ finishReason: responseBody.candidates?.[0]?.finishReason || null, promptFeedback: responseBody.promptFeedback || null }));
+      await finishAnalysis(trackingRequestId, { status: 'provider_empty', model, durationMs: Date.now() - startedAt }).catch(() => {});
       return json(502, { error: 'A Gemini devolveu uma resposta vazia. Tente novamente dentro de alguns minutos.' });
     }
     let report;
@@ -332,6 +351,7 @@ export const handler = async (event) => {
       report = parseModelJson(modelText);
     } catch (parseFailure) {
       console.error('provider_invalid_json', JSON.stringify({ message: parseFailure.message, excerpt: modelText.slice(0, 300) }));
+      await finishAnalysis(trackingRequestId, { status: 'invalid_json', model, durationMs: Date.now() - startedAt }).catch(() => {});
       return json(502, { error: 'A Gemini concluiu a resposta, mas o formato do relatório foi inválido. Tente novamente.' });
     }
     const usage = responseBody.usageMetadata || {};
@@ -341,6 +361,7 @@ export const handler = async (event) => {
       outputTokens: usage.candidatesTokenCount || null,
       documents: documents.length,
     }));
+    await finishAnalysis(trackingRequestId, { status: 'completed', model, promptTokens: usage.promptTokenCount || null, outputTokens: usage.candidatesTokenCount || null, durationMs: Date.now() - startedAt }).catch((error) => console.warn('analysis_tracking_finish_unavailable', error.message));
 
     const reply = renderReport(report);
     const reportText = reply.replace(/<br\s*\/?\s*>/gi, '\n').replace(/<\/p>|<\/li>|<\/tr>/gi, '\n').replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#039;/g, "'").replace(/\n\s*/g, '\n').trim();

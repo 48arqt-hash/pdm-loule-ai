@@ -510,6 +510,11 @@
   .map-decision p{ margin:0 0 9px; font-size:.78rem; color:var(--ink-soft); line-height:1.45; }
   .map-decision .btn-submit{ margin:0; font-size:.76rem; padding:8px 11px; }
   .map-decision.ready{ border-color:rgba(36,86,93,.45); background:#eef5f3; }
+  .operation-metrics{ display:none; margin-top:10px; padding:12px; border:1px solid var(--line); border-radius:8px; background:var(--wash); }
+  .operation-metrics strong{ color:var(--teal-deep); }
+  .operation-metrics-grid{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:7px; margin-top:9px; }
+  .operation-metrics-grid span{ display:block; padding:8px; background:#fff; border:1px solid var(--line); border-radius:6px; font-size:.72rem; color:var(--ink-soft); }
+  .operation-metrics-grid b{ display:block; color:var(--ink); font-size:.95rem; margin-top:2px; }
 
   .cost-estimator{ display:grid; grid-template-columns:minmax(0,1.25fr) minmax(260px,.75fr); gap:22px; align-items:start; }
   .cost-estimator label{ display:block; font-size:.75rem; font-weight:600; color:var(--ink-soft); margin:0 0 4px; }
@@ -681,6 +686,8 @@
           <input id="professionalCode" type="password" class="input-field" autocomplete="current-password" placeholder="Código de acesso profissional">
           <button class="btn-submit secondary" type="button" onclick="validarAcessoProfissional()">Validar código</button>
           <p class="form-error" id="professionalError"></p>
+          <button id="metricsButton" class="btn-submit secondary" type="button" onclick="verMetricasOperacao()" style="display:none;">Ver métricas do trial</button>
+          <div id="operationMetrics" class="operation-metrics" aria-live="polite"></div>
         </div>
       </div>
     </div>
@@ -1185,9 +1192,29 @@
       });
       const data = await readJsonResponse(response, 'O serviço de validação de acesso não devolveu uma resposta válida');
       if (!response.ok) throw new Error(data.error || 'Não foi possível validar o código.');
-      document.getElementById('professionalAccess').style.display = 'none';
+      document.getElementById('professionalCode').value = '';
+      document.getElementById('metricsButton').style.display = 'inline-flex';
       addMsg('✓ Acesso profissional ativo nesta sessão. Pode gerar análises sem passar pelo pagamento.', 'system');
     } catch (err) { error.textContent = err.message; error.style.display = 'block'; }
+  }
+
+  async function verMetricasOperacao(){
+    const target = document.getElementById('operationMetrics');
+    target.style.display = 'block';
+    target.textContent = 'A consultar métricas operacionais…';
+    try {
+      const response = await fetch('/.netlify/functions/metricas-operacao');
+      const data = await readJsonResponse(response, 'As métricas não devolveram uma resposta válida');
+      if (!response.ok) throw new Error(data.error || 'Não foi possível consultar as métricas.');
+      if (!data.tracking) {
+        target.innerHTML = '<strong>Métricas ainda não disponíveis</strong><br><small>Ative a base de dados do projeto na Netlify para começar a registar análises, consumos e contactos distintos sem guardar conteúdo dos pedidos.</small>';
+        return;
+      }
+      const seconds = Math.round(Number(data.average_duration_ms || 0) / 1000);
+      target.innerHTML = `<strong>${escapeText(data.period || 'Últimos 30 dias')}</strong><div class="operation-metrics-grid"><span>Análises<b>${escapeText(data.total_analyses)}</b></span><span>Concluídas<b>${escapeText(data.completed_analyses)}</b></span><span>Contactos<b>${escapeText(data.distinct_contacts)}</b></span><span>Tokens entrada<b>${escapeText(data.average_prompt_tokens)}</b></span><span>Tokens saída<b>${escapeText(data.average_output_tokens)}</b></span><span>Tempo médio<b>${seconds}s</b></span></div><small>Registo técnico agregado, sem conteúdo de documentos ou e-mails em claro.</small>`;
+    } catch (error) {
+      target.textContent = error.message || 'Não foi possível consultar as métricas.';
+    }
   }
 
   function addMsg(html, cls){
