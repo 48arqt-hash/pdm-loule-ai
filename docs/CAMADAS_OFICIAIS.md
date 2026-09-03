@@ -1,6 +1,6 @@
 # Camadas oficiais e base territorial
 
-O relatório só pode aplicar regras quantitativas quando a categoria de solo for devolvida por uma camada vetorial oficial. Uma imagem, um PDF ou uma camada WMS servem para consulta visual, mas não devem determinar automaticamente uma regra urbanística.
+O relatório só pode aplicar regras quantitativas quando a categoria de solo for devolvida por uma camada vetorial oficial ou por uma zona específica municipal que publique expressamente os respetivos atributos. Uma imagem, um PDF ou uma camada WMS servem para consulta visual, mas não devem determinar automaticamente uma regra urbanística.
 
 ## Arquitetura
 
@@ -25,9 +25,9 @@ Para ativar o cruzamento automático, configurar na Netlify **uma** destas liga�
 
 A função acrescenta os parâmetros de consulta espacial necessários e aceita atributos em `properties` (WFS) ou `attributes` (ArcGIS). O serviço deve ser público, devolver GeoJSON/JSON e disponibilizar uma designação textual de classe, categoria ou subcategoria; códigos isolados não são apresentados ao cliente como classificação urbanística.
 
-### Estado de confirmação — 21-08-2026
+### Estado de confirmação — 03-09-2026
 
-O geoportal municipal disponibiliza a Planta 1.1 — Modelo de Organização do Território como WMS `pdm2024:1_1_P_Ordenamento_MOT`, no endereço `https://mapas.cm-faro.pt/geoserver/wms`. Esta camada é mantida apenas como apoio visual. A aplicação tenta primeiro a camada WFS/ArcGIS registada; só um atributo vetorial permite aplicar regras quantitativas. A confirmação vetorial exige uma camada WFS/GeoPackage/Shapefile/Feature Service do Município de Faro ou da DGT/IntelIGT.
+O geoportal municipal disponibiliza a Planta 1.1 — Modelo de Organização do Território como WMS `pdm2024:1_1_P_Ordenamento_MOT`, no endereço `https://mapas.cm-faro.pt/geoserver/wms`. Esta camada é mantida apenas como apoio visual. A aplicação apresenta essa leitura, quando possível, mas **não aplica índices, pisos ou áreas máximas** sem um atributo vetorial confirmado. A confirmação exige uma camada WFS/GeoPackage/Shapefile/Feature Service do Município de Faro ou da DGT/IntelIGT.
 
 ## Loulé — planos eficazes e parâmetros específicos
 
@@ -41,6 +41,9 @@ para detetar quando uma parcela está abrangida por PU ou PP:
 
 Para o PU de Quarteira Norte-Nordeste, a aplicação mantém o cruzamento com as
 camadas municipais de zonamento que devolvem categoria, pisos, cércea, ICM e CCM.
+Também consulta por ponto as áreas vetoriais municipais de medidas preventivas
+de Quarteira Nascente e do Mercado da Fruta; estas surgem como condicionantes,
+sem serem confundidas com uma classe de solo.
 Fora das áreas com esses atributos vetoriais, o PDM de Loulé em vigor é hoje
 publicado no geoportal como cartografia raster: é uma fonte visual, não uma base
 segura para calcular índices automaticamente. A revisão do PDM em discussão
@@ -75,6 +78,6 @@ A IDEAlg é uma fonte de referência para condicionantes regionais. Deve ser int
 Uma coincidência de fronteira ou uma camada digitalizada a partir de carta analógica deve continuar marcada como `Necessita validação técnica`.
 # Leitura da Planta de Ordenamento de Faro
 
-O geoportal de Faro disponibiliza a Planta 1.1 - Modelo de Organização do Território por WMS, mas não expõe atributos consultáveis de forma fiável para todas as manchas. Quando a parcela está em Faro, a pré-análise obtém dois excertos oficiais dessa planta, centrados no ponto selecionado: um excerto muito aproximado para leitura da assinatura cartográfica central e outro de enquadramento, juntamente com a legenda oficial. A categoria resultante é sempre apresentada como **interpretação por cor/legenda - necessita verificação**, nunca como atributo vetorial confirmado.
+O geoportal de Faro disponibiliza a Planta 1.1 - Modelo de Organização do Território por WMS, mas não expõe atributos consultáveis de forma fiável para todas as manchas. Quando a parcela está em Faro, a pré-análise obtém dois excertos oficiais dessa planta, centrados no ponto selecionado. A categoria eventualmente devolvida é apresentada como **leitura visual - necessita verificação**, nunca como atributo vetorial confirmado.
 
-As regras reproduzidas no relatório são limitadas à categoria identificada e à biblioteca regulamentar com artigo e página do Regulamento do PDM de Faro (Aviso n.º 20948/2024/2, 20-09-2024). A análise deve assinalar quando uma fronteira de mancha, a escala ou a legibilidade da legenda impedem essa leitura.
+Não são reproduzidas regras quantitativas a partir dessa leitura visual. A análise assinala quando uma fronteira de mancha, a escala ou a legibilidade impedem a confirmação e solicita a camada vetorial/validação municipal antes de calcular os parâmetros aplicáveis.

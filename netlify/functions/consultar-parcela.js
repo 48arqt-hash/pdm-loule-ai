@@ -5,14 +5,20 @@ const DGT_API = 'https://ogcapi.dgterritorio.gov.pt';
 // pois um PU ou PP pode prevalecer sobre o regulamento geral do PDM.
 const LOULÉ_PLANS = 'https://geoloule.cm-loule.pt/arcgisnprot/rest/services/Siteadmin/eploc_pmots_vigor/MapServer/0/query';
 const LOULÉ_ZONING = 'https://geoloule.cm-loule.pt/arcgisnprot/rest/services/MapasOnline/PMOT_vigor_ZONAM_MO/MapServer';
+// Áreas municipais publicadas como feições, distintas da carta raster do PDM.
+// São condicionantes territoriais a assinalar, não categorias de solo.
+const LOULÉ_PREVENTIVE_AREAS = [
+  { id: 5, nome: 'Medidas preventivas — Quarteira Nascente' },
+  { id: 8, nome: 'Medidas preventivas — Mercado da Fruta (Quarteira)' },
+];
 const FARO_WMS = 'https://mapas.cm-faro.pt/geoserver/wms';
 const FARO_ORDERING_LAYER = 'pdm2024:1_1_P_Ordenamento_MOT';
 let collectionsCache;
 
 const ALGARVE = { minLat: 36.8, maxLat: 37.75, minLng: -9.2, maxLng: -7.05 };
 const MUNICIPAL_PROFILES = {
-  'loule': { nome: 'Loulé', estado: 'Planos municipais vetoriais e regras PDM por classe CRUS; confirmação final pela planta de ordenamento', geoportal: 'https://geoloule.cm-loule.pt/', regulamentos: [{ nome: 'Regulamento oficial do PDM de Loulé', url: 'https://geoloule.cm-loule.pt/docs/regulamentos/pmots/PDM_Regulamento.pdf' }, { nome: 'RMUE de Loulé', url: 'https://files.diariodarepublica.pt/2s/2024/08/155000000/0034300423.pdf' }], capacidade: 'Parâmetros vetoriais disponíveis em zonas específicas, quando a fonte municipal os devolver.' },
-  'faro': { nome: 'Faro', estado: 'Perfil prioritário - cartografia e planos disponíveis', geoportal: 'https://mapas.cm-faro.pt/geoportal/mapa/pmot', regulamentos: [{ nome: 'Regulamento do PDM de Faro', url: 'https://mapas.cm-faro.pt/geoportal/docs/pdm_2024/Regulamento.pdf' }], capacidade: 'PDM, condicionantes, RAN, REN, riscos, património, ruído e planos municipais disponíveis no geoportal.' },
+  'loule': { nome: 'Loulé', estado: 'Planos eficazes e zonas específicas por fonte vetorial; PDM geral publicado como carta raster, a confirmar pela planta de ordenamento', geoportal: 'https://geoloule.cm-loule.pt/', regulamentos: [{ nome: 'Regulamento oficial do PDM de Loulé', url: 'https://geoloule.cm-loule.pt/docs/regulamentos/pmots/PDM_Regulamento.pdf' }, { nome: 'RMUE de Loulé', url: 'https://files.diariodarepublica.pt/2s/2024/08/155000000/0034300423.pdf' }], capacidade: 'Parâmetros quantitativos apenas quando a zona específica/PU/PP for devolvida pela fonte vetorial municipal.' },
+  'faro': { nome: 'Faro', estado: 'Regulamento e cartografia oficiais disponíveis; parâmetros automáticos apenas após atributo vetorial confirmado da Planta 1.1', geoportal: 'https://mapas.cm-faro.pt/geoportal/mapa/pmot', regulamentos: [{ nome: 'Regulamento do PDM de Faro', url: 'https://mapas.cm-faro.pt/geoportal/docs/pdm_2024/Regulamento.pdf' }], capacidade: 'Consulta visual WMS ativa; a associação automática de índices exige uma camada vetorial municipal com designação textual.' },
   'olhao': { nome: 'Olhão', estado: 'Perfil prioritário - cartografia e planos disponíveis', geoportal: 'https://mapas.cm-olhao.pt/geoportal/webforms/menu_territorio.aspx?separador=&xml=menu_webpdm.xml', regulamentos: [{ nome: 'PDM de Olhão e alterações em vigor', url: 'https://cm-olhao.pt/areas-de-atuacao/urbanismo/planeamento-urbanistico/planos-municipais-de-ordenamento-do-territorio/planos-municipais-em-vigor/pdm-plano-diretor-municipal' }], capacidade: 'PDM, condicionantes, RAN, REN, ortofoto e planos de pormenor disponíveis no geoportal.' },
   'alcoutim': { nome: 'Alcoutim', estado: 'Perfil prioritário - cartografia georreferenciada disponível', geoportal: 'https://geoportal.cm-alcoutim.pt/mapa/cartomapas', regulamentos: [{ nome: 'PDM de Alcoutim', url: 'https://cm-alcoutim.pt/pt/areas-de-atuacao/planeamento-e-urbanismo/planeamento-e-ordenamento-do-territorio/plano-diretor-municipal' }], capacidade: 'PDM, REN e extratos de PDM, PU e PP disponíveis no CartoMapas municipal.' },
   'lagos': { nome: 'Lagos', estado: 'Perfil prioritário - planos municipais disponíveis', geoportal: 'https://lagos.city-platform.com/', regulamentos: [{ nome: 'Planos territoriais municipais de Lagos', url: 'https://www.cm-lagos.pt/index.php?Itemid=139&cid=80%3Aurbanismo&id=496%3Aplanos-municipais-de-ordenamento-do-territorio-496&lang=pt&option=com_flexicontent&view=item' }], capacidade: 'PDM, PU e diversos PP com regulamentos, zonamento/implantação e condicionantes.' },
@@ -183,6 +189,16 @@ async function municipalPlans(lat, lng) {
   return (await fetchJson(`${LOULÉ_PLANS}?${params}`)).features || [];
 }
 
+async function municipalPreventiveArea(layerId, lat, lng) {
+  const params = new URLSearchParams({
+    f: 'json',
+    geometry: JSON.stringify({ x: lng, y: lat, spatialReference: { wkid: 4326 } }),
+    geometryType: 'esriGeometryPoint', inSR: '4326', spatialRel: 'esriSpatialRelIntersects',
+    outFields: 'DESIG,DATAVIGOR,FREG,REGULAMENTO,OBS,AREA_M2,LOCAL', returnGeometry: 'false',
+  });
+  return (await fetchJson(`${LOULÉ_ZONING}/${layerId}/query?${params}`)).features || [];
+}
+
 async function zoningFeatures(layerId, lat, lng) {
   const params = new URLSearchParams({
     f: 'json',
@@ -330,6 +346,9 @@ export const handler = async (event) => {
     const planFeatures = plans;
     const hasQuarteiraNorthEastPlan = planFeatures.some((feature) => /quarteira.*norte|norte.*nordeste/i.test(`${feature.attributes?.NOME || ''} ${feature.attributes?.TIPO || ''}`));
     const zoning = hasQuarteiraNorthEastPlan ? await quarteiraNorthEastRules(analysisLat, analysisLng) : [];
+    const preventiveAreas = municipality?.nome === 'Loulé'
+      ? (await Promise.allSettled(LOULÉ_PREVENTIVE_AREAS.map(async (area) => ({ ...area, features: await municipalPreventiveArea(area.id, analysisLat, analysisLng) })))).flatMap((result) => result.status === 'fulfilled' ? result.value.features.map((feature) => ({ ...result.value, attributes: feature.attributes || {} })) : [])
+      : [];
     const faroOrdering = municipality?.nome === 'Faro'
       ? await municipalOrderingFeatures(process.env.FARO_PDM_ORDERING_QUERY_URL, analysisLat, analysisLng).catch((error) => { console.warn('faro_ordering_unavailable', error.message); return []; })
       : [];
@@ -340,13 +359,18 @@ export const handler = async (event) => {
       ? await faroVisualOrderingAt(analysisLat, analysisLng).catch((error) => { console.warn('faro_visual_ordering_unavailable', error.message); return null; })
       : null;
     const faroVectorFeature = faroOrdering[0] || faroWfsOrdering[0] || null;
-    const faroClassification = officialClassification(faroVectorFeature?.attributes || faroVectorFeature?.properties || {}) || faroVisualOrdering?.label || null;
+    const faroVectorClassification = officialClassification(faroVectorFeature?.attributes || faroVectorFeature?.properties || {});
+    const faroVisualClassification = faroVisualOrdering?.label || null;
+    const faroClassification = faroVectorClassification || faroVisualClassification || null;
     const faroClassificationMethod = faroOrdering.length ? 'camada vetorial oficial ArcGIS' : faroWfsOrdering.length ? 'camada vetorial oficial WFS' : faroVisualOrdering?.label ? 'leitura por ponto da planta de ordenamento WMS' : null;
     const landUseLabel = landUseLabels[0] || null;
     // Em Loulé, a CRUS da DGT devolve designações coincidentes com as
     // subcategorias do PDM em vigor. A regra é apresentada como pré-análise
     // e mantém a ressalva de confirmação pela planta de ordenamento.
-    const regulatoryClassifications = faroClassification ? [faroClassification] : municipality?.nome === 'Loulé' ? (implantationUseLabel ? [implantationUseLabel] : landUseLabels) : [];
+    // Uma leitura WMS pode ser útil ao técnico como enquadramento visual, mas
+    // não pode desbloquear índices ou regras quantitativas: falta-lhe o
+    // atributo vetorial e a respetiva rastreabilidade de feição.
+    const regulatoryClassifications = faroVectorClassification ? [faroVectorClassification] : municipality?.nome === 'Loulé' ? (implantationUseLabel ? [implantationUseLabel] : landUseLabels) : [];
     const regulatoryContexts = regulatoryClassifications.map((classification) => regulatoryContextFor(municipality?.nome, classification));
     const regulatoryRules = regulatoryContexts.flatMap((context) => context.rules).filter((rule, index, rules) => rules.findIndex((other) => `${other.camada}|${other.valor}` === `${rule.camada}|${rule.valor}`) === index);
     const regulatorySources = regulatoryContexts.flatMap((context) => context.sources).filter((source, index, sources) => sources.findIndex((other) => other.url === source.url) === index);
@@ -361,6 +385,7 @@ export const handler = async (event) => {
       ...regulatoryRules.map((rule) => ({ camada: rule.camada, valor: rule.valor, artigo: rule.artigo, pagina: rule.pagina, fonte: rule.fonte?.documento || 'Regulamento municipal' })),
       ...planFeatures.map((feature) => ({ camada: 'Plano municipal em vigor (CML)', valor: feature.attributes?.NOME || feature.attributes?.TIPO || null, atributos: feature.attributes || {} })),
       ...zoning.flatMap(zoningResult),
+      ...preventiveAreas.map((area) => ({ camada: `Condicionante territorial municipal (CML) — ${area.nome}`, valor: area.attributes.DESIG || 'Área abrangida', atributos: area.attributes, fonte: area.attributes.REGULAMENTO || 'Camada vetorial municipal' })),
     ];
     return json(200, {
       coordenadas: { latitude: lat, longitude: lng }, implantacao: requestedImplantation ? { ...requestedImplantation, confirmada: true, metodo: 'Ponto aproximado indicado pelo utilizador dentro da parcela cadastral' } : null, parcela: parcel ? { id: parcel.id || null, ...cadastralIdentification(parcel.properties || {}, parcel.id || null), propriedades: parcel.properties || {}, geometria: parcel.geometry || null } : null, pdm: results,
@@ -373,6 +398,8 @@ export const handler = async (event) => {
         ...(requestedImplantation ? ['A classificação do plano e as regras apresentadas foram relacionadas com o ponto de implantação indicado. O ponto é aproximado e deve ser confirmado por levantamento, projeto e cartografia oficial em vigor.'] : []),
         ...(!parcel && landUseLabels.length ? ['Sem polígono cadastral disponível, a classe apresentada resulta apenas do ponto selecionado e não confirma a totalidade do prédio.'] : []),
         ...(municipality?.nome === 'Faro' && faroClassificationMethod === 'leitura por ponto da planta de ordenamento WMS' ? ['A classe foi obtida por consulta da planta de ordenamento visual publicada pelo Município de Faro. A categoria e as regras são uma interpretação cartográfica preliminar e exigem confirmação municipal ou acesso à camada vetorial oficial.'] : []),
+        ...(municipality?.nome === 'Faro' && faroVisualClassification && !faroVectorClassification ? ['Por não existir atributo vetorial confirmado nesta consulta, não são calculados índices, pisos ou áreas máximas a partir desta leitura visual.'] : []),
+        ...(municipality?.nome === 'Loulé' && !hasQuarteiraNorthEastPlan ? ['No PDM geral de Loulé, a carta de ordenamento publicada pelo Município é raster. As regras associadas à CRUS são uma referência regulamentar e não confirmam, por si só, a mancha do PDM; índices só são apresentados quando uma zona específica vetorial os devolver.'] : []),
         ...(municipality?.nome === 'Faro' && !faroClassification ? ['Ainda não está configurado um serviço vetorial com atributos da Planta 1.1 do PDM de Faro. A aplicação não inventa uma categoria por cor; a análise fica limitada à CRUS e às restantes condicionantes oficiais até ser registado o WFS/ArcGIS oficial.'] : []),
         ...(municipality?.geoportal ? [`Consulte também o geoportal municipal de ${municipality.nome} para confirmação das plantas e legendas em vigor: ${municipality.geoportal}`] : []),
         'A classificação cartográfica do plano é cruzada automaticamente quando a camada vetorial oficial estiver disponível. A aplicação final do regulamento depende da geometria exata da propriedade e da pretensão apresentada.',
