@@ -147,6 +147,19 @@ export function regulatoryContextFor(municipalityName, officialClassification) {
   return { sources, rules };
 }
 
+// Regime transversal do solo rural de Loulé. Não prova que uma ruína exista
+// ou que seja legal: apenas impede que a pré-análise confunda construção nova
+// com a reabilitação/ampliação de uma preexistência documentalmente comprovada.
+export function preexistenceRulesFor(municipalityName) {
+  if (municipalityKey(municipalityName) !== 'loule') return [];
+  return [
+    { elemento: 'Preexistência - regime de princípio', resultado: 'Em solo rural, não se deve confundir uma nova habitação isolada com obras sobre construção existente. São admitidas obras de conservação, reconstrução, alteração e ampliação de construções existentes para fins habitacionais, nos termos e limites regulamentares.', artigo: 'Artigo 88.º-B, n.º 1', pagina: '26', fonte: louleSource },
+    { elemento: 'Preexistência - prova necessária', resultado: 'A admissibilidade depende de demonstrar a preexistência e a respetiva situação legal. A edificação deve apresentar estrutura edificada e volumetricamente definida; uma simples referência cadastral, ruína sem comprovação ou vestígio não basta para concluir viabilidade.', artigo: 'Artigo 88.º-B, n.º 4, alínea f)', pagina: '26', fonte: louleSource },
+    { elemento: 'Preexistência - limites de ampliação habitacional', resultado: 'O total edificado, incluindo a ampliação, não pode exceder 300 m² de área de construção para fins habitacionais; se a preexistência tiver área superior, essa área constitui o máximo. Não pode aumentar o número de pisos pré-existentes.', artigo: 'Artigo 88.º-B, n.º 4, alíneas b) e d)', pagina: '26', fonte: louleSource },
+    { elemento: 'Preexistência - condições complementares', resultado: 'Exige integração paisagística, salvaguarda da segurança, manutenção da traça arquitetónica quando adequada, acesso público e respeito pelos afastamentos e demais condicionantes aplicáveis.', artigo: 'Artigo 88.º-B, n.º 4, alíneas a), e), g) e h)', pagina: '26', fonte: louleSource },
+  ];
+}
+
 export function regulatoryRuleCatalogFor(municipalityName) {
   const municipality = MUNICIPAL_DATA[municipalityKey(municipalityName)];
   if (!municipality) return [];
