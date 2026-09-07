@@ -523,6 +523,14 @@
   .journey-step.ready b{ color:var(--teal-deep); }
   .analysis-readiness{ margin:0 0 14px; padding:10px 12px; border-radius:7px; background:var(--sand-soft); color:var(--ink-soft); font-size:.78rem; line-height:1.45; }
   .analysis-readiness.ready{ background:#eef5f3; color:var(--teal-deep); }
+  .guided-step{ display:none; margin:14px 0; padding:18px; border:1px solid var(--line); border-radius:10px; background:#fff; }
+  .guided-step.active{ display:block; animation:stepIn .24s ease both; }
+  .guided-step h4{ margin-top:0; color:var(--teal-deep); }
+  .guided-step-lead{ margin:0 0 14px!important; font-size:.9rem!important; color:var(--ink-soft); }
+  .guided-step .btn-submit{ max-width:340px; }
+  .guided-step-actions{ display:flex; justify-content:flex-end; margin-top:12px; }
+  @keyframes stepIn{ from{ opacity:0; transform:translateY(6px); } to{ opacity:1; transform:translateY(0); } }
+  @media(min-width:760px){ .guided-step{ padding:22px; } }
   .map-result details{ margin-top:8px; font-size:.75rem; color:var(--ink-soft); }
   .map-result summary{ cursor:pointer; color:var(--teal-deep); font-weight:600; }
   @media(max-width:640px){ .analysis-journey{ grid-template-columns:repeat(2,minmax(0,1fr)); } }
@@ -660,12 +668,10 @@
       </div>
       <p class="analysis-readiness" id="analysisReadiness">Comece por selecionar o terreno. Os documentos são opcionais nesta fase.</p>
 
-      <div class="chat-history" id="pdmChat" aria-live="polite">
-        <div class="chat-msg system" data-i18n="mapStart">Comece por localizar o terreno no mapa. Pode reforçar a análise com a caderneta, registo predial, levantamento topográfico ou Planta de Localização.</div>
-      </div>
-
       <div id="pdmStep1">
+      <section id="guidedLocation" class="guided-step active">
         <h4 data-i18n="findLand">1. Encontre e confirme o terreno</h4>
+        <p class="guided-step-lead">Comece pela morada ou localização no mapa. Se o cadastro não estiver disponível, pode desenhar o limite aproximado.</p>
         <div class="map-search">
           <input id="mapSearch" class="input-field" data-i18n-placeholder="searchPlaceholder" placeholder="Pesquise localidade ou morada no Algarve">
           <button class="btn-submit secondary" type="button" onclick="pesquisarNoMapa()" data-i18n="search">Procurar</button>
@@ -687,19 +693,11 @@
           <p id="implantationStatus">Se pretende construir ou ampliar, marque no mapa o ponto aproximado de implantação. Assim distinguimos a zona aplicável dentro da parcela.</p>
           <button type="button" class="btn-submit secondary" id="implantationButton" onclick="ativarMarcacaoImplantacao()">Marcar implantação no mapa</button>
         </div>
+      </section>
 
-        <h4 data-i18n="documents">2. Documentos do terreno</h4>
-        <div class="upload-zone" onclick="document.getElementById('pdmPdfInput').click()">
-        <span id="pdmUploadText" data-i18n="locationPlan">📁 Planta de Localização (opcional, PDF)</span>
-          <input type="file" id="pdmPdfInput" accept="application/pdf" style="display:none;" onchange="updateDocuments()">
-        </div>
-        <div class="upload-zone" onclick="document.getElementById('pdmOptionalDocsInput').click()">
-          <span id="pdmOptionalDocsText" data-i18n="optionalDocuments">＋ Caderneta, registo predial ou levantamento (opcionais, até 3 PDFs)</span>
-          <input type="file" id="pdmOptionalDocsInput" multiple accept="application/pdf" style="display:none;" onchange="updateDocuments()">
-        </div>
-        <p class="secure-note" data-i18n="docsNote">O mapa e o cadastro são suficientes para iniciar a pré-análise. Os documentos são opcionais; para envio online, o conjunto tem o limite técnico de 4 MB. Uma Planta de Localização maior não impede a análise geográfica no mapa.</p>
-
-        <h4 data-i18n="purpose">3. O que pretende fazer?</h4>
+      <section id="guidedPurpose" class="guided-step">
+        <h4>2. O que pretende fazer?</h4>
+        <p class="guided-step-lead">Escolha a intenção principal. Isto permite relacionar a análise com aquilo que pretende concretamente.</p>
         <select id="pdmObjetivo" class="input-field">
           <option value="" data-i18n="purposePlaceholder">Selecione a intenção (recomendado)</option>
           <option>Construir uma moradia</option>
@@ -710,16 +708,34 @@
           <option>Apenas conhecer o potencial do terreno</option>
         </select>
         <textarea id="pdmUserMsg" class="textarea-field" data-i18n-placeholder="analysisDescription" placeholder="Ex.: Moradia T4 com cerca de 300 m² e piscina. Indique dúvidas ou dados relevantes."></textarea>
+        <div class="guided-step-actions"><button type="button" class="btn-submit" onclick="avancarParaContacto()">Continuar →</button></div>
+      </section>
 
-        <h4 data-i18n="contact">4. Contacto</h4>
+      <section id="guidedContact" class="guided-step">
+        <h4>3. Receber a pré-análise</h4>
+        <p class="guided-step-lead">Indique o e-mail para receber o relatório. Os documentos são opcionais, mas ajudam a confirmar a análise.</p>
+        <h4 data-i18n="documents">Documentos opcionais</h4>
+        <div class="upload-zone" onclick="document.getElementById('pdmPdfInput').click()">
+        <span id="pdmUploadText" data-i18n="locationPlan">📁 Planta de Localização (opcional, PDF)</span>
+          <input type="file" id="pdmPdfInput" accept="application/pdf" style="display:none;" onchange="updateDocuments()">
+        </div>
+        <div class="upload-zone" onclick="document.getElementById('pdmOptionalDocsInput').click()">
+          <span id="pdmOptionalDocsText" data-i18n="optionalDocuments">＋ Caderneta, registo predial ou levantamento (opcionais, até 3 PDFs)</span>
+          <input type="file" id="pdmOptionalDocsInput" multiple accept="application/pdf" style="display:none;" onchange="updateDocuments()">
+        </div>
+        <p class="secure-note" data-i18n="docsNote">O mapa e o cadastro são suficientes para iniciar a pré-análise. Os documentos são opcionais; para envio online, o conjunto tem o limite técnico de 4 MB. Uma Planta de Localização maior não impede a análise geográfica no mapa.</p>
+
+        <h4 data-i18n="contact">Contacto</h4>
         <input type="email" id="pdmEmail" class="input-field" data-i18n-placeholder="reportEmail" placeholder="E-mail para receber o relatório" required>
         <div class="checkbox-container"><input type="checkbox" id="pdmConsent"> <span>Li e aceito a <button type="button" class="privacy-link" onclick="openPrivacyPolicy()">Política de Privacidade</button>, incluindo o tratamento e conservação dos dados e documentos para esta pré-análise.</span></div>
         <p class="form-error" id="pdmError"></p>
 
         <button class="btn-submit" id="pdmSubmitBtn" onclick="pedirAnalisePdm()" data-i18n="generateReport">Gerar pré-análise documental →</button>
         <p class="secure-note" data-i18n="preliminaryNote">A análise é preliminar. A confirmação de viabilidade requer validação técnica e, quando aplicável, resposta da Câmara.</p>
+      </section>
         <div id="professionalActive" class="professional-active" role="status" aria-live="polite"><strong>✓ Modo profissional ativo</strong><span>Acesso validado nesta sessão. Pode utilizar as funcionalidades profissionais do site.</span></div>
         <div id="pdmReportOutput" aria-live="polite"></div>
+        <div class="chat-history" id="pdmChat" aria-live="polite" style="display:none"></div>
         <button class="btn-submit secondary" type="button" onclick="mostrarAcessoProfissional()" data-i18n="professionalAccess">Acesso profissional</button>
         <div id="professionalAccess" style="display:none; margin-top:10px;">
           <input id="professionalCode" type="password" class="input-field" autocomplete="current-password" placeholder="Código de acesso profissional">
@@ -1138,6 +1154,7 @@
       resultBox.innerHTML = `<strong>Terreno localizado</strong>${municipality}<br>${escapeText(cadastralId)}<ul>${layers}</ul>${details ? `<details><summary>Ver informação técnica complementar</summary><ul>${details}</ul></details>` : ''}<small>${escapeText(data.avisos.join(' '))}</small>`;
       resultBox.style.display = 'block';
       updateAnalysisJourney();
+      mostrarEtapaGuiada('guidedPurpose');
       const manualControl = document.getElementById('manualBoundaryControl');
       manualControl.style.display = (!data.parcela || data.parcela.manual) ? 'block' : 'none';
       if (data.parcela?.manual) {
@@ -1288,6 +1305,28 @@
     }
   }
 
+  function mostrarEtapaGuiada(id){
+    const target = document.getElementById(id);
+    if (!target) return;
+    target.classList.add('active');
+    if (id === 'guidedPurpose') {
+      document.getElementById('journeyLocation')?.classList.add('ready');
+    }
+  }
+
+  function avancarParaContacto(){
+    const purpose = document.getElementById('pdmObjetivo')?.value;
+    const status = document.getElementById('mapStatus');
+    if (!purpose) {
+      status.textContent = 'Escolha o que pretende fazer para que a pré-análise responda ao seu caso.';
+      document.getElementById('pdmObjetivo')?.focus();
+      return;
+    }
+    mostrarEtapaGuiada('guidedContact');
+    updateAnalysisJourney();
+    setTimeout(() => document.getElementById('pdmEmail')?.focus(), 120);
+  }
+
   async function pedirAnalisePdm(){
     const email = document.getElementById('pdmEmail').value.trim();
     const consent = document.getElementById('pdmConsent').checked;
@@ -1367,6 +1406,7 @@
 
   function addMsg(html, cls){
     const chat = document.getElementById('pdmChat');
+    chat.style.display = 'block';
     const div = document.createElement('div');
     div.className = 'chat-msg ' + cls;
     div.innerHTML = html;

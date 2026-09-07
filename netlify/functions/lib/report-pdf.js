@@ -250,6 +250,37 @@ async function aerialContext(location) {
   };
 }
 
+function planBounds(location) {
+  const points = locationPoints(location);
+  if (!points.length) return null;
+  const lons = points.map(([lon]) => lon); const lats = points.map(([, lat]) => lat);
+  const minLon = Math.min(...lons); const maxLon = Math.max(...lons);
+  const minLat = Math.min(...lats); const maxLat = Math.max(...lats);
+  const padding = Math.max(0.00028, Math.max(maxLon - minLon, maxLat - minLat) * 0.7);
+  return { minLon: minLon - padding, minLat: minLat - padding, maxLon: maxLon + padding, maxLat: maxLat + padding };
+}
+
+async function officialPlanContext(location) {
+  // Apenas é produzida sobreposição quando existe um serviço de imagem oficial
+  // identificado e acessível. Não é criada uma planta artificial a partir de
+  // nomes de classes ou de cores inferidas.
+  if (location?.municipio?.nome !== 'Faro') return null;
+  const bounds = planBounds(location);
+  if (!bounds) return null;
+  const query = new URLSearchParams({ SERVICE: 'WMS', VERSION: '1.3.0', REQUEST: 'GetMap', LAYERS: 'pdm2024:1_1_P_Ordenamento_MOT', STYLES: '', FORMAT: 'image/png', TRANSPARENT: 'false', CRS: 'EPSG:4326', BBOX: `${bounds.minLat},${bounds.minLon},${bounds.maxLat},${bounds.maxLon}`, WIDTH: '900', HEIGHT: '520' });
+  const url = `https://mapas.cm-faro.pt/geoportal/map/proxy?url=${encodeURIComponent(`http://mapas.cm-faro.pt/geoserver/wms?${query}`)}`;
+  try {
+    const response = await fetch(url, { signal: AbortSignal.timeout(8_000) });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const image = Buffer.from(await response.arrayBuffer());
+    if (!image.length || image.length > 5 * 1024 * 1024) throw new Error('imagem indisponível');
+    return { image, bbox: [bounds.minLon, bounds.minLat, bounds.maxLon, bounds.maxLat], source: 'Planta 1.1 — Modelo de Organização do Território, PDM de Faro (WMS municipal)' };
+  } catch (error) {
+    console.warn('official_plan_context_unavailable', error.message);
+    return null;
+  }
+}
+
 function drawLocationMap(doc, aerial, location) {
   if (!aerial) return;
   ensureSpace(doc, 360);
@@ -306,6 +337,56 @@ function drawLocationMap(doc, aerial, location) {
   doc.moveDown(1.15);
 }
 
+function relevantCartographicLegend(location) {
+  const seen = new Set();
+  return (Array.isArray(location?.pdm) ? location.pdm : [])
+    .map((item) => ({ label: String(item?.camada || '').trim(), value: String(item?.valor || '').trim() }))
+    .filter((item) => item.label && item.value && /plano municipal|classifica[cç][aã]o|regime de uso|condicionante|classifica[cç][aã]o e uso dominante/i.test(item.label))
+    .filter((item) => !(/regime de uso do solo \(dgt\)/i.test(item.label) && /^\d+$/.test(item.value)))
+    .filter((item) => {
+      const key = `${item.label}|${item.value}`;
+      if (seen.has(key)) return false;
+      seen.add(key); return true;
+    }).slice(0, 6);
+}
+
+function drawOfficialPlanOverlay(doc, plan, location) {
+  if (!plan) return;
+  ensureSpace(doc, 320);
+  drawSectionTitle(doc, 'Sobreposição com planta territorial aplicável');
+  const x = 47; const y = doc.y; const width = 501; const height = 278;
+  doc.image(plan.image, x, y, { width, height });
+  const [minLon, minLat, maxLon, maxLat] = plan.bbox;
+  const toPoint = ([lon, lat]) => [x + ((lon - minLon) / (maxLon - minLon)) * width, y + height - ((lat - minLat) / (maxLat - minLat)) * height];
+  const points = locationPoints(location);
+  if (points.length > 1) {
+    const [startX, startY] = toPoint(points[0]);
+    doc.save().opacity(0.16).fillColor('#A13B2B').moveTo(startX, startY);
+    points.slice(1).forEach((point) => { const [px, py] = toPoint(point); doc.lineTo(px, py); });
+    doc.closePath().fill().restore();
+    doc.save().lineWidth(2.5).strokeColor('#A13B2B').moveTo(startX, startY);
+    points.slice(1).forEach((point) => { const [px, py] = toPoint(point); doc.lineTo(px, py); });
+    doc.closePath().stroke().restore();
+  }
+  const implementation = implantationPoint(location);
+  if (implementation) { const [px, py] = toPoint(implementation); doc.save().circle(px, py, 6).fillAndStroke('#A13B2B', '#FFFFFF').restore(); }
+  doc.rect(x, y, width, height).lineWidth(.8).strokeColor(COLORS.line).stroke();
+  doc.y = y + height + 7;
+  const boundary = location?.parcela?.manual ? 'Limite aproximado desenhado pelo utilizador' : 'Limite cadastral/seleção DGT';
+  doc.font('Helvetica').fontSize(7.2).fillColor(COLORS.muted).text(`${boundary} assinalado a vermelho. Fonte da planta: ${plan.source}. Leitura cartográfica preliminar; confirme pelas peças oficiais em vigor.`, x, doc.y, { width });
+  const legend = relevantCartographicLegend(location);
+  if (legend.length) {
+    doc.moveDown(.45);
+    doc.font('Helvetica-Bold').fontSize(7.4).fillColor(COLORS.navy).text('Interações identificadas na consulta', x, doc.y, { width });
+    legend.forEach((item) => {
+      ensureSpace(doc, 15);
+      doc.circle(x + 4, doc.y + 4, 1.5).fill(COLORS.gold);
+      doc.font('Helvetica').fontSize(7.3).fillColor(COLORS.ink).text(`${item.label}: ${item.value}`, x + 12, doc.y - 2, { width: width - 12, lineGap: 1.2 });
+      doc.moveDown(.38);
+    });
+  } else doc.moveDown(.7);
+}
+
 function drawCartographicEvidence(doc, location) {
   const layers = Array.isArray(location?.pdm) ? location.pdm : [];
   const useful = layers
@@ -335,7 +416,7 @@ export async function createProfessionalPdf({
   documentLabel = 'PRÉ-ANÁLISE URBANÍSTICA',
   disclaimer = 'Pré-análise assistida por IA. Não constitui parecer municipal nem decisão de licenciamento.',
 }) {
-  const aerial = await aerialContext(location);
+  const [aerial, plan] = await Promise.all([aerialContext(location), officialPlanContext(location)]);
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: 'A4', margin: 47, bufferPages: true, info: { Title: `${documentTitle} - Leonel Mendes` } });
     const chunks = [];
@@ -360,6 +441,7 @@ export async function createProfessionalPdf({
     drawExecutiveSummary(doc, report, location);
 
     drawLocationMap(doc, aerial, location);
+    drawOfficialPlanOverlay(doc, plan, location);
     drawCartographicEvidence(doc, location);
 
     if (!report.sections.length && report.fallback) {
