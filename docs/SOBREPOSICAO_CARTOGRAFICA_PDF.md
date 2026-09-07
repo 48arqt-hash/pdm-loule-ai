@@ -6,7 +6,8 @@ O relatório inclui a vista aérea com o limite analisado. Quando existe uma fon
 
 ## Implementação atual
 
-- **Faro:** é consultada a Planta 1.1 — Modelo de Organização do Território do PDM, publicada pelo Município em WMS. O limite cadastral DGT ou o limite manual é desenhado a vermelho sobre a imagem oficial. A legenda textual indica apenas plano, classificação, uso do solo e condicionantes efetivamente devolvidos para a área.
+- **Loulé:** é usada prioritariamente a OrtoSAT 2023 publicada pela Câmara/DGT, uma ortofoto vertical. A Carta de Ordenamento do PDM é obtida no serviço ArcGIS municipal e recebe o limite cadastral DGT ou o limite manual assinalado a vermelho. A legenda textual indica apenas plano, classificação, uso do solo e condicionantes efetivamente devolvidos para a área.
+- **Faro:** é consultada a Planta 1.1 — Modelo de Organização do Território do PDM, publicada pelo Município em WMS. A função consulta primeiro o WMS direto e usa o proxy municipal apenas como alternativa. O limite cadastral DGT ou o limite manual é desenhado a vermelho sobre a imagem oficial; a legenda oficial WMS é incluída quando o serviço a devolve. A legenda textual indica apenas plano, classificação, uso do solo e condicionantes efetivamente devolvidos para a área.
 - **Outros concelhos:** a fotografia aérea e o limite analisado continuam a constar do PDF. Sem um serviço de imagem oficial confirmado, não é criada uma falsa planta PDM por cor ou inferência. A evidência disponível é apresentada na secção de enquadramento cartográfico, com a respetiva limitação.
 
 ## Leitura correta

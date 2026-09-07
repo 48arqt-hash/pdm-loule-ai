@@ -150,13 +150,16 @@
   .hero-summary{ text-align:center; }
   .hero-summary p{ margin:0 auto; font-family:'Fraunces', serif; font-size:clamp(1.25rem, 2.6vw, 1.7rem); line-height:1.22; max-width:720px; position:relative; z-index:1; }
   .hero-summary small{ display:block; color:rgba(255,255,255,.8); line-height:1.5; margin:10px auto 0; max-width:620px; position:relative; z-index:1; }
+  .hero-actions{ display:flex; justify-content:center; margin-top:20px; position:relative; z-index:1; }
+  .hero-primary-action{ border:1px solid #fff; border-radius:7px; background:#fff; color:var(--teal-deep); padding:12px 19px; font:700 .88rem 'Inter',sans-serif; cursor:pointer; box-shadow:0 8px 18px rgba(0,0,0,.12); }
+  .hero-primary-action:hover{ background:var(--sand-soft); border-color:var(--sand-soft); }
   .result-steps{ display:flex; gap:6px; flex-wrap:wrap; justify-content:center; margin-top:16px; }
   .result-steps span{ color:#fff; background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.16); border-radius:20px; font-size:.7rem; font-weight:600; padding:6px 9px; position:relative; z-index:1; }
 
   .divider{ border:none; border-top:1px solid var(--line); margin:22px 0; }
 
   /* PROJETO — carrossel com molduras tipo peça desenhada */
-  .project{ margin:18px 0 8px; }
+  .project{ display:none; }
   .project-eyebrow{
     font-size:.66rem;
     letter-spacing:.18em;
@@ -220,7 +223,8 @@
     color:var(--ink-faint);
     margin:0 0 12px;
   }
-  .service-btn-group{ display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:12px; margin-bottom:6px; }
+  .service-btn-group{ display:block; margin-bottom:6px; }
+  .secondary-services{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-top:10px; }
 
   .btn-action{
     background:var(--teal);
@@ -257,6 +261,12 @@
   .btn-action .service-copy{ font-size:.78rem; line-height:1.45; color:rgba(255,255,255,.75); font-weight:400; max-width:250px; }
   .btn-arrow{ font-size:.75rem; opacity:.75; transition:transform .2s ease; position:absolute; top:16px; right:16px; }
   .btn-action{ position:relative; min-height:150px; }
+  .btn-action.primary-service{ min-height:110px; align-items:flex-start; text-align:left; padding:22px 24px; gap:6px; }
+  .btn-action.primary-service .service-title{ font-size:1.12rem; }
+  .btn-action.primary-service .service-copy{ max-width:620px; font-size:.84rem; }
+  .secondary-services .btn-action{ min-height:94px; padding:14px 38px 14px 14px; align-items:flex-start; text-align:left; gap:5px; }
+  .secondary-services .btn-action .service-title{ font-size:.86rem; }
+  .secondary-services .btn-action .service-copy{ max-width:none; font-size:.72rem; }
   .btn-action[aria-expanded="true"] .btn-arrow{ transform:rotate(180deg); }
   .process-strip{ display:grid; grid-template-columns:repeat(3,1fr); gap:1px; margin:18px 0 6px; border:1px solid var(--line); border-radius:10px; overflow:hidden; background:var(--line); }
   .process-step{ background:#fff; padding:14px; min-height:92px; }
@@ -575,7 +585,7 @@
     #parcelMap{ height:390px; }
     .map-search{ flex-wrap:wrap; }
     .map-search .input-field{ min-width:200px; flex:1; }
-    .service-btn-group{ grid-template-columns:1fr; }
+    .secondary-services{ grid-template-columns:1fr; }
     .btn-action{ min-height:112px; }
     .process-strip{ grid-template-columns:1fr; }
     .cost-estimator{ grid-template-columns:1fr; }
@@ -609,9 +619,9 @@
   </div>
 
   <div class="hero-summary">
-    <p data-i18n="heroTitle">Avalie a viabilidade urbanística do seu terreno antes de avançar.</p>
-    <small data-i18n="heroText">Selecione a parcela, obtenha um enquadramento técnico preliminar e saiba quais são os próximos passos.</small>
-    <div class="result-steps"><span data-i18n="stepDocs">Documentos organizados</span><span data-i18n="stepAlerts">Alertas de divergência</span><span data-i18n="stepNext">Próximos passos claros</span></div>
+    <p data-i18n="heroTitle">O que pode fazer no seu terreno?</p>
+    <small data-i18n="heroText">Localize-o no mapa e receba uma pré-análise urbanística com os próximos passos claros.</small>
+    <div class="hero-actions"><button class="hero-primary-action" type="button" onclick="iniciarPreAnalise()" data-i18n="heroCta">Analisar um terreno →</button></div>
   </div>
 
   <div class="divider"></div>
@@ -630,29 +640,31 @@
   <div class="services-section">
     <p class="section-eyebrow" data-i18n="services">Serviços</p>
     <div class="service-btn-group">
-      <button class="btn-action" onclick="togglePanel('pdmPanel', this)" aria-expanded="false">
+      <button class="btn-action primary-service" onclick="togglePanel('pdmPanel', this)" aria-expanded="false">
         <span class="service-title" data-i18n="landService">🔍 Análise urbanística do terreno</span>
-        <span class="service-copy" data-i18n="landServiceCopy">Selecione a parcela no mapa e receba um enquadramento técnico preliminar.</span>
+        <span class="service-copy" data-i18n="landServiceCopy">Comece pela localização do terreno. Nós cruzamos as fontes territoriais disponíveis e enviamos-lhe uma pré-análise.</span>
         <span class="btn-arrow">▼</span>
       </button>
 
-      <button class="btn-action" onclick="togglePanel('meetingPanel', this)" aria-expanded="false">
-        <span class="service-title" data-i18n="meetingService">📅 Reunião de Consultoria</span>
-        <span class="service-copy" data-i18n="meetingServiceCopy">Esclareça a viabilidade, estratégia e próximos passos do seu processo.</span>
-        <span class="btn-arrow">▼</span>
-      </button>
+      <div class="secondary-services">
+        <button class="btn-action" onclick="togglePanel('meetingPanel', this)" aria-expanded="false">
+          <span class="service-title" data-i18n="meetingService">📅 Reunião de Consultoria</span>
+          <span class="service-copy" data-i18n="meetingServiceCopy">Esclareça a viabilidade e os próximos passos do seu processo.</span>
+          <span class="btn-arrow">▼</span>
+        </button>
 
-      <button class="btn-action" onclick="togglePanel('quotePanel', this)" aria-expanded="false">
-        <span class="service-title" data-i18n="quoteService">📄 Pedir Orçamento de Projeto</span>
-        <span class="service-copy" data-i18n="quoteServiceCopy">Peça uma proposta informada para projetos, especialidades e estudos.</span>
-        <span class="btn-arrow">▼</span>
-      </button>
+        <button class="btn-action" onclick="togglePanel('quotePanel', this)" aria-expanded="false">
+          <span class="service-title" data-i18n="quoteService">📄 Pedir Orçamento de Projeto</span>
+          <span class="service-copy" data-i18n="quoteServiceCopy">Receba uma proposta para os projetos e estudos necessários.</span>
+          <span class="btn-arrow">▼</span>
+        </button>
 
-      <button class="btn-action" onclick="togglePanel('costPanel', this)" aria-expanded="false">
-        <span class="service-title" data-i18n="costService">🧮 Simulador de custo de obra</span>
-        <span class="service-copy" data-i18n="costServiceCopy">Obtenha um intervalo indicativo para construção, ampliação ou reabilitação.</span>
-        <span class="btn-arrow">▼</span>
-      </button>
+        <button class="btn-action" onclick="togglePanel('costPanel', this)" aria-expanded="false">
+          <span class="service-title" data-i18n="costService">🧮 Simulador de custo de obra</span>
+          <span class="service-copy" data-i18n="costServiceCopy">Obtenha uma estimativa inicial de construção, ampliação ou reabilitação.</span>
+          <span class="btn-arrow">▼</span>
+        </button>
+      </div>
     </div>
 
     <!-- PAINEL 1: PRÉ-ANÁLISE DOCUMENTAL -->
@@ -937,10 +949,10 @@
   Object.assign(translations.fr, { landServiceCopy:'Sélectionnez la parcelle sur la carte et recevez un premier cadre technique.', meetingServiceCopy:'Clarifiez la faisabilité, la stratégie et les prochaines étapes de votre dossier.', quoteServiceCopy:'Demandez une proposition informée pour les projets, spécialités et études.', processOneTitle:'01 · Localiser', processOneText:'Sélectionnez le terrain ou indiquez une adresse.', processTwoTitle:'02 · Analyser', processTwoText:'Nous croisons cadastre, plans et données territoriales disponibles.', processThreeTitle:'03 · Décider', processThreeText:'Recevez un rapport et identifiez les prochaines étapes.' });
   Object.assign(translations.de, { landServiceCopy:'Wählen Sie das Grundstück auf der Karte und erhalten Sie eine erste technische Einordnung.', meetingServiceCopy:'Klären Sie Machbarkeit, Strategie und die nächsten Schritte Ihres Vorhabens.', quoteServiceCopy:'Fordern Sie ein fundiertes Angebot für Projekte, Fachplanungen und Studien an.', processOneTitle:'01 · Lokalisieren', processOneText:'Grundstück auswählen oder Adresse eingeben.', processTwoTitle:'02 · Analysieren', processTwoText:'Wir gleichen Kataster, Pläne und verfügbare Gebietsdaten ab.', processThreeTitle:'03 · Entscheiden', processThreeText:'Erhalten Sie einen Bericht mit den nächsten Schritten.' });
   Object.assign(translations.es, { landServiceCopy:'Seleccione la parcela en el mapa y reciba un encuadre técnico inicial.', meetingServiceCopy:'Aclare la viabilidad, estrategia y próximos pasos de su solicitud.', quoteServiceCopy:'Solicite una propuesta informada de proyectos, especialidades y estudios.', processOneTitle:'01 · Localizar', processOneText:'Seleccione el terreno o indique una dirección.', processTwoTitle:'02 · Analizar', processTwoText:'Cruzamos catastro, planes y datos territoriales disponibles.', processThreeTitle:'03 · Decidir', processThreeText:'Reciba un informe y conozca los próximos pasos.' });
-  Object.assign(translations.en, { heroTitle:'Assess the urban-planning feasibility of your land before proceeding.', heroText:'Select the parcel, obtain a preliminary technical framework and understand the next steps.', landService:'🔍 Urban-planning land assessment', landServiceCopy:'Select the parcel on the map and receive a preliminary technical framework.' });
-  Object.assign(translations.fr, { heroTitle:'Évaluez la faisabilité urbanistique de votre terrain avant d’avancer.', heroText:'Sélectionnez la parcelle, obtenez un premier cadre technique et identifiez les prochaines étapes.', landService:'🔍 Analyse urbanistique du terrain', landServiceCopy:'Sélectionnez la parcelle sur la carte et recevez un premier cadre technique.' });
-  Object.assign(translations.de, { heroTitle:'Prüfen Sie die planungsrechtliche Machbarkeit Ihres Grundstücks, bevor Sie fortfahren.', heroText:'Wählen Sie das Grundstück, erhalten Sie eine erste technische Einordnung und kennen Sie die nächsten Schritte.', landService:'🔍 Städtebauliche Grundstücksanalyse', landServiceCopy:'Wählen Sie das Grundstück auf der Karte und erhalten Sie eine vorläufige technische Einordnung.' });
-  Object.assign(translations.es, { heroTitle:'Evalúe la viabilidad urbanística de su terreno antes de avanzar.', heroText:'Seleccione la parcela, obtenga un encuadre técnico preliminar y conozca los próximos pasos.', landService:'🔍 Análisis urbanístico del terreno', landServiceCopy:'Seleccione la parcela en el mapa y reciba un encuadre técnico preliminar.' });
+  Object.assign(translations.en, { heroTitle:'What can you do with your land?', heroText:'Locate it on the map and receive an urban-planning pre-assessment with clear next steps.', heroCta:'Analyse a plot →', landService:'🔍 Urban-planning land assessment', landServiceCopy:'Start with the land location. We cross-check the available territorial sources and email you a pre-assessment.' });
+  Object.assign(translations.fr, { heroTitle:'Que pouvez-vous faire sur votre terrain ?', heroText:'Localisez-le sur la carte et recevez une pré-analyse urbanistique avec des étapes claires.', heroCta:'Analyser un terrain →', landService:'🔍 Analyse urbanistique du terrain', landServiceCopy:'Commencez par localiser le terrain. Nous croisons les sources territoriales disponibles et vous envoyons une pré-analyse.' });
+  Object.assign(translations.de, { heroTitle:'Was ist auf Ihrem Grundstück möglich?', heroText:'Lokalisieren Sie es auf der Karte und erhalten Sie eine städtebauliche Voranalyse mit klaren nächsten Schritten.', heroCta:'Grundstück analysieren →', landService:'🔍 Städtebauliche Grundstücksanalyse', landServiceCopy:'Beginnen Sie mit dem Standort. Wir gleichen die verfügbaren Gebietsdaten ab und senden Ihnen eine Voranalyse.' });
+  Object.assign(translations.es, { heroTitle:'¿Qué puede hacer en su terreno?', heroText:'Localícelo en el mapa y reciba un preanálisis urbanístico con próximos pasos claros.', heroCta:'Analizar un terreno →', landService:'🔍 Análisis urbanístico del terreno', landServiceCopy:'Empiece por localizar el terreno. Cruzamos las fuentes territoriales disponibles y le enviamos un preanálisis.' });
   Object.assign(translations.en, { costService:'🧮 Construction cost simulator', costServiceCopy:'Get an indicative range for a new build, extension or refurbishment.', costTitle:'Construction cost simulator', costTrial:'Free access during the testing phase', costIntro:'Get an indicative estimate to support an initial decision. The result includes construction, design/support and a contingency allowance; it does not replace quantities, design or a contractor quote.', costLocation:'Project location *', costLocationPlaceholder:'Address, locality or cadastral reference', costWorkType:'Type of intervention', costQuality:'Construction standard', costArea:'Gross construction area (m²) *', costFloors:'Floors', costPlotArea:'Land area (m²)', costDetails:'Items to consider (optional)', costBasement:'Basement (m²)', costPool:'Pool (m²)', costExterior:'External works (m²)', costWalls:'Walls / fencing (linear m)', costSlope:'Sloping land', costAccess:'Difficult access', costVat:'Optional VAT simulation', costVatHelp:'The rate is only an indicative simulation. Eligibility must be confirmed by the client with a qualified professional or the tax authority.', costVatNone:'No VAT - base cost', costVat6:'VAT at 6%', costVat23:'VAT at 23%', costVatMixed:'Split between 6% and 23%', costReducedShare:'Share subject to 6% (%)', costTaxConsent:'I confirm that I must validate the applicable tax framework.', costContact:'Receive the estimate as a PDF', costConsent:'I authorise the processing of these data to generate and send this estimate.', costSend:'Generate and send PDF estimate', costResultEyebrow:'Indicative estimate', costWithoutVat:'Estimated cost excluding VAT', costDisclaimer:'It excludes land acquisition, licences, fees, taxes, furniture and tax validation. The final value depends on the design, quantities and contractor proposals.' });
   Object.assign(translations.fr, { costService:'🧮 Estimateur de coût des travaux', costServiceCopy:'Obtenez une fourchette indicative pour une construction, extension ou réhabilitation.', costTitle:'Estimation du coût des travaux', costTrial:'Accès gratuit pendant la phase de test', costIntro:'Obtenez une estimation indicative pour soutenir une première décision. Le résultat inclut les travaux, les études/suivi et une provision pour imprévus ; il ne remplace pas un métré, un projet ou un devis d’entreprise.', costLocation:'Localisation du projet *', costLocationPlaceholder:'Adresse, localité ou référence cadastrale', costWorkType:'Type d’intervention', costQuality:'Niveau de construction', costArea:'Surface brute construite (m²) *', costFloors:'Étages', costPlotArea:'Surface du terrain (m²)', costDetails:'Éléments à considérer (facultatif)', costBasement:'Sous-sol (m²)', costPool:'Piscine (m²)', costExterior:'Aménagements extérieurs (m²)', costWalls:'Murs / clôtures (m)', costSlope:'Terrain en pente', costAccess:'Accès difficile', costVat:'Simulation optionnelle de TVA', costVatHelp:'Le taux est seulement une simulation indicative. L’éligibilité doit être confirmée par le client auprès d’un professionnel compétent ou de l’administration fiscale.', costVatNone:'Sans TVA - coût de base', costVat6:'TVA à 6%', costVat23:'TVA à 23%', costVatMixed:'Répartition entre 6% et 23%', costReducedShare:'Part soumise à 6% (%)', costTaxConsent:'Je confirme devoir valider le régime fiscal applicable.', costContact:'Recevoir l’estimation en PDF', costConsent:'J’autorise le traitement de ces données afin de générer et envoyer cette estimation.', costSend:'Générer et envoyer l’estimation PDF', costResultEyebrow:'Estimation indicative', costWithoutVat:'Coût estimé hors TVA', costDisclaimer:'N’inclut pas l’acquisition du terrain, licences, taxes, mobilier ou validation fiscale. La valeur finale dépend du projet, des métrés et des offres d’entreprises.' });
   Object.assign(translations.de, { costService:'🧮 Baukostenrechner', costServiceCopy:'Erhalten Sie eine unverbindliche Spanne für Neubau, Erweiterung oder Sanierung.', costTitle:'Baukostenschätzung', costTrial:'Kostenloser Zugang während der Testphase', costIntro:'Erhalten Sie eine unverbindliche Schätzung für eine erste Entscheidung. Das Ergebnis umfasst Bau, Planung/Begleitung und einen Risikopuffer; es ersetzt keine Mengenberechnung, Planung oder Unternehmerangebot.', costLocation:'Projektstandort *', costLocationPlaceholder:'Adresse, Ort oder Katasterreferenz', costWorkType:'Art der Maßnahme', costQuality:'Ausbaustandard', costArea:'Bruttogeschossfläche (m²) *', costFloors:'Geschosse', costPlotArea:'Grundstücksfläche (m²)', costDetails:'Zu berücksichtigende Elemente (optional)', costBasement:'Untergeschoss (m²)', costPool:'Pool (m²)', costExterior:'Außenanlagen (m²)', costWalls:'Mauern / Zäune (lfm)', costSlope:'Hanglage', costAccess:'Schwierige Zufahrt', costVat:'Optionale MwSt.-Simulation', costVatHelp:'Der Satz dient nur als unverbindliche Simulation. Die Berechtigung muss vom Kunden mit einer fachkundigen Person oder Steuerbehörde geprüft werden.', costVatNone:'Ohne MwSt. - Basiskosten', costVat6:'MwSt. 6%', costVat23:'MwSt. 23%', costVatMixed:'Aufteilung zwischen 6% und 23%', costReducedShare:'Anteil mit 6% (%)', costTaxConsent:'Ich bestätige, dass ich die steuerliche Einordnung prüfen muss.', costContact:'Schätzung als PDF erhalten', costConsent:'Ich stimme der Verarbeitung dieser Daten zur Erstellung und Zusendung dieser Schätzung zu.', costSend:'PDF-Schätzung erstellen und senden', costResultEyebrow:'Unverbindliche Schätzung', costWithoutVat:'Geschätzte Kosten ohne MwSt.', costDisclaimer:'Nicht enthalten sind Grundstückserwerb, Genehmigungen, Gebühren, Steuern, Einrichtung oder steuerliche Prüfung. Der Endwert hängt von Planung, Mengen und Angeboten ab.' });
@@ -1026,6 +1038,11 @@
   })();
 
   /* ---------- Painéis de serviços ---------- */
+  function iniciarPreAnalise(){
+    const action = document.querySelector('.primary-service');
+    togglePanel('pdmPanel', action);
+  }
+
   function togglePanel(panelId, btn){
     const panels = ['pdmPanel', 'meetingPanel', 'quotePanel', 'costPanel'];
     document.querySelectorAll('.btn-action').forEach(b => b.setAttribute('aria-expanded','false'));

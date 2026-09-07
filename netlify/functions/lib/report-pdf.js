@@ -201,6 +201,19 @@ async function aerialContext(location) {
   const span = Math.max(maxLon - minLon, maxLat - minLat, 0.00045);
   const padding = span * 0.55;
   const bbox = [minLon - padding, minLat - padding, maxLon + padding, maxLat + padding];
+  // Em Loulé, a ortofoto municipal/DGT é ortorretificada e lida verticalmente.
+  // É preferível a imagens globais compostas que podem aparentar perspetiva.
+  if (location?.municipio?.nome === 'Loulé') {
+    const localOrtho = new URL('https://geoloule.cm-loule.pt/arcgisnprot/rest/services/Siteadmin/Base_OrtoSAT2023/ImageServer/exportImage');
+    localOrtho.search = new URLSearchParams({ bbox: bbox.join(','), bboxSR: '4326', imageSR: '4326', size: '1200,760', format: 'png32', f: 'image' }).toString();
+    try {
+      const response = await fetch(localOrtho, { signal: AbortSignal.timeout(6_500) });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const image = Buffer.from(await response.arrayBuffer());
+      if (!image.length) throw new Error('imagem vazia');
+      return { image, bbox, points, source: 'OrtoSAT 2023 - DGT, serviço cartográfico da Câmara Municipal de Loulé (ortofoto vertical)' };
+    } catch (error) { console.warn('loule_ortho_context_unavailable', error.message); }
+  }
   const url = new URL('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export');
   url.search = new URLSearchParams({ bbox: bbox.join(','), bboxSR: '4326', imageSR: '4326', size: '1200,760', format: 'png32', transparent: 'false', f: 'image' }).toString();
   try {
@@ -208,7 +221,7 @@ async function aerialContext(location) {
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const image = Buffer.from(await response.arrayBuffer());
     if (!image.length) throw new Error('imagem vazia');
-    return { image, bbox, points };
+    return { image, bbox, points, source: 'Esri World Imagery (vista aérea de enquadramento)' };
   } catch (error) {
     console.warn('aerial_context_unavailable', error.message);
   }
@@ -247,6 +260,7 @@ async function aerialContext(location) {
     tileOrigin: { x: centerX - 1, y: centerY - 1 },
     bbox: [tileLon(centerX - 1), tileLat(centerY + 2), tileLon(centerX + 2), tileLat(centerY - 1)],
     points,
+    source: 'Esri World Imagery (mosaico de enquadramento)',
   };
 }
 
@@ -260,21 +274,51 @@ function planBounds(location) {
   return { minLon: minLon - padding, minLat: minLat - padding, maxLon: maxLon + padding, maxLat: maxLat + padding };
 }
 
+async function fetchOfficialMapImage(urls) {
+  let lastError;
+  for (const url of urls) {
+    try {
+      const response = await fetch(url, { signal: AbortSignal.timeout(8_000) });
+      const contentType = response.headers.get('content-type') || '';
+      if (!response.ok || !/^image\//i.test(contentType)) throw new Error(`HTTP ${response.status} (${contentType || 'sem imagem'})`);
+      const image = Buffer.from(await response.arrayBuffer());
+      if (!image.length || image.length > 5 * 1024 * 1024) throw new Error('imagem indisponível');
+      return image;
+    } catch (error) { lastError = error; }
+  }
+  throw lastError || new Error('imagem indisponível');
+}
+
 async function officialPlanContext(location) {
   // Apenas é produzida sobreposição quando existe um serviço de imagem oficial
   // identificado e acessível. Não é criada uma planta artificial a partir de
   // nomes de classes ou de cores inferidas.
-  if (location?.municipio?.nome !== 'Faro') return null;
+  if (!['Faro', 'Loulé'].includes(location?.municipio?.nome)) return null;
   const bounds = planBounds(location);
   if (!bounds) return null;
+  if (location?.municipio?.nome === 'Loulé') {
+    const url = new URL('https://geoloule.cm-loule.pt/arcgisnprot/rest/services/Siteadmin/Base_PDM/MapServer/export');
+    url.search = new URLSearchParams({ bbox: `${bounds.minLon},${bounds.minLat},${bounds.maxLon},${bounds.maxLat}`, bboxSR: '4326', imageSR: '4326', size: '900,520', format: 'png32', transparent: 'false', layers: 'show:0', f: 'image' }).toString();
+    try {
+      const response = await fetch(url, { signal: AbortSignal.timeout(8_000) });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const image = Buffer.from(await response.arrayBuffer());
+      if (!image.length || image.length > 5 * 1024 * 1024) throw new Error('imagem indisponível');
+      return { image, bbox: [bounds.minLon, bounds.minLat, bounds.maxLon, bounds.maxLat], source: 'Carta de Ordenamento do PDM de Loulé, serviço cartográfico municipal (vista vertical)' };
+    } catch (error) { console.warn('loule_official_plan_context_unavailable', error.message); return null; }
+  }
   const query = new URLSearchParams({ SERVICE: 'WMS', VERSION: '1.3.0', REQUEST: 'GetMap', LAYERS: 'pdm2024:1_1_P_Ordenamento_MOT', STYLES: '', FORMAT: 'image/png', TRANSPARENT: 'false', CRS: 'EPSG:4326', BBOX: `${bounds.minLat},${bounds.minLon},${bounds.maxLat},${bounds.maxLon}`, WIDTH: '900', HEIGHT: '520' });
-  const url = `https://mapas.cm-faro.pt/geoportal/map/proxy?url=${encodeURIComponent(`http://mapas.cm-faro.pt/geoserver/wms?${query}`)}`;
+  const directUrl = `https://mapas.cm-faro.pt/geoserver/wms?${query}`;
+  const proxyUrl = `https://mapas.cm-faro.pt/geoportal/map/proxy?url=${encodeURIComponent(`http://mapas.cm-faro.pt/geoserver/wms?${query}`)}`;
+  const legendQuery = new URLSearchParams({ SERVICE: 'WMS', VERSION: '1.3.0', REQUEST: 'GetLegendGraphic', LAYER: 'pdm2024:1_1_P_Ordenamento_MOT', FORMAT: 'image/png', LEGEND_OPTIONS: 'fontName:Arial;fontSize:9;dpi:120' });
+  const directLegendUrl = `https://mapas.cm-faro.pt/geoserver/wms?${legendQuery}`;
+  const proxyLegendUrl = `https://mapas.cm-faro.pt/geoportal/map/proxy?url=${encodeURIComponent(`http://mapas.cm-faro.pt/geoserver/wms?${legendQuery}`)}`;
   try {
-    const response = await fetch(url, { signal: AbortSignal.timeout(8_000) });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const image = Buffer.from(await response.arrayBuffer());
-    if (!image.length || image.length > 5 * 1024 * 1024) throw new Error('imagem indisponível');
-    return { image, bbox: [bounds.minLon, bounds.minLat, bounds.maxLon, bounds.maxLat], source: 'Planta 1.1 — Modelo de Organização do Território, PDM de Faro (WMS municipal)' };
+    const [image, legend] = await Promise.all([
+      fetchOfficialMapImage([directUrl, proxyUrl]),
+      fetchOfficialMapImage([directLegendUrl, proxyLegendUrl]).catch(() => null),
+    ]);
+    return { image, legend, bbox: [bounds.minLon, bounds.minLat, bounds.maxLon, bounds.maxLat], source: 'Planta 1.1 — Modelo de Organização do Território, PDM de Faro (WMS municipal)' };
   } catch (error) {
     console.warn('official_plan_context_unavailable', error.message);
     return null;
@@ -333,7 +377,7 @@ function drawLocationMap(doc, aerial, location) {
   const boundaryNote = location?.parcela?.manual
     ? 'limite aproximado desenhado pelo utilizador, sem confirmação cadastral'
     : 'limite/seleção cadastral DGT, de caráter preliminar';
-  doc.font('Helvetica').fontSize(7.2).fillColor(COLORS.muted).text(`Delimitação analisada: ${reference}. Vista aérea: Esri World Imagery; ${boundaryNote}.${implantationNote}`, x, doc.y, { width });
+  doc.font('Helvetica').fontSize(7.2).fillColor(COLORS.muted).text(`Delimitação analisada: ${reference}. Base cartográfica: ${aerial.source || 'imagem de enquadramento'}; ${boundaryNote}.${implantationNote}`, x, doc.y, { width });
   doc.moveDown(1.15);
 }
 
@@ -374,6 +418,14 @@ function drawOfficialPlanOverlay(doc, plan, location) {
   doc.y = y + height + 7;
   const boundary = location?.parcela?.manual ? 'Limite aproximado desenhado pelo utilizador' : 'Limite cadastral/seleção DGT';
   doc.font('Helvetica').fontSize(7.2).fillColor(COLORS.muted).text(`${boundary} assinalado a vermelho. Fonte da planta: ${plan.source}. Leitura cartográfica preliminar; confirme pelas peças oficiais em vigor.`, x, doc.y, { width });
+  if (plan.legend) {
+    doc.moveDown(.45);
+    ensureSpace(doc, 150);
+    const legendY = doc.y;
+    doc.font('Helvetica-Bold').fontSize(7.4).fillColor(COLORS.navy).text('Legenda oficial da planta', x, legendY, { width: 190 });
+    doc.image(plan.legend, x, legendY + 12, { fit: [230, 130] });
+    doc.y = legendY + 150;
+  }
   const legend = relevantCartographicLegend(location);
   if (legend.length) {
     doc.moveDown(.45);
