@@ -191,6 +191,27 @@ function implantationPoint(location = {}) {
   return Number.isFinite(latitude) && Number.isFinite(longitude) ? [longitude, latitude] : null;
 }
 
+async function imageBufferFromResponse(response, label = 'imagem') {
+  const contentType = response.headers.get('content-type') || '';
+  if (!response.ok || !/^image\//i.test(contentType)) throw new Error(`${label}: HTTP ${response.status} (${contentType || 'sem imagem'})`);
+  const image = Buffer.from(await response.arrayBuffer());
+  if (!image.length || image.length > 5 * 1024 * 1024) throw new Error(`${label}: imagem indisponível`);
+  return image;
+}
+
+// Uma fonte cartográfica externa nunca deve impedir a emissão do relatório.
+// PDFKit rejeita buffers HTML/JSON como imagem; nestes casos mantém-se o PDF
+// sem essa ilustração e fica registado o aviso nos logs técnicos.
+function safeImage(doc, image, x, y, options, label = 'imagem') {
+  try {
+    doc.image(image, x, y, options);
+    return true;
+  } catch (error) {
+    console.warn('pdf_image_skipped', JSON.stringify({ label, error: error.message }));
+    return false;
+  }
+}
+
 async function aerialContext(location) {
   const points = locationPoints(location);
   if (!points.length) return null;
@@ -208,9 +229,7 @@ async function aerialContext(location) {
     localOrtho.search = new URLSearchParams({ bbox: bbox.join(','), bboxSR: '4326', imageSR: '4326', size: '1200,760', format: 'png32', f: 'image' }).toString();
     try {
       const response = await fetch(localOrtho, { signal: AbortSignal.timeout(6_500) });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const image = Buffer.from(await response.arrayBuffer());
-      if (!image.length) throw new Error('imagem vazia');
+      const image = await imageBufferFromResponse(response, 'ortofoto Loulé');
       return { image, bbox, points, source: 'OrtoSAT 2023 - DGT, serviço cartográfico da Câmara Municipal de Loulé (ortofoto vertical)' };
     } catch (error) { console.warn('loule_ortho_context_unavailable', error.message); }
   }
@@ -218,9 +237,7 @@ async function aerialContext(location) {
   url.search = new URLSearchParams({ bbox: bbox.join(','), bboxSR: '4326', imageSR: '4326', size: '1200,760', format: 'png32', transparent: 'false', f: 'image' }).toString();
   try {
     const response = await fetch(url, { signal: AbortSignal.timeout(4500) });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const image = Buffer.from(await response.arrayBuffer());
-    if (!image.length) throw new Error('imagem vazia');
+    const image = await imageBufferFromResponse(response, 'vista aérea');
     return { image, bbox, points, source: 'Esri World Imagery (vista aérea de enquadramento)' };
   } catch (error) {
     console.warn('aerial_context_unavailable', error.message);
@@ -244,8 +261,7 @@ async function aerialContext(location) {
       const safeY = Math.max(0, Math.min(n - 1, y));
       requests.push(fetch(`https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${zoom}/${safeY}/${safeX}`, { signal: AbortSignal.timeout(5000) })
         .then(async (response) => {
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-          return { x, y, image: Buffer.from(await response.arrayBuffer()) };
+          return { x, y, image: await imageBufferFromResponse(response, 'mosaico aéreo') };
         }));
     }
   }
@@ -268,10 +284,24 @@ function planBounds(location) {
   const points = locationPoints(location);
   if (!points.length) return null;
   const lons = points.map(([lon]) => lon); const lats = points.map(([, lat]) => lat);
-  const minLon = Math.min(...lons); const maxLon = Math.max(...lons);
-  const minLat = Math.min(...lats); const maxLat = Math.max(...lats);
-  const padding = Math.max(0.00028, Math.max(maxLon - minLon, maxLat - minLat) * 0.7);
-  return { minLon: minLon - padding, minLat: minLat - padding, maxLon: maxLon + padding, maxLat: maxLat + padding };
+  const centerLon = (Math.min(...lons) + Math.max(...lons)) / 2;
+  const centerLat = (Math.min(...lats) + Math.max(...lats)) / 2;
+  const latSpanFromParcel = Math.max(...lats) - Math.min(...lats);
+  const lonSpanFromParcel = Math.max(...lons) - Math.min(...lons);
+  // A carta raster municipal é publicada para leitura a escalas entre 1:999
+  // e 1:245 436. Uma janela demasiado aproximada ficava fora dessa escala e
+  // devolvia uma imagem aparentemente vazia. Mantemos um enquadramento de
+  // cerca de 650 m, suficiente para identificar a mancha PDM e o polígono.
+  const latSpan = Math.max(0.006, latSpanFromParcel * 3.4, lonSpanFromParcel * 1.7);
+  // Respeita a proporção do quadro do PDF, evitando deformar a carta oficial.
+  const mapAspect = 501 / 278;
+  const lonSpan = Math.max(lonSpanFromParcel * 3.4, (latSpan * mapAspect) / Math.max(0.25, Math.cos((centerLat * Math.PI) / 180)));
+  return {
+    minLon: centerLon - lonSpan / 2,
+    minLat: centerLat - latSpan / 2,
+    maxLon: centerLon + lonSpan / 2,
+    maxLat: centerLat + latSpan / 2,
+  };
 }
 
 async function fetchOfficialMapImage(urls) {
@@ -298,13 +328,11 @@ async function officialPlanContext(location) {
   if (!bounds) return null;
   if (location?.municipio?.nome === 'Loulé') {
     const url = new URL('https://geoloule.cm-loule.pt/arcgisnprot/rest/services/Siteadmin/Base_PDM/MapServer/export');
-    url.search = new URLSearchParams({ bbox: `${bounds.minLon},${bounds.minLat},${bounds.maxLon},${bounds.maxLat}`, bboxSR: '4326', imageSR: '4326', size: '900,520', format: 'png32', transparent: 'false', layers: 'show:0', f: 'image' }).toString();
+    url.search = new URLSearchParams({ bbox: `${bounds.minLon},${bounds.minLat},${bounds.maxLon},${bounds.maxLat}`, bboxSR: '4326', imageSR: '4326', size: '1500,832', dpi: '150', format: 'png32', transparent: 'false', layers: 'show:0', f: 'image' }).toString();
     try {
       const response = await fetch(url, { signal: AbortSignal.timeout(8_000) });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const image = Buffer.from(await response.arrayBuffer());
-      if (!image.length || image.length > 5 * 1024 * 1024) throw new Error('imagem indisponível');
-      return { image, bbox: [bounds.minLon, bounds.minLat, bounds.maxLon, bounds.maxLat], source: 'Carta de Ordenamento do PDM de Loulé, serviço cartográfico municipal (vista vertical)' };
+      const image = await imageBufferFromResponse(response, 'planta PDM Loulé');
+      return { image, bbox: [bounds.minLon, bounds.minLat, bounds.maxLon, bounds.maxLat], source: 'Carta de Ordenamento do PDM de Loulé, serviço cartográfico municipal (vista vertical; polígono assinalado a vermelho)' };
     } catch (error) { console.warn('loule_official_plan_context_unavailable', error.message); return null; }
   }
   const query = new URLSearchParams({ SERVICE: 'WMS', VERSION: '1.3.0', REQUEST: 'GetMap', LAYERS: 'pdm2024:1_1_P_Ordenamento_MOT', STYLES: '', FORMAT: 'image/png', TRANSPARENT: 'false', CRS: 'EPSG:4326', BBOX: `${bounds.minLat},${bounds.minLon},${bounds.maxLat},${bounds.maxLon}`, WIDTH: '900', HEIGHT: '520' });
@@ -331,13 +359,13 @@ function drawLocationMap(doc, aerial, location) {
   drawSectionTitle(doc, 'Localização analisada');
   const x = 47; const y = doc.y; const width = 501; const height = 300;
   if (aerial.image) {
-    doc.image(aerial.image, x, y, { width, height });
+    if (!safeImage(doc, aerial.image, x, y, { width, height }, 'vista aérea')) return;
   } else {
     const tileWidth = width / 3; const tileHeight = height / 3;
     aerial.tiles.forEach((tile) => {
       const tileX = x + (tile.x - aerial.tileOrigin.x) * tileWidth;
       const tileY = y + (tile.y - aerial.tileOrigin.y) * tileHeight;
-      doc.image(tile.image, tileX, tileY, { width: tileWidth + 0.4, height: tileHeight + 0.4 });
+      safeImage(doc, tile.image, tileX, tileY, { width: tileWidth + 0.4, height: tileHeight + 0.4 }, 'mosaico aéreo');
     });
   }
   const [minLon, minLat, maxLon, maxLat] = aerial.bbox;
@@ -399,7 +427,7 @@ function drawOfficialPlanOverlay(doc, plan, location) {
   ensureSpace(doc, 320);
   drawSectionTitle(doc, 'Sobreposição com planta territorial aplicável');
   const x = 47; const y = doc.y; const width = 501; const height = 278;
-  doc.image(plan.image, x, y, { width, height });
+  if (!safeImage(doc, plan.image, x, y, { width, height }, 'planta territorial')) return;
   const [minLon, minLat, maxLon, maxLat] = plan.bbox;
   const toPoint = ([lon, lat]) => [x + ((lon - minLon) / (maxLon - minLon)) * width, y + height - ((lat - minLat) / (maxLat - minLat)) * height];
   const points = locationPoints(location);
@@ -423,7 +451,7 @@ function drawOfficialPlanOverlay(doc, plan, location) {
     ensureSpace(doc, 150);
     const legendY = doc.y;
     doc.font('Helvetica-Bold').fontSize(7.4).fillColor(COLORS.navy).text('Legenda oficial da planta', x, legendY, { width: 190 });
-    doc.image(plan.legend, x, legendY + 12, { fit: [230, 130] });
+    safeImage(doc, plan.legend, x, legendY + 12, { fit: [230, 130] }, 'legenda territorial');
     doc.y = legendY + 150;
   }
   const legend = relevantCartographicLegend(location);
