@@ -750,7 +750,7 @@
 
         <h4 data-i18n="contact">Contacto</h4>
         <input type="email" id="pdmEmail" class="input-field" data-i18n-placeholder="reportEmail" placeholder="E-mail para receber o relatório" required>
-        <div class="checkbox-container"><input type="checkbox" id="pdmConsent"> <span>Li e aceito a <button type="button" class="privacy-link" onclick="openPrivacyPolicy()">Política de Privacidade</button>, incluindo o tratamento e conservação dos dados e documentos para esta pré-análise.</span></div>
+      <div class="checkbox-container"><input type="checkbox" id="pdmConsent"> <span>Li e aceito a <button type="button" class="privacy-link" onclick="openPrivacyPolicy()">Política de Privacidade</button>, incluindo o tratamento e conservação dos dados e documentos para esta pré-análise.</span></div>
         <p class="form-error" id="pdmError"></p>
 
         <button class="btn-submit" id="pdmSubmitBtn" onclick="pedirAnalisePdm()" data-i18n="generateReport">Gerar pré-análise documental →</button>
@@ -922,7 +922,7 @@
       <h3>IA, análise automática e decisão humana</h3>
       <p>Na pré-análise, os documentos e elementos do pedido podem ser processados pelo Google Gemini para gerar um relatório assistido por IA. O resultado é preliminar, não decide licenças nem produz efeitos jurídicos. Pode pedir revisão humana pelo Atelier antes de tomar decisões com base no relatório.</p>
       <h3>Fornecedores e fontes externas</h3>
-      <p>Usamos fornecedores necessários para prestar o serviço: Netlify (alojamento e funções), Resend (e-mail), Google Calendar (consulta de disponibilidade de reuniões) e Google Gemini (pré-análise assistida por IA). Para mapas e enquadramento territorial, quando utiliza o mapa, o browser comunica com OpenStreetMap/Nominatim, Esri, Direção-Geral do Território e geoportais municipais. O carregamento do site também utiliza Google Fonts e Leaflet via unpkg. Estes fornecedores podem receber dados técnicos como endereço IP e informação do pedido estritamente necessária ao serviço.</p>
+      <p>Usamos fornecedores necessários para prestar o serviço: Netlify (alojamento e funções), Resend (e-mail), Google Calendar (consulta de disponibilidade de reuniões) e Google Gemini (pré-análise assistida por IA). Para mapas e enquadramento territorial, quando utiliza o mapa, o browser comunica com OpenStreetMap/Nominatim, Esri, Direção-Geral do Território e geoportais municipais. O carregamento do site também utiliza Google Fonts e Leaflet/PDF.js via unpkg; PDF.js só é usado localmente no browser para reduzir plantas PDF grandes antes do envio. Estes fornecedores podem receber dados técnicos como endereço IP e informação do pedido estritamente necessária ao serviço.</p>
       <p>Alguns fornecedores podem tratar dados fora do Espaço Económico Europeu. O Atelier deve manter os respetivos contratos de tratamento e garantias de transferência aplicáveis antes de usar o serviço em produção.</p>
       <h3>Cookies e armazenamento local</h3>
       <p>Não utilizamos cookies de publicidade, pixel de redes sociais nem ferramentas de medição comportamental. O site usa apenas armazenamento técnico necessário ou de preferência:</p>
@@ -947,6 +947,7 @@
 </main>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
 <script>
   const translations = {
     en: {
@@ -1326,9 +1327,43 @@
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onerror = () => reject(new Error(`Não foi possível ler ${file.name}.`));
-      reader.onload = () => resolve({ nome: file.name, tipo: documentType(file.name, primary), base64: String(reader.result).split(',')[1] });
+      reader.onload = () => resolve({ nome: file.name, tipo: documentType(file.name, primary), base64: String(reader.result).split(',')[1], mimeType: file.type || 'application/pdf' });
       reader.readAsDataURL(file);
     });
+  }
+
+  function imageDocumentFromCanvas(canvas, name, page){
+    return {
+      nome: `${name} — ${page}`,
+      tipo: 'planta_localizacao',
+      base64: canvas.toDataURL('image/jpeg', .82).split(',')[1],
+      mimeType: 'image/jpeg',
+      origem: 'planta_localizacao_compactada',
+      paginaOriginal: page,
+    };
+  }
+
+  async function compactarPlantaMunicipal(file){
+    if (!window.pdfjsLib) throw new Error('Não foi possível preparar a Planta de Localização. Atualize a página e tente novamente.');
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+    const pdf = await window.pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
+    // Nas plantas emitidas pela CML, as páginas 4 e 5 são normalmente a
+    // Carta de Ordenamento e a respetiva legenda. São as peças necessárias
+    // para o modelo confrontar a categoria com o polígono assinalado.
+    const pages = pdf.numPages >= 5 ? [4, 5] : Array.from({ length: Math.min(pdf.numPages, 2) }, (_, index) => index + 1);
+    const labels = ['PDM - Ordenamento', 'Legenda da Planta de Ordenamento'];
+    const documents = [];
+    for (let index = 0; index < pages.length; index += 1) {
+      const page = await pdf.getPage(pages[index]);
+      const viewport = page.getViewport({ scale: 1.35 });
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(viewport.width); canvas.height = Math.round(viewport.height);
+      const context = canvas.getContext('2d', { alpha: false });
+      context.fillStyle = '#ffffff'; context.fillRect(0, 0, canvas.width, canvas.height);
+      await page.render({ canvasContext: context, viewport, background: '#ffffff' }).promise;
+      documents.push(imageDocumentFromCanvas(canvas, file.name, labels[index] || `Página ${pages[index]}`));
+    }
+    return documents;
   }
 
   async function updateDocuments(){
@@ -1338,18 +1373,17 @@
     error.style.display = 'none';
     const files = [primary, ...optional].filter(Boolean);
     const totalBytes = files.reduce((total, file) => total + file.size, 0);
-    if (optional.length > 3 || files.some(file => file.size > 10 * 1024 * 1024)) {
-      error.textContent = 'Pode enviar até 4 PDFs, com máximo de 10 MB por ficheiro.'; error.style.display = 'block'; return;
-    }
-    if (totalBytes > 4 * 1024 * 1024) {
-      pdmDocuments = [];
-      document.getElementById('pdmUploadText').textContent = primary ? `⚠ ${primary.name} não será enviado (${(primary.size / 1024 / 1024).toFixed(1)} MB)` : '📁 Planta de Localização (opcional, PDF)';
-      document.getElementById('pdmOptionalDocsText').textContent = '＋ Documentos não anexados — a análise usará mapa, cadastro e PDM';
-      error.textContent = 'Os documentos ultrapassam o limite técnico de 4 MB para envio online. Pode continuar: a análise será feita pela localização selecionada no mapa, cadastro e camadas do PDM.'; error.style.display = 'block'; return;
+    if (optional.length > 3 || optional.some(file => file.size > 10 * 1024 * 1024) || (primary && primary.size > 25 * 1024 * 1024)) {
+      error.textContent = 'Pode enviar até 4 PDFs. Os documentos complementares têm máximo de 10 MB; a Planta de Localização pode ter até 25 MB, pois é reduzida localmente antes do envio.'; error.style.display = 'block'; return;
     }
     try {
-      pdmDocuments = await Promise.all([...(primary ? [fileAsDocument(primary, true)] : []), ...optional.map(file => fileAsDocument(file, false))]);
-      document.getElementById('pdmUploadText').textContent = primary ? `✓ ${primary.name}` : '📁 Planta de Localização (opcional, PDF)';
+      const mustCompactPrimary = primary && (primary.size > 3.5 * 1024 * 1024 || totalBytes > 4 * 1024 * 1024);
+      const primaryDocuments = primary ? (mustCompactPrimary ? await compactarPlantaMunicipal(primary) : [await fileAsDocument(primary, true)]) : [];
+      const optionalDocuments = await Promise.all(optional.map(file => fileAsDocument(file, false)));
+      pdmDocuments = [...primaryDocuments, ...optionalDocuments];
+      const sentBytes = pdmDocuments.reduce((total, document) => total + Math.floor((String(document.base64 || '').length * 3) / 4), 0);
+      if (sentBytes > 4 * 1024 * 1024) throw new Error('A Planta de Localização foi reduzida, mas continua demasiado detalhada para envio. Faça a pré-análise pelo mapa ou envie apenas uma planta de menor dimensão.');
+      document.getElementById('pdmUploadText').textContent = primary ? (mustCompactPrimary ? `✓ ${primary.name} — PDM e legenda preparados` : `✓ ${primary.name}`) : '📁 Planta de Localização (opcional, PDF)';
       document.getElementById('pdmOptionalDocsText').textContent = optional.length ? `✓ ${optional.length} documento(s) complementar(es) selecionado(s)` : '＋ Caderneta, registo predial ou levantamento (opcionais, até 3 PDFs)';
     } catch (err) { error.textContent = err.message; error.style.display = 'block'; }
     updateAnalysisJourney();

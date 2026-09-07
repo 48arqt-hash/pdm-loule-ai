@@ -1,9 +1,11 @@
 import { hasProfessionalAccess } from './lib/access.js';
 import { sendReportEmail, validEmail } from './lib/report-email.js';
-import { preexistenceRulesFor, regulatoryRuleCatalogFor } from './lib/territorial-data.js';
+import { preexistenceRulesFor, regulatoryRuleCatalogFor, regulatoryRulesFor } from './lib/territorial-data.js';
 import { beginAnalysis, finishAnalysis } from './lib/operation-metrics.js';
 
-const MAX_DOCUMENTS = 4;
+// Uma Planta de Localização grande pode originar duas imagens leves (PDM e
+// legenda), mantendo os quatro documentos originais indicados ao utilizador.
+const MAX_DOCUMENTS = 5;
 const MAX_DOCUMENT_BYTES = 10 * 1024 * 1024;
 // O pedido completo passa pela Netlify em base64. O limite efetivo para os
 // documentos é inferior ao limite por ficheiro, para não provocar HTTP 413.
@@ -18,6 +20,7 @@ const ALLOWED_TYPES = new Set([
   'registo_predial',
   'levantamento_topografico',
 ]);
+const ALLOWED_DOCUMENT_MIMES = new Set(['application/pdf', 'image/jpeg', 'image/png']);
 
 const json = (statusCode, payload) => ({
   statusCode,
@@ -39,6 +42,33 @@ const escapeHtml = (value = '') => String(value)
 function parseModelJson(text) {
   const cleaned = text.trim().replace(/^```json\s*/i, '').replace(/\s*```$/, '');
   return JSON.parse(cleaned);
+}
+
+function normalizeText(value = '') {
+  return String(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+}
+
+function enrichLouleDispersedBuildingRules(report, localizacao) {
+  if (localizacao?.municipio?.nome !== 'Loulé') return report;
+  const wholeReport = normalizeText(JSON.stringify(report || {}));
+  if (!wholeReport.includes('area de edificacao dispersa a estruturar')) return report;
+  const rules = regulatoryRulesFor('Loulé', 'Área de edificação dispersa a estruturar');
+  if (!rules.length) return report;
+  const current = Array.isArray(report.regras_aplicaveis) ? report.regras_aplicaveis : [];
+  const existing = new Set(current.map((item) => normalizeText(item?.elemento)));
+  rules.forEach((rule) => {
+    const elemento = String(rule.camada || '').replace(/^Regra urbanística\s*—\s*/i, '');
+    if (!existing.has(normalizeText(elemento))) {
+      current.push({
+        elemento,
+        resultado: rule.valor,
+        estado: 'Necessita verificação',
+        fonte: `Planta de Localização CML + Regulamento do PDM de Loulé (${rule.artigo}, p. ${rule.pagina}; leitura gráfica a confirmar)`,
+      });
+    }
+  });
+  report.regras_aplicaveis = current;
+  return report;
 }
 
 function providerMessage(status, payload = {}) {
@@ -202,7 +232,7 @@ async function cartographicEvidence(localizacao) {
 }
 
 function buildPrompt({ objetivo, descricao, documents, localizacao, regulationSources = [], officialRegulations = [], cartographicLayers = [] }) {
-  const inventory = documents.length ? documents.map((doc) => `- ${doc.tipo}: ${doc.nome}`).join('\n') : '- Sem documentos PDF anexados.';
+  const inventory = documents.length ? documents.map((doc) => `- ${doc.tipo}: ${doc.nome}${doc.origem === 'planta_localizacao_compactada' ? ' (imagem preparada localmente a partir da Planta de Localização oficial)' : ''}`).join('\n') : '- Sem documentos PDF anexados.';
   const preexistenceRules = preexistenceRulesFor(localizacao?.municipio?.nome);
   const mapEvidence = localizacao ? JSON.stringify({
     coordenadas: localizacao.coordenadas,
@@ -234,8 +264,8 @@ Tarefa:
 1. Classifica e extrai apenas informação diretamente visível nos PDFs.
 2. Confronta área, artigo matricial, freguesia, localização e coordenadas entre documentos e, quando existir, a consulta geográfica.
 3. Quando existir Planta de Localização oficial, identifica o polígono/área delimitada na planta e confronta-a com a parcela e coordenadas da consulta geográfica. Regista expressamente no relatório se a coincidência é aparente, divergente ou não verificável, indicando a fonte e o grau de confiança. Nunca apresentes uma sobreposição visual como georreferenciação rigorosa se o PDF não tiver elementos suficientes.
-4. Se a Planta de Localização incluir peças de ordenamento, condicionantes ou REN, descreve somente o que seja legível nessa peça e indica-a como evidência gráfica, não como confirmação normativa autónoma.
-5. Na secção "regras_aplicaveis", inclui todas as regras já presentes em "regrasBase" da consulta geográfica, mantendo artigo, página, fonte e estado "Necessita verificação". Estas regras resultam de cruzamento automático com fontes oficiais: no caso de Loulé, uma designação devolvida pela CRUS/DGT é apenas associada ao Regulamento do PDM e tem sempre de ser confirmada na planta de ordenamento; no caso de Faro, regras quantitativas só podem resultar de camada vetorial municipal configurada. Se a evidência cartográfica visual de Faro permitir identificar uma categoria, acrescenta apenas uma linha "Categoria PDM interpretada" com estado "Necessita verificação" e fonte "Planta 1.1 - Modelo de Organização do Território, PDM de Faro (leitura visual)". NÃO reproduzas índices, cérceas, pisos, áreas máximas ou regras quantitativas a partir de uma leitura WMS/por cor. Acrescenta regras, artigos, índices, cérceas, pisos, afastamentos, usos ou condicionantes apenas quando constem em regrasBase, numa camada vetorial confirmada ou literalmente legíveis nos PDFs enviados. Nunca inventes valores ou artigos. Se a categoria não for legível ou não for vetorialmente confirmada, explica quais as regras que dependem dela, sem escolher uma categoria por suposição.
+4. Se a Planta de Localização incluir peças de ordenamento, condicionantes ou REN, descreve somente o que seja legível nessa peça e indica-a como evidência gráfica, não como confirmação normativa autónoma. Para Loulé, quando receberes uma imagem com o nome “PDM - Ordenamento” e outra “Legenda da Planta de Ordenamento”, compara expressamente o polígono assinalado com a trama da legenda. Se for legível que todo ou parte do polígono incide em “Área de edificação dispersa a estruturar”, cria em “parametros” uma linha com esse nome, indica “interseção gráfica total” ou “interseção gráfica parcial” e usa o estado “Necessita verificação”. Se a incidência for parcial e não existir ponto de implantação, nunca atribuas a regra a todo o prédio: explica que a viabilidade depende da localização da implantação dentro da zona.
+5. Na secção "regras_aplicaveis", inclui todas as regras já presentes em "regrasBase" da consulta geográfica, mantendo artigo, página, fonte e estado "Necessita verificação". Estas regras resultam de cruzamento automático com fontes oficiais: no caso de Loulé, uma designação devolvida pela CRUS/DGT é apenas associada ao Regulamento do PDM e tem sempre de ser confirmada na planta de ordenamento; no caso de Faro, regras quantitativas só podem resultar de camada vetorial municipal configurada. Quando uma Planta de Localização de Loulé, juntamente com a sua legenda, tornar legível a categoria “Área de edificação dispersa a estruturar”, acrescenta as regras do Artigo 26.º e Artigo 27.º presentes na biblioteca regulamentar interna, com fonte “Planta de Localização CML + Regulamento do PDM de Loulé (leitura gráfica a confirmar)”. Se a interseção for parcial, identifica sempre que os parâmetros apenas se aplicam à área dessa categoria e que a implantação precisa de ser confirmada. Se a evidência cartográfica visual de Faro permitir identificar uma categoria, acrescenta apenas uma linha "Categoria PDM interpretada" com estado "Necessita verificação" e fonte "Planta 1.1 - Modelo de Organização do Território, PDM de Faro (leitura visual)". NÃO reproduzas índices, cérceas, pisos, áreas máximas ou regras quantitativas a partir de uma leitura WMS/por cor sem uma legenda legível. Acrescenta regras, artigos, índices, cérceas, pisos, afastamentos, usos ou condicionantes apenas quando constem em regrasBase, numa camada vetorial confirmada ou literalmente legíveis nos PDFs enviados. Nunca inventes valores ou artigos. Se a categoria não for legível ou não for vetorialmente confirmada, explica quais as regras que dependem dela, sem escolher uma categoria por suposição.
 6. Quando o cliente declarar uma pretensão, abre a secção "regras_aplicaveis" com a linha "Viabilidade preliminar da pretensão". Responde diretamente à pretensão, mas sem emitir decisão de licenciamento: "Viável em princípio, sujeito a confirmação" quando os usos e regras recebidos forem compatíveis; "Não demonstrada / não viável como apresentada" quando as regras recebidas exigirem condições que os dados da consulta não demonstram; ou "Dados insuficientes" quando não existir classificação aplicável. Se a parcela intersectar mais de uma classe e não existir "implantacao.confirmada", não apresentes uma conclusão única para todo o prédio: escreve "Dados insuficientes - depende da zona de implantação" e explica os cenários separadamente. Se existir "implantacao.confirmada", relaciona as regras apenas com a classe do ponto de implantação indicado; não mistures regras de outras zonas da parcela. Se "parcela.manual" for verdadeiro, chama sempre à geometria "limite aproximado desenhado pelo utilizador", nunca "parcela cadastral"; assinala que o cruzamento territorial é indicativo e que ficam por confirmar estremas, área, titularidade e artigo matricial. Em particular, para "Construir uma moradia" em RAN ou em solo rural agrícola de Loulé, esclarece que uma moradia NOVA comum não é viável apenas pela seleção do terreno: só pode haver enquadramento nas condições cumulativas da habitação do agricultor e, quando haja RAN, no respetivo regime jurídico. Contudo, se os PDFs ou a descrição demonstrarem uma construção pré-existente/ruína com estrutura e volumetria definida, apresenta obrigatoriamente um cenário separado: "Reconstrução, alteração ou ampliação de preexistência". Aplica exclusivamente as regras em "regrasPreexistencia", cita artigo e página, e conclui "Potencialmente admissível, sujeito a prova da preexistência e validação municipal". Nunca trates a ruína como confirmada sem prova documental, fotográfica ou levantamento; explica os elementos em falta. Indica quais as provas em falta e não transformes uma exceção em autorização.
 7. Distingue sempre: confirmado, necessita verificação, não identificado.
 8. Não apresentes aconselhamento jurídico nem uma decisão de licenciamento.
@@ -279,7 +309,7 @@ export const handler = async (event) => {
 
     let totalDocumentBytes = 0;
     for (const document of documents) {
-      if (!ALLOWED_TYPES.has(document.tipo) || !document.base64 || !document.nome) {
+      if (!ALLOWED_TYPES.has(document.tipo) || !document.base64 || !document.nome || !ALLOWED_DOCUMENT_MIMES.has(document.mimeType || 'application/pdf')) {
         return json(400, { error: 'Foi recebido um documento inválido.' });
       }
       const estimatedBytes = Math.floor((document.base64.length * 3) / 4);
@@ -326,7 +356,10 @@ export const handler = async (event) => {
               { text: layer.tipo },
               { inlineData: { mimeType: layer.mimeType, data: layer.base64 } },
             ]),
-            ...documents.map((document) => ({ inlineData: { mimeType: 'application/pdf', data: document.base64 } })),
+            ...documents.flatMap((document) => [
+              { text: `Documento anexo: ${document.nome}${document.origem === 'planta_localizacao_compactada' ? '. Imagem obtida localmente da Planta de Localização; lê a categoria do PDM e a legenda em conjunto.' : ''}` },
+              { inlineData: { mimeType: document.mimeType || 'application/pdf', data: document.base64 } },
+            ]),
             ...regulations.flatMap((regulation) => [
               { text: `Documento oficial anexo: ${regulation.nome} (${regulation.fonte})` },
               { inlineData: { mimeType: 'application/pdf', data: regulation.base64 } },
@@ -356,6 +389,7 @@ export const handler = async (event) => {
       await finishAnalysis(trackingRequestId, { status: 'invalid_json', model, durationMs: Date.now() - startedAt }).catch(() => {});
       return json(502, { error: 'A Gemini concluiu a resposta, mas o formato do relatório foi inválido. Tente novamente.' });
     }
+    report = enrichLouleDispersedBuildingRules(report, body.localizacao);
     const usage = responseBody.usageMetadata || {};
     console.info('analysis_usage', JSON.stringify({
       model,
