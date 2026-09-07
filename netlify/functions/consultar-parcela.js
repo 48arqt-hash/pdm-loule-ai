@@ -78,6 +78,17 @@ function geometryBounds(geometry) {
   }), { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity });
 }
 
+function manualPolygonGeometry(value) {
+  if (!value || value.type !== 'Polygon' || !Array.isArray(value.coordinates) || value.coordinates.length !== 1) return null;
+  const ring = value.coordinates[0];
+  if (!Array.isArray(ring) || ring.length < 4 || ring.length > 31) return null;
+  const points = ring.map((point) => Array.isArray(point) ? [Number(point[0]), Number(point[1])] : null);
+  if (points.some((point) => !point || !Number.isFinite(point[0]) || !Number.isFinite(point[1]) || point[1] < ALGARVE.minLat || point[1] > ALGARVE.maxLat || point[0] < ALGARVE.minLng || point[0] > ALGARVE.maxLng)) return null;
+  const [first, last] = [points[0], points[points.length - 1]];
+  if (first[0] !== last[0] || first[1] !== last[1]) return null;
+  return { type: 'Polygon', coordinates: [points] };
+}
+
 function orientation([ax, ay], [bx, by], [cx, cy]) { return (by - ay) * (cx - bx) - (bx - ax) * (cy - by); }
 function pointOnSegment([ax, ay], [bx, by], [cx, cy]) {
   return Math.abs(orientation([ax, ay], [bx, by], [cx, cy])) < 1e-12 && cx >= Math.min(ax, bx) && cx <= Math.max(ax, bx) && cy >= Math.min(ay, by) && cy <= Math.max(ay, by);
@@ -309,8 +320,10 @@ function officialClassification(attributes = {}) {
 export const handler = async (event) => {
   if (event.httpMethod !== 'POST') return json(405, { error: 'Método não permitido.' });
   try {
-    const { latitude, longitude, implantationLatitude, implantationLongitude } = JSON.parse(event.body || '{}'); const lat = Number(latitude); const lng = Number(longitude);
+    const { latitude, longitude, implantationLatitude, implantationLongitude, manualGeometry: submittedManualGeometry } = JSON.parse(event.body || '{}'); const lat = Number(latitude); const lng = Number(longitude);
     if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < ALGARVE.minLat || lat > ALGARVE.maxLat || lng < ALGARVE.minLng || lng > ALGARVE.maxLng) return json(400, { error: 'Selecione uma localização dentro do Algarve.' });
+    const manualGeometry = submittedManualGeometry ? manualPolygonGeometry(submittedManualGeometry) : null;
+    if (submittedManualGeometry && !manualGeometry) return json(400, { error: 'O polígono manual é inválido. Desenhe pelo menos 3 vértices dentro do Algarve e conclua novamente.' });
     const requestedImplantation = Number.isFinite(Number(implantationLatitude)) && Number.isFinite(Number(implantationLongitude))
       ? { latitude: Number(implantationLatitude), longitude: Number(implantationLongitude) } : null;
     const [cadastre, municipalityResult] = await Promise.allSettled([
@@ -318,9 +331,12 @@ export const handler = async (event) => {
       municipalityAt(lat, lng),
     ]);
     const municipality = municipalityResult.status === 'fulfilled' ? municipalityResult.value : null;
-    const parcel = cadastre.status === 'fulfilled' ? cadastre.value : null;
+    const cadastralParcel = cadastre.status === 'fulfilled' ? cadastre.value : null;
+    // O desenho manual é alternativa apenas onde a fonte cadastral não devolve
+    // parcela. Nunca substitui uma feição DGT existente.
+    const parcel = cadastralParcel || (manualGeometry ? { id: null, properties: {}, geometry: manualGeometry, manual: true } : null);
     if (requestedImplantation && (!parcel?.geometry || !containsPoint(parcel, [requestedImplantation.longitude, requestedImplantation.latitude]))) {
-      return json(400, { error: 'O ponto de implantação deve estar dentro da parcela cadastral selecionada.' });
+      return json(400, { error: `O ponto de implantação deve estar dentro do ${parcel?.manual ? 'limite aproximado' : 'polígono cadastral'} selecionado.` });
     }
     const analysisLat = requestedImplantation?.latitude || lat;
     const analysisLng = requestedImplantation?.longitude || lng;
@@ -378,8 +394,8 @@ export const handler = async (event) => {
     const results = [
       ...(municipality ? [{ camada: 'Concelho identificado (CAOP)', valor: municipality.nome, atributos: municipality.propriedades || {} }] : []),
       ...(municipality ? [{ camada: 'Cobertura da pré-análise', valor: municipality.estado }] : []),
-      ...(landUseLabels.length === 1 ? [{ camada: parcel ? 'Regime de uso do solo (DGT) — interseção com a parcela' : 'Regime de uso do solo (DGT) — ponto selecionado', valor: landUseLabel, atributos: labelledUses[0].feature.properties || {} }] : []),
-      ...(landUseLabels.length > 1 ? landUseLabels.map((label) => ({ camada: 'Regime de uso do solo (DGT) — classe que intersecta a parcela', valor: label, atributos: labelledUses.find((item) => item.label === label)?.feature.properties || {} })) : []),
+      ...(landUseLabels.length === 1 ? [{ camada: parcel ? `Regime de uso do solo (DGT) — interseção com ${parcel.manual ? 'o limite manual' : 'a parcela'}` : 'Regime de uso do solo (DGT) — ponto selecionado', valor: landUseLabel, atributos: labelledUses[0].feature.properties || {} }] : []),
+      ...(landUseLabels.length > 1 ? landUseLabels.map((label) => ({ camada: `Regime de uso do solo (DGT) — classe que intersecta ${parcel?.manual ? 'o limite manual' : 'a parcela'}`, valor: label, atributos: labelledUses.find((item) => item.label === label)?.feature.properties || {} })) : []),
       ...(implantationUseLabel ? [{ camada: 'Regime de uso do solo (DGT) — ponto de implantação indicado', valor: implantationUseLabel, atributos: implantationUse.properties || {} }] : []),
       ...(faroClassification ? [{ camada: `Classificação do solo — PDM de Faro (${faroClassificationMethod})`, valor: faroClassification, atributos: faroVectorFeature?.attributes || faroVectorFeature?.properties || faroVisualOrdering?.properties || {} }] : []),
       ...regulatoryRules.map((rule) => ({ camada: rule.camada, valor: rule.valor, artigo: rule.artigo, pagina: rule.pagina, fonte: rule.fonte?.documento || 'Regulamento municipal' })),
@@ -388,13 +404,14 @@ export const handler = async (event) => {
       ...preventiveAreas.map((area) => ({ camada: `Condicionante territorial municipal (CML) — ${area.nome}`, valor: area.attributes.DESIG || 'Área abrangida', atributos: area.attributes, fonte: area.attributes.REGULAMENTO || 'Camada vetorial municipal' })),
     ];
     return json(200, {
-      coordenadas: { latitude: lat, longitude: lng }, implantacao: requestedImplantation ? { ...requestedImplantation, confirmada: true, metodo: 'Ponto aproximado indicado pelo utilizador dentro da parcela cadastral' } : null, parcela: parcel ? { id: parcel.id || null, ...cadastralIdentification(parcel.properties || {}, parcel.id || null), propriedades: parcel.properties || {}, geometria: parcel.geometry || null } : null, pdm: results,
+      coordenadas: { latitude: lat, longitude: lng }, implantacao: requestedImplantation ? { ...requestedImplantation, confirmada: true, metodo: `Ponto aproximado indicado pelo utilizador dentro d${parcel?.manual ? 'o limite manual' : 'a parcela cadastral'}` } : null, parcela: parcel ? (parcel.manual ? { id: null, referencia: null, declaracao: null, manual: true, propriedades: { origem: 'Limite aproximado desenhado pelo utilizador' }, geometria: parcel.geometry } : { id: parcel.id || null, ...cadastralIdentification(parcel.properties || {}, parcel.id || null), propriedades: parcel.properties || {}, geometria: parcel.geometry || null }) : null, pdm: results,
       avisos: [
         ...(cadastre.status === 'rejected' ? ['A fonte do Cadastro Predial da DGT não respondeu nesta tentativa. Tente novamente dentro de alguns segundos; não foi selecionado qualquer polígono por aproximação.'] : []),
-        ...(cadastre.status === 'fulfilled' && !parcel ? ['A Carta Cadastral Digital não devolveu uma parcela para este ponto. Pode tratar-se de cobertura incompleta, limite impreciso ou de prédio não representado na fonte pública.'] : []),
+        ...(cadastre.status === 'fulfilled' && !cadastralParcel && !manualGeometry ? ['A Carta Cadastral Digital não devolveu uma parcela para este ponto. Pode tratar-se de cobertura incompleta, limite impreciso ou de prédio não representado na fonte pública.'] : []),
+        ...(!cadastralParcel && manualGeometry ? ['A Carta Cadastral Digital não devolveu uma parcela neste local. A consulta usa o limite aproximado desenhado pelo utilizador; não confirma estremas, área, titularidade, artigo matricial ou declaração cadastral.'] : []),
         ...(!useFeatures.length ? ['Não foi possível obter uma classificação de uso do solo vetorial para esta localização.'] : []),
         ...(useFeatures.length && !landUseLabels.length ? [`O regime de uso do solo foi encontrado, mas a fonte pública devolveu apenas ${technicalCode(useFeatures[0].properties || {}) ? `o código técnico ${technicalCode(useFeatures[0].properties || {}).valor}` : 'um código técnico'} sem designação legível. Esse código não é apresentado ao cliente como classificação urbanística.`] : []),
-        ...(parcel && landUseLabels.length > 1 ? ['A parcela intersecta mais do que uma classe de uso do solo. As regras e condicionantes são apresentadas para todas as classes identificadas; uma zona RAN ou outra condicionante parcial não pode ser excluída apenas pelo local do clique.'] : []),
+        ...(parcel && landUseLabels.length > 1 ? [`${parcel.manual ? 'O limite manual' : 'A parcela'} intersecta mais do que uma classe de uso do solo. As regras e condicionantes são apresentadas para todas as classes identificadas; uma zona RAN ou outra condicionante parcial não pode ser excluída apenas pelo local do clique.`] : []),
         ...(requestedImplantation ? ['A classificação do plano e as regras apresentadas foram relacionadas com o ponto de implantação indicado. O ponto é aproximado e deve ser confirmado por levantamento, projeto e cartografia oficial em vigor.'] : []),
         ...(!parcel && landUseLabels.length ? ['Sem polígono cadastral disponível, a classe apresentada resulta apenas do ponto selecionado e não confirma a totalidade do prédio.'] : []),
         ...(municipality?.nome === 'Faro' && faroClassificationMethod === 'leitura por ponto da planta de ordenamento WMS' ? ['A classe foi obtida por consulta da planta de ordenamento visual publicada pelo Município de Faro. A categoria e as regras são uma interpretação cartográfica preliminar e exigem confirmação municipal ou acesso à camada vetorial oficial.'] : []),

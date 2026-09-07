@@ -673,6 +673,15 @@
         <div id="parcelMap" aria-label="Mapa para selecionar o terreno"></div>
         <p id="mapStatus" class="map-status" data-i18n="mapStatus">Clique dentro do terreno no mapa. Consultaremos o Cadastro Predial e a Carta do Regime de Uso do Solo da DGT, além dos planos municipais em vigor.</p>
         <div id="mapResult" class="map-result"></div>
+        <div id="manualBoundaryControl" class="map-decision" style="display:none">
+          <strong>Não encontrou o limite cadastral?</strong>
+          <p id="manualBoundaryStatus">Pode desenhar o limite aproximado do terreno diretamente no mapa. Esta área serve apenas para a pré-análise territorial; não substitui cadastro, matriz, registo predial ou levantamento topográfico.</p>
+          <button type="button" class="btn-submit secondary" id="manualBoundaryButton" onclick="ativarDesenhoPoligono()">Desenhar limite aproximado</button>
+          <span id="manualBoundaryActions" style="display:none">
+            <button type="button" class="btn-submit secondary" id="manualBoundaryFinish" onclick="concluirPoligonoManual()" disabled>Concluir polígono</button>
+            <button type="button" class="btn-submit secondary" onclick="limparPoligonoManual()">Limpar</button>
+          </span>
+        </div>
         <div id="implantationControl" class="map-decision" style="display:none">
           <strong>Localização aproximada da construção</strong>
           <p id="implantationStatus">Se pretende construir ou ampliar, marque no mapa o ponto aproximado de implantação. Assim distinguimos a zona aplicável dentro da parcela.</p>
@@ -962,6 +971,8 @@
   let selectedParcelPoint = null;
   let mapSelectionMode = 'parcel';
   let mapResizeObserver;
+  let manualPolygonPoints = [];
+  let manualPolygonLayer;
 
   /* ---------- Logo / Sobre ---------- */
   function toggleAbout(){
@@ -1054,6 +1065,7 @@
       L.control.layers({ 'Mapa': streetMap, 'Vista aérea': aerialMap }, { 'Limites cadastrais DGT': cadastreLayer }, { collapsed:false, position:'topright' }).addTo(map);
       map.on('click', event => {
         if (mapSelectionMode === 'implantation') definirImplantacao(event.latlng.lat, event.latlng.lng);
+        else if (mapSelectionMode === 'manual-polygon') adicionarPontoPoligono(event.latlng.lat, event.latlng.lng);
         else consultarLocalizacao(event.latlng.lat, event.latlng.lng);
       });
       if ('ResizeObserver' in window){
@@ -1080,7 +1092,8 @@
     } catch (error) { status.textContent = error.message; }
   }
 
-  async function consultarLocalizacao(latitude, longitude, implantation = null){
+  async function consultarLocalizacao(latitude, longitude, implantation = null, manualGeometry = null){
+    const geometryForRequest = manualGeometry || (implantation && selectedLocation?.parcela?.manual ? selectedLocation.parcela.geometria : null);
     const status = document.getElementById('mapStatus');
     const resultBox = document.getElementById('mapResult');
     document.getElementById('journeyResult')?.classList.remove('ready');
@@ -1089,21 +1102,28 @@
     mapSelectionMode = 'parcel';
     if (selectedMarker) map.removeLayer(selectedMarker);
     if (selectedParcelLayer) map.removeLayer(selectedParcelLayer);
+    if (geometryForRequest && manualPolygonLayer && manualPolygonLayer !== selectedParcelLayer) { map.removeLayer(manualPolygonLayer); manualPolygonLayer = null; }
     if (!implantation && implantationMarker) { map.removeLayer(implantationMarker); implantationMarker = null; }
     selectedMarker = L.marker([latitude, longitude]).addTo(map);
     try {
       const response = await fetch('/.netlify/functions/consultar-parcela', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ latitude, longitude, implantationLatitude: implantation?.latitude, implantationLongitude: implantation?.longitude })
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ latitude, longitude, implantationLatitude: implantation?.latitude, implantationLongitude: implantation?.longitude, manualGeometry: geometryForRequest })
       });
       const data = await readJsonResponse(response, 'Não foi possível consultar esta localização');
       if (!response.ok) throw new Error(data.error || 'Não foi possível consultar esta localização.');
       selectedLocation = data;
       selectedParcelPoint = { latitude, longitude };
       if (data.parcela?.geometria){
-        selectedParcelLayer = L.geoJSON(data.parcela.geometria, { style: { color:'#B9954F', weight:3, fillColor:'#B9954F', fillOpacity:.12 } }).addTo(map);
-        map.fitBounds(selectedParcelLayer.getBounds(), { padding:[18,18], maxZoom:19 });
+        selectedParcelLayer = L.geoJSON(data.parcela.geometria, { style: { color: data.parcela.manual ? '#A13B2B' : '#B9954F', dashArray: data.parcela.manual ? '7 5' : null, weight:3, fillColor: data.parcela.manual ? '#A13B2B' : '#B9954F', fillOpacity:.12 } }).addTo(map);
+        if (data.parcela.manual) {
+          manualPolygonLayer = selectedParcelLayer;
+        } else {
+          map.fitBounds(selectedParcelLayer.getBounds(), { padding:[18,18], maxZoom:19 });
+        }
       }
-      const cadastralId = data.parcela?.declaracao
+      const cadastralId = data.parcela?.manual
+        ? 'Limite aproximado desenhado pelo utilizador — sem referência cadastral confirmada'
+        : data.parcela?.declaracao
         ? `Declaração cadastral: ${data.parcela.declaracao}`
         : data.parcela?.referencia
           ? `Referência cadastral DGT: ${data.parcela.referencia}`
@@ -1118,6 +1138,15 @@
       resultBox.innerHTML = `<strong>Terreno localizado</strong>${municipality}<br>${escapeText(cadastralId)}<ul>${layers}</ul>${details ? `<details><summary>Ver informação técnica complementar</summary><ul>${details}</ul></details>` : ''}<small>${escapeText(data.avisos.join(' '))}</small>`;
       resultBox.style.display = 'block';
       updateAnalysisJourney();
+      const manualControl = document.getElementById('manualBoundaryControl');
+      manualControl.style.display = (!data.parcela || data.parcela.manual) ? 'block' : 'none';
+      if (data.parcela?.manual) {
+        document.getElementById('manualBoundaryStatus').textContent = 'Limite aproximado desenhado e usado nesta pré-análise. Confirme-o com caderneta, registo predial ou levantamento topográfico antes de qualquer decisão.';
+        document.getElementById('manualBoundaryButton').textContent = 'Redesenhar limite aproximado';
+      } else {
+        document.getElementById('manualBoundaryStatus').textContent = 'Pode desenhar o limite aproximado do terreno diretamente no mapa. Esta área serve apenas para a pré-análise territorial; não substitui cadastro, matriz, registo predial ou levantamento topográfico.';
+        document.getElementById('manualBoundaryButton').textContent = 'Desenhar limite aproximado';
+      }
       const implantationControl = document.getElementById('implantationControl');
       implantationControl.style.display = data.parcela?.geometria ? 'block' : 'none';
       if (implantation?.latitude && data.implantacao?.confirmada) {
@@ -1134,6 +1163,61 @@
         status.textContent = 'Consulta geográfica concluída. Confirme se o limite destacado corresponde ao terreno pretendido e, se aplicável, marque a implantação aproximada.';
       }
     } catch (error) { status.textContent = error.message; }
+  }
+
+  function atualizarDesenhoPoligono(){
+    if (manualPolygonLayer && manualPolygonLayer !== selectedParcelLayer) map.removeLayer(manualPolygonLayer);
+    if (manualPolygonPoints.length < 2) return;
+    const closed = manualPolygonPoints.length >= 3;
+    manualPolygonLayer = (closed ? L.polygon(manualPolygonPoints) : L.polyline(manualPolygonPoints));
+    manualPolygonLayer.setStyle({ color:'#A13B2B', weight:3, dashArray:'7 5', fillColor:'#A13B2B', fillOpacity: closed ? .12 : 0 });
+    manualPolygonLayer.addTo(map);
+  }
+
+  function ativarDesenhoPoligono(){
+    if (!map) return;
+    if (selectedParcelLayer) { map.removeLayer(selectedParcelLayer); selectedParcelLayer = null; }
+    if (manualPolygonLayer) { map.removeLayer(manualPolygonLayer); manualPolygonLayer = null; }
+    manualPolygonPoints = [];
+    selectedLocation = null;
+    selectedParcelPoint = null;
+    mapSelectionMode = 'manual-polygon';
+    document.getElementById('manualBoundaryActions').style.display = 'inline';
+    document.getElementById('manualBoundaryFinish').disabled = true;
+    document.getElementById('manualBoundaryStatus').textContent = 'Clique sucessivamente nos vértices do limite do terreno. No fim, carregue em “Concluir polígono”.';
+    document.getElementById('mapStatus').textContent = 'Modo de desenho ativo: assinale pelo menos 3 vértices do limite aproximado do terreno.';
+  }
+
+  function adicionarPontoPoligono(latitude, longitude){
+    if (manualPolygonPoints.length >= 30) {
+      document.getElementById('mapStatus').textContent = 'Para esta pré-análise, use no máximo 30 vértices. Conclua ou limpe o polígono.';
+      return;
+    }
+    manualPolygonPoints.push([latitude, longitude]);
+    atualizarDesenhoPoligono();
+    document.getElementById('manualBoundaryFinish').disabled = manualPolygonPoints.length < 3;
+    document.getElementById('manualBoundaryStatus').textContent = `${manualPolygonPoints.length} vértice(s) indicado(s). Delimite o perímetro e conclua quando estiver correto.`;
+  }
+
+  function limparPoligonoManual(){
+    if (manualPolygonLayer && manualPolygonLayer !== selectedParcelLayer) map.removeLayer(manualPolygonLayer);
+    manualPolygonLayer = null;
+    manualPolygonPoints = [];
+    mapSelectionMode = 'parcel';
+    document.getElementById('manualBoundaryActions').style.display = 'none';
+    document.getElementById('manualBoundaryStatus').textContent = 'Pode desenhar o limite aproximado do terreno diretamente no mapa. Esta área serve apenas para a pré-análise territorial; não substitui cadastro, matriz, registo predial ou levantamento topográfico.';
+    document.getElementById('mapStatus').textContent = 'Clique dentro do terreno no mapa ou escolha “Desenhar limite aproximado”.';
+  }
+
+  function concluirPoligonoManual(){
+    if (manualPolygonPoints.length < 3) return;
+    const ring = manualPolygonPoints.map(([lat, lng]) => [lng, lat]);
+    ring.push([...ring[0]]);
+    const manualGeometry = { type:'Polygon', coordinates:[ring] };
+    const latitude = manualPolygonPoints.reduce((sum, point) => sum + point[0], 0) / manualPolygonPoints.length;
+    const longitude = manualPolygonPoints.reduce((sum, point) => sum + point[1], 0) / manualPolygonPoints.length;
+    document.getElementById('manualBoundaryActions').style.display = 'none';
+    consultarLocalizacao(latitude, longitude, null, manualGeometry);
   }
 
   function ativarMarcacaoImplantacao(){

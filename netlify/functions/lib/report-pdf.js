@@ -299,7 +299,10 @@ function drawLocationMap(doc, aerial, location) {
   doc.y = y + height + 7;
   const reference = location?.parcela?.declaracao || location?.parcela?.referencia || 'localização selecionada';
   const implantationNote = implementation ? ' Ponto vermelho: implantação aproximada indicada pelo utilizador.' : ' Sem ponto de implantação indicado.';
-  doc.font('Helvetica').fontSize(7.2).fillColor(COLORS.muted).text(`Delimitação analisada: ${reference}. Vista aérea: Esri World Imagery; limite/seleção cadastral DGT, de caráter preliminar.${implantationNote}`, x, doc.y, { width });
+  const boundaryNote = location?.parcela?.manual
+    ? 'limite aproximado desenhado pelo utilizador, sem confirmação cadastral'
+    : 'limite/seleção cadastral DGT, de caráter preliminar';
+  doc.font('Helvetica').fontSize(7.2).fillColor(COLORS.muted).text(`Delimitação analisada: ${reference}. Vista aérea: Esri World Imagery; ${boundaryNote}.${implantationNote}`, x, doc.y, { width });
   doc.moveDown(1.15);
 }
 
