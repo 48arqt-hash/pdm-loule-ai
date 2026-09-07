@@ -14,11 +14,15 @@ export const handler = async (event) => {
   if (process.env.ALLOW_DIRECT_ANALYSIS === 'false' && !professionalAccess) return json(403, { error: 'Valide o acesso profissional antes de enviar o relatório.' });
 
   try {
-    const { to, reportText, reportHtml, location, privacyConsent, privacyPolicyVersion } = JSON.parse(event.body || '{}');
+    const { to, reportText, reportHtml, location, documentPlan, privacyConsent, privacyPolicyVersion } = JSON.parse(event.body || '{}');
     if (privacyConsent !== true) return json(400, { error: 'Aceite a Política de Privacidade antes de enviar o relatório.' });
     if (!validEmail(to)) return json(400, { error: 'Indique um e-mail de destino válido.' });
     if (!reportText || typeof reportText !== 'string' || reportText.length > 70000) return json(400, { error: 'O relatório a enviar é inválido ou demasiado extenso.' });
-    const sent = await sendReportEmail({ to, reportText, reportHtml, location, privacyPolicyVersion: privacyPolicyVersion || null });
+    const validPlan = documentPlan?.base64 && ['image/jpeg', 'image/png'].includes(documentPlan.mimeType)
+      && documentPlan.base64.length <= 2_500_000
+      ? { image: Buffer.from(documentPlan.base64, 'base64'), source: String(documentPlan.source || 'Planta de Localização oficial') }
+      : null;
+    const sent = await sendReportEmail({ to, reportText, reportHtml, location, privacyPolicyVersion: privacyPolicyVersion || null, documentPlan: validPlan });
     await recordOperation({ eventType: 'report_resend', email: to, municipality: location?.municipio?.nome || null }).catch((error) => console.warn('report_resend_tracking_unavailable', error.message));
     console.info('privacy_consent_recorded', JSON.stringify({ service: 'reenvio-relatorio', policyVersion: privacyPolicyVersion || 'não indicado', at: new Date().toISOString() }));
     console.info('report_email_sent', JSON.stringify(sent));

@@ -467,6 +467,29 @@ function drawOfficialPlanOverlay(doc, plan, location) {
   } else doc.moveDown(.7);
 }
 
+function drawDocumentPlanOverlay(doc, documentPlan) {
+  if (!documentPlan?.image) return false;
+  ensureSpace(doc, 390);
+  drawSectionTitle(doc, 'Sobreposição do PDM indicada na Planta de Localização');
+  const x = 47; const y = doc.y; const maxWidth = 501; const maxHeight = 350;
+  let dimensions;
+  try {
+    const source = doc.openImage(documentPlan.image);
+    const ratio = source.width / source.height;
+    const width = Math.min(maxWidth, maxHeight * ratio);
+    dimensions = { width, height: width / ratio, x: x + (maxWidth - width) / 2 };
+  } catch (error) {
+    console.warn('document_plan_dimensions_unavailable', error.message);
+    return false;
+  }
+  if (!safeImage(doc, documentPlan.image, dimensions.x, y, { width: dimensions.width, height: dimensions.height }, 'planta de ordenamento anexa')) return false;
+  doc.rect(dimensions.x, y, dimensions.width, dimensions.height).lineWidth(.8).strokeColor(COLORS.line).stroke();
+  doc.y = y + dimensions.height + 7;
+  doc.font('Helvetica').fontSize(7.2).fillColor(COLORS.muted).text(`${documentPlan.source || 'Planta de Localização oficial'} Esta é a carta utilizada para a leitura gráfica; o polígono/limite já assinalado na peça é a base da pré-análise. Confirme a delimitação e a implantação junto da entidade competente.`, x, doc.y, { width: maxWidth, lineGap: 1.4 });
+  doc.moveDown(1);
+  return true;
+}
+
 function drawCartographicEvidence(doc, location) {
   const layers = Array.isArray(location?.pdm) ? location.pdm : [];
   const useful = layers
@@ -495,6 +518,7 @@ export async function createProfessionalPdf({
   documentTitle = 'Relatório de Pré-Análise Urbanística',
   documentLabel = 'PRÉ-ANÁLISE URBANÍSTICA',
   disclaimer = 'Pré-análise assistida por IA. Não constitui parecer municipal nem decisão de licenciamento.',
+  documentPlan = null,
 }) {
   const [aerial, plan] = await Promise.all([aerialContext(location), officialPlanContext(location)]);
   return new Promise((resolve, reject) => {
@@ -521,7 +545,11 @@ export async function createProfessionalPdf({
     drawExecutiveSummary(doc, report, location);
 
     drawLocationMap(doc, aerial, location);
-    drawOfficialPlanOverlay(doc, plan, location);
+    // A planta entregue pelo cliente tem prioridade: contém a peça emitida
+    // pela entidade e o polígono que serviu de base à análise, qualquer que
+    // seja o município. Se não existir, usa-se o serviço cartográfico oficial
+    // configurado para o município (quando disponível).
+    if (!drawDocumentPlanOverlay(doc, documentPlan)) drawOfficialPlanOverlay(doc, plan, location);
     drawCartographicEvidence(doc, location);
 
     if (!report.sections.length && report.fallback) {

@@ -49,7 +49,8 @@ function normalizeText(value = '') {
 }
 
 function enrichLouleDispersedBuildingRules(report, localizacao) {
-  if (localizacao?.municipio?.nome !== 'Loulé') return report;
+  const reportedLocation = normalizeText(report?.identificacao?.localizacao || '');
+  if (localizacao?.municipio?.nome !== 'Loulé' && !reportedLocation.includes('loule')) return report;
   const wholeReport = normalizeText(JSON.stringify(report || {}));
   if (!wholeReport.includes('area de edificacao dispersa a estruturar')) return report;
   const rules = regulatoryRulesFor('Loulé', 'Área de edificação dispersa a estruturar');
@@ -404,7 +405,11 @@ export const handler = async (event) => {
     let emailSent = false;
     let emailError = null;
     try {
-      await sendReportEmail({ to: body.email, reportText, reportHtml: reply, location: body.localizacao || null, privacyPolicyVersion: body.privacyPolicyVersion || null });
+      const orderingPlan = documents.find((document) => document.origem === 'planta_localizacao_compactada' && /PDM\s*-\s*Ordenamento/i.test(document.paginaOriginal || document.nome || ''));
+      const documentPlan = orderingPlan?.base64 && ['image/jpeg', 'image/png'].includes(orderingPlan.mimeType)
+        ? { image: Buffer.from(orderingPlan.base64, 'base64'), source: 'Planta de Localização oficial — PDM / Ordenamento; polígono assinalado pelo requerente' }
+        : null;
+      await sendReportEmail({ to: body.email, reportText, reportHtml: reply, location: body.localizacao || null, privacyPolicyVersion: body.privacyPolicyVersion || null, documentPlan });
       emailSent = true;
     } catch (emailFailure) {
       console.error('automatic_report_email_error', emailFailure);

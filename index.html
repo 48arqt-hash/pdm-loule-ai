@@ -1332,11 +1332,22 @@
     });
   }
 
-  function imageDocumentFromCanvas(canvas, name, page){
+  function imageDocumentFromCanvas(canvas, name, page, crop = null){
+    let output = canvas;
+    if (crop) {
+      output = document.createElement('canvas');
+      output.width = Math.round(canvas.width * crop.width);
+      output.height = Math.round(canvas.height * crop.height);
+      output.getContext('2d', { alpha: false }).drawImage(
+        canvas,
+        Math.round(canvas.width * crop.x), Math.round(canvas.height * crop.y), Math.round(canvas.width * crop.width), Math.round(canvas.height * crop.height),
+        0, 0, output.width, output.height,
+      );
+    }
     return {
       nome: `${name} — ${page}`,
       tipo: 'planta_localizacao',
-      base64: canvas.toDataURL('image/jpeg', .82).split(',')[1],
+      base64: output.toDataURL('image/jpeg', .82).split(',')[1],
       mimeType: 'image/jpeg',
       origem: 'planta_localizacao_compactada',
       paginaOriginal: page,
@@ -1361,7 +1372,10 @@
       const context = canvas.getContext('2d', { alpha: false });
       context.fillStyle = '#ffffff'; context.fillRect(0, 0, canvas.width, canvas.height);
       await page.render({ canvasContext: context, viewport, background: '#ffffff' }).promise;
-      documents.push(imageDocumentFromCanvas(canvas, file.name, labels[index] || `Página ${pages[index]}`));
+      const isOrderingPlan = index === 0;
+      // Retira cabeçalho e rodapé administrativos: o relatório passa a mostrar
+      // a carta de ordenamento e o polígono em tamanho útil para o cliente.
+      documents.push(imageDocumentFromCanvas(canvas, file.name, labels[index] || `Página ${pages[index]}`, isOrderingPlan ? { x:.04, y:.225, width:.92, height:.67 } : null));
     }
     return documents;
   }
@@ -1377,7 +1391,10 @@
       error.textContent = 'Pode enviar até 4 PDFs. Os documentos complementares têm máximo de 10 MB; a Planta de Localização pode ter até 25 MB, pois é reduzida localmente antes do envio.'; error.style.display = 'block'; return;
     }
     try {
-      const mustCompactPrimary = primary && (primary.size > 3.5 * 1024 * 1024 || totalBytes > 4 * 1024 * 1024);
+      // A Planta de Localização é sempre preparada em imagem. Assim, mesmo
+      // quando o PDF original é pequeno, o relatório final pode incluir a
+      // carta de ordenamento e o polígono que o técnico/cliente vê na planta.
+      const mustCompactPrimary = Boolean(primary);
       const primaryDocuments = primary ? (mustCompactPrimary ? await compactarPlantaMunicipal(primary) : [await fileAsDocument(primary, true)]) : [];
       const optionalDocuments = await Promise.all(optional.map(file => fileAsDocument(file, false)));
       pdmDocuments = [...primaryDocuments, ...optionalDocuments];
@@ -1556,12 +1573,13 @@
     if (!report) return;
     const copy = report.cloneNode(true);
     copy.querySelector('.report-actions')?.remove();
+    const orderingPlan = pdmDocuments.find((document) => document.origem === 'planta_localizacao_compactada' && /PDM\s*-\s*Ordenamento/i.test(document.paginaOriginal || document.nome || ''));
     const previous = button.textContent;
     button.disabled = true; button.textContent = 'A gerar PDF…';
     try {
       const response = await fetch('/.netlify/functions/gerar-relatorio-pdf', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reportText: copy.innerText, reportHtml: copy.innerHTML, location: selectedLocation }),
+        body: JSON.stringify({ reportText: copy.innerText, reportHtml: copy.innerHTML, location: selectedLocation, documentPlan: orderingPlan ? { base64: orderingPlan.base64, mimeType: orderingPlan.mimeType, source: 'Planta de Localização oficial — PDM / Ordenamento; polígono assinalado pelo requerente' } : null }),
       });
       if (!response.ok) throw new Error(await response.text() || 'Não foi possível gerar o PDF.');
       const blob = await response.blob();
@@ -1582,13 +1600,14 @@
     if (!report) return;
     const copy = report.cloneNode(true);
     copy.querySelector('.report-actions')?.remove();
+    const orderingPlan = pdmDocuments.find((document) => document.origem === 'planta_localizacao_compactada' && /PDM\s*-\s*Ordenamento/i.test(document.paginaOriginal || document.nome || ''));
     const previous = button.textContent;
     button.disabled = true;
       button.textContent = document.documentElement.lang === 'pt' ? 'A enviar PDF…' : 'Sending PDF…';
     try {
       const response = await fetch('/.netlify/functions/enviar-relatorio', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ to: email, reportText: copy.innerText, reportHtml: copy.innerHTML, location: selectedLocation, privacyConsent: true, privacyPolicyVersion: '2026-09-07' }),
+        body: JSON.stringify({ to: email, reportText: copy.innerText, reportHtml: copy.innerHTML, location: selectedLocation, documentPlan: orderingPlan ? { base64: orderingPlan.base64, mimeType: orderingPlan.mimeType, source: 'Planta de Localização oficial — PDM / Ordenamento; polígono assinalado pelo requerente' } : null, privacyConsent: true, privacyPolicyVersion: '2026-09-07' }),
       });
       const data = await readJsonResponse(response, 'O serviço de envio de e-mail não devolveu uma resposta válida');
       if (!response.ok) throw new Error(data.error || 'Não foi possível enviar o relatório.');

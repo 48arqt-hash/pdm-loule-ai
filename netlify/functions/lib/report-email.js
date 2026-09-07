@@ -21,6 +21,7 @@ export async function sendReportEmail({
   disclaimer = 'Pré-análise assistida por IA. Não constitui parecer municipal nem decisão de licenciamento.',
   emailIntro = 'Este documento foi produzido com apoio de inteligência artificial e dados geográficos oficiais. É uma pré-análise e requer validação técnica antes de qualquer decisão, projeto ou licenciamento.',
   privacyPolicyVersion = null,
+  documentPlan = null,
 }) {
   const recipient = String(to || '').trim();
   if (!validEmail(recipient)) throw new Error('Indique um e-mail de destino válido.');
@@ -28,7 +29,7 @@ export async function sendReportEmail({
   if (!process.env.RESEND_API_KEY || !process.env.REPORT_FROM_EMAIL) throw new Error('O envio por e-mail ainda não está configurado.');
 
   const owner = validEmail(process.env.REPORT_OWNER_EMAIL || '') ? process.env.REPORT_OWNER_EMAIL.trim() : OWNER_EMAIL;
-  const pdf = await createProfessionalPdf({ reportHtml, reportText, location, documentTitle, documentLabel, disclaimer });
+  const pdf = await createProfessionalPdf({ reportHtml, reportText, location, documentTitle, documentLabel, disclaimer, documentPlan });
   const payload = {
     from: process.env.REPORT_FROM_EMAIL,
     to: [recipient],
