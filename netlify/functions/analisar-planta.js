@@ -370,7 +370,7 @@ export const handler = async (event) => {
     let emailSent = false;
     let emailError = null;
     try {
-      await sendReportEmail({ to: body.email, reportText, reportHtml: reply, location: body.localizacao || null });
+      await sendReportEmail({ to: body.email, reportText, reportHtml: reply, location: body.localizacao || null, privacyPolicyVersion: body.privacyPolicyVersion || null });
       emailSent = true;
     } catch (emailFailure) {
       console.error('automatic_report_email_error', emailFailure);

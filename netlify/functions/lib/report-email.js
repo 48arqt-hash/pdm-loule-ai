@@ -20,6 +20,7 @@ export async function sendReportEmail({
   attachmentFilename = 'relatorio-pre-analise-urbanistica.pdf',
   disclaimer = 'Pré-análise assistida por IA. Não constitui parecer municipal nem decisão de licenciamento.',
   emailIntro = 'Este documento foi produzido com apoio de inteligência artificial e dados geográficos oficiais. É uma pré-análise e requer validação técnica antes de qualquer decisão, projeto ou licenciamento.',
+  privacyPolicyVersion = null,
 }) {
   const recipient = String(to || '').trim();
   if (!validEmail(recipient)) throw new Error('Indique um e-mail de destino válido.');
@@ -32,7 +33,7 @@ export async function sendReportEmail({
     from: process.env.REPORT_FROM_EMAIL,
     to: [recipient],
     subject: `${documentTitle} - Arq. Leonel Mendes`,
-    html: `<p>Exmo.(a) Cliente,</p><p>Segue em anexo a sua <strong>${escapeHtml(documentTitle)}</strong>.</p><p>${escapeHtml(emailIntro)}</p><hr><pre style="white-space:pre-wrap;font-family:Arial,sans-serif;font-size:12px;color:#17201f">${escapeHtml(reportText)}</pre>`,
+    html: `<p>Exmo.(a) Cliente,</p><p>Segue em anexo a sua <strong>${escapeHtml(documentTitle)}</strong>.</p><p>${escapeHtml(emailIntro)}</p><p style="font-size:11px;color:#57645f">Pedido submetido após leitura da informação de privacidade${privacyPolicyVersion ? ` (versão ${escapeHtml(privacyPolicyVersion)})` : ''}.</p><hr><pre style="white-space:pre-wrap;font-family:Arial,sans-serif;font-size:12px;color:#17201f">${escapeHtml(reportText)}</pre>`,
     attachments: [{ filename: attachmentFilename, content: pdf.toString('base64') }],
   };
   if (owner.toLowerCase() !== recipient.toLowerCase()) payload.bcc = [owner];

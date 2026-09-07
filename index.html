@@ -485,6 +485,16 @@
   .privacy-dialog ul{ padding-left:20px; }
   .privacy-close{ position:absolute; top:14px; right:14px; width:34px; height:34px; border:1px solid var(--line); border-radius:50%; background:#fff; color:var(--teal-deep); font-size:1.25rem; cursor:pointer; }
   .privacy-close:hover{ background:var(--sand-soft); }
+  .privacy-dialog .policy-meta{ padding:11px 14px; background:var(--sand-soft); border-left:3px solid var(--teal); border-radius:4px; }
+  .privacy-dialog .policy-table{ width:100%; border-collapse:collapse; margin:10px 0 4px; font-size:.82rem; }
+  .privacy-dialog .policy-table th,.privacy-dialog .policy-table td{ padding:8px; text-align:left; vertical-align:top; border:1px solid var(--line); color:var(--ink-soft); }
+  .privacy-dialog .policy-table th{ color:var(--teal-deep); background:#fff; font-weight:700; }
+  .privacy-notice{ position:fixed; z-index:4900; right:20px; bottom:20px; width:min(440px,calc(100% - 32px)); padding:18px; border:1px solid var(--line); border-radius:10px; background:var(--paper); box-shadow:0 16px 42px rgba(0,0,0,.2); color:var(--ink); }
+  .privacy-notice[hidden]{ display:none; }
+  .privacy-notice p{ margin:7px 0 13px; font-size:.84rem; line-height:1.5; color:var(--ink-soft); }
+  .privacy-notice-actions{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .privacy-notice-actions button{ margin:0; }
+  @media(max-width:560px){ .privacy-modal{ padding:12px; } .privacy-dialog{ margin:12px auto; padding:22px 18px; } .privacy-notice{ right:16px; bottom:16px; } .privacy-notice-actions{ align-items:flex-start; flex-direction:column-reverse; } }
 
   .secure-note{
     display:flex; align-items:center; gap:6px;
@@ -896,27 +906,43 @@
     <a href="https://www.instagram.com/by_arq_leonel_mendes" target="_blank"><img src="images/instagram.svg" alt="Instagram"></a>
   </div>
 
-  <footer>© 2026 Arq. Leonel Mendes — Arquitetura &amp; Engenharia<br><button type="button" class="privacy-link" onclick="openPrivacyPolicy()">Política de Privacidade</button></footer>
+  <footer>© 2026 Arq. Leonel Mendes — Arquitetura &amp; Engenharia<br><button type="button" class="privacy-link" onclick="openPrivacyPolicy()">Privacidade e cookies</button></footer>
 
   <div id="privacyModal" class="privacy-modal" role="dialog" aria-modal="true" aria-labelledby="privacyTitle" onclick="if(event.target === this) closePrivacyPolicy()">
     <section class="privacy-dialog">
       <button class="privacy-close" type="button" aria-label="Fechar" onclick="closePrivacyPolicy()">×</button>
-      <h2 id="privacyTitle">Política de Privacidade</h2>
-      <p><strong>Versão: 2 de setembro de 2026.</strong> Esta política explica como são tratados os dados enviados através deste site.</p>
+      <h2 id="privacyTitle">Privacidade e cookies</h2>
+      <p class="policy-meta"><strong>Versão: 7 de setembro de 2026.</strong> Esta informação explica, em linguagem simples, que dados tratamos para prestar os serviços do site e que armazenamento técnico é utilizado.</p>
       <h3>Responsável pelo tratamento</h3>
       <p>Arq. Leonel Mendes, Av. José da Costa Mealha, n.º 133, 8100-500 Loulé. Contacto: <a href="mailto:geral@leonelmendes.com">geral@leonelmendes.com</a> · +351 960 010 870.</p>
       <h3>Dados e finalidades</h3>
-      <p>Tratamos nome, e-mail, telefone, localização do prédio, elementos do pedido, documentos que decida anexar e os resultados produzidos para responder a pedidos de reunião ou orçamento, elaborar e enviar pré-análises urbanísticas e estimativas de custo, e assegurar o respetivo acompanhamento técnico.</p>
-      <h3>Fundamento e conservação</h3>
-      <p>O tratamento baseia-se no seu consentimento, dado através da caixa própria em cada serviço, e nas diligências pré-contratuais solicitadas por si. Os elementos são conservados pelo Atelier por até 24 meses após o pedido, salvo se iniciar uma relação profissional, pedir eliminação antes desse prazo ou existir obrigação legal de conservação.</p>
-      <h3>Partilha limitada com fornecedores</h3>
-      <p>Os dados são tratados nos sistemas necessários ao serviço: alojamento Netlify, envio de e-mail Resend, Google Calendar para confirmar disponibilidade de reuniões e Google Gemini para gerar a pré-análise assistida por IA. Os documentos não são publicados no site nem vendidos ou cedidos para fins de marketing.</p>
+      <p>Consoante o serviço pedido, tratamos nome, e-mail, telefone, localização do prédio, intenção urbanística, elementos descritivos, documentos que decida anexar e resultados produzidos. Estes dados servem exclusivamente para responder a pedidos de reunião ou orçamento, elaborar e enviar pré-análises urbanísticas e estimativas de custo, e assegurar o respetivo acompanhamento técnico. Não vendemos dados nem os usamos para publicidade comportamental.</p>
+      <h3>Base jurídica e conservação</h3>
+      <p>Quando nos pede uma pré-análise, reunião, estimativa ou orçamento, o tratamento é necessário para responder às diligências pré-contratuais pedidas por si. A caixa em cada formulário confirma que leu esta informação e que os dados indicados podem ser usados para esse pedido; não é uma autorização para comunicações de marketing. Conservamos os elementos do pedido por até 24 meses, salvo se iniciar uma relação profissional, solicitar eliminação antes desse prazo ou existir obrigação legal de conservação.</p>
+      <h3>IA, análise automática e decisão humana</h3>
+      <p>Na pré-análise, os documentos e elementos do pedido podem ser processados pelo Google Gemini para gerar um relatório assistido por IA. O resultado é preliminar, não decide licenças nem produz efeitos jurídicos. Pode pedir revisão humana pelo Atelier antes de tomar decisões com base no relatório.</p>
+      <h3>Fornecedores e fontes externas</h3>
+      <p>Usamos fornecedores necessários para prestar o serviço: Netlify (alojamento e funções), Resend (e-mail), Google Calendar (consulta de disponibilidade de reuniões) e Google Gemini (pré-análise assistida por IA). Para mapas e enquadramento territorial, quando utiliza o mapa, o browser comunica com OpenStreetMap/Nominatim, Esri, Direção-Geral do Território e geoportais municipais. O carregamento do site também utiliza Google Fonts e Leaflet via unpkg. Estes fornecedores podem receber dados técnicos como endereço IP e informação do pedido estritamente necessária ao serviço.</p>
+      <p>Alguns fornecedores podem tratar dados fora do Espaço Económico Europeu. O Atelier deve manter os respetivos contratos de tratamento e garantias de transferência aplicáveis antes de usar o serviço em produção.</p>
+      <h3>Cookies e armazenamento local</h3>
+      <p>Não utilizamos cookies de publicidade, pixel de redes sociais nem ferramentas de medição comportamental. O site usa apenas armazenamento técnico necessário ou de preferência:</p>
+      <table class="policy-table"><thead><tr><th>Nome</th><th>Finalidade</th><th>Duração</th></tr></thead><tbody>
+        <tr><td><code>pdm_professional_access</code></td><td>Cookie seguro, criado apenas após validar o código de acesso profissional; mantém a sessão autenticada.</td><td>8 horas</td></tr>
+        <tr><td><code>siteLanguage</code></td><td>Guarda a língua selecionada no próprio dispositivo.</td><td>Até 12 meses ou até limpar os dados do browser</td></tr>
+        <tr><td><code>privacyNoticeSeen</code></td><td>Evita repetir o aviso de privacidade no mesmo dispositivo.</td><td>Até 12 meses ou até limpar os dados do browser</td></tr>
+      </tbody></table>
+      <p>Pode apagar este armazenamento nas definições do browser. Bloquear cookies essenciais pode impedir o acesso profissional, mas não impede a consulta pública do site.</p>
       <h3>Os seus direitos</h3>
-      <p>Pode pedir acesso, retificação, apagamento, limitação ou oposição ao tratamento, bem como retirar o consentimento, escrevendo para <a href="mailto:geral@leonelmendes.com">geral@leonelmendes.com</a>. Pode também apresentar reclamação à CNPD. A retirada do consentimento não afeta o tratamento já realizado, mas pode impedir a prestação do serviço solicitado.</p>
+      <p>Pode pedir acesso, retificação, apagamento, limitação ou oposição ao tratamento, bem como retirar uma autorização opcional, escrevendo para <a href="mailto:geral@leonelmendes.com">geral@leonelmendes.com</a>. Pode também apresentar reclamação à CNPD. Respondemos aos pedidos de direitos no prazo legal aplicável.</p>
       <h3>Segurança e limites do serviço</h3>
-      <p>Aplicamos medidas técnicas razoáveis de acesso restrito. Não envie documentos que não sejam necessários ao pedido. As pré-análises são informativas e não constituem parecer municipal, decisão de licenciamento ou aconselhamento jurídico.</p>
+      <p>Aplicamos medidas técnicas razoáveis de acesso restrito e não pedimos documentos que não sejam necessários ao pedido. As pré-análises são informativas e não constituem parecer municipal, decisão de licenciamento ou aconselhamento jurídico.</p>
     </section>
   </div>
+  <aside id="privacyNotice" class="privacy-notice" role="status" aria-label="Informação de privacidade" hidden>
+    <strong>Privacidade no seu dispositivo</strong>
+    <p>Este site não usa publicidade nem medição comportamental. Guarda apenas a língua selecionada e, se entrar no acesso profissional, uma sessão temporária. <button type="button" class="privacy-link" onclick="openPrivacyPolicy()">Ver detalhes</button></p>
+    <div class="privacy-notice-actions"><button type="button" class="privacy-link" onclick="openPrivacyPolicy()">Política de privacidade</button><button type="button" class="btn-primary" onclick="acknowledgePrivacyNotice()">Continuar</button></div>
+  </aside>
 
 </main>
 
@@ -972,10 +998,37 @@
       button.classList.toggle('active', active);
       button.setAttribute('aria-current', active ? 'true' : 'false');
     });
-    localStorage.setItem('siteLanguage', lang);
+    const preference = { value: lang, expiresAt: Date.now() + (365 * 24 * 60 * 60 * 1000) };
+    localStorage.setItem('siteLanguage', JSON.stringify(preference));
+  }
+  function storedLanguage(){
+    try {
+      const raw = localStorage.getItem('siteLanguage');
+      if (!raw) return 'pt';
+      const parsed = JSON.parse(raw);
+      if (parsed?.value && parsed.expiresAt > Date.now()) return parsed.value;
+      localStorage.removeItem('siteLanguage');
+    } catch {
+      // Compatibilidade com a preferência guardada antes desta política.
+      const legacy = localStorage.getItem('siteLanguage');
+      if (translations[legacy]) return legacy;
+      localStorage.removeItem('siteLanguage');
+    }
+    return 'pt';
+  }
+  function acknowledgePrivacyNotice(){
+    localStorage.setItem('privacyNoticeSeen', JSON.stringify({ expiresAt: Date.now() + (365 * 24 * 60 * 60 * 1000) }));
+    document.getElementById('privacyNotice').hidden = true;
+  }
+  function shouldShowPrivacyNotice(){
+    try {
+      const record = JSON.parse(localStorage.getItem('privacyNoticeSeen') || 'null');
+      return !(record?.expiresAt > Date.now());
+    } catch { return true; }
   }
   document.addEventListener('DOMContentLoaded', () => {
-    setLanguage(localStorage.getItem('siteLanguage') || 'pt');
+    setLanguage(storedLanguage());
+    if (shouldShowPrivacyNotice()) document.getElementById('privacyNotice').hidden = false;
     ['pdmObjetivo', 'pdmEmail', 'pdmConsent'].forEach((id) => document.getElementById(id)?.addEventListener('input', updateAnalysisJourney));
     document.getElementById('pdmConsent')?.addEventListener('change', updateAnalysisJourney);
     updateAnalysisJourney();
@@ -1366,7 +1419,7 @@
     try {
       const resp = await fetch('/.netlify/functions/analisar-planta', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, documentos: documentsForAnalysis, localizacao: selectedLocation, objetivo: document.getElementById('pdmObjetivo').value, descricao: document.getElementById('pdmUserMsg').value.trim(), privacyConsent: true, privacyPolicyVersion: '2026-09-02' })
+        body: JSON.stringify({ email, documentos: documentsForAnalysis, localizacao: selectedLocation, objetivo: document.getElementById('pdmObjetivo').value, descricao: document.getElementById('pdmUserMsg').value.trim(), privacyConsent: true, privacyPolicyVersion: '2026-09-07' })
       });
       const data = await readJsonResponse(resp, 'A análise não devolveu uma resposta válida');
       if (!resp.ok) throw new Error(data.error || `Não foi possível concluir a análise (resposta ${resp.status} do servidor).`);
@@ -1501,7 +1554,7 @@
     try {
       const response = await fetch('/.netlify/functions/enviar-relatorio', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ to: email, reportText: copy.innerText, reportHtml: copy.innerHTML, location: selectedLocation, privacyConsent: true, privacyPolicyVersion: '2026-09-02' }),
+        body: JSON.stringify({ to: email, reportText: copy.innerText, reportHtml: copy.innerHTML, location: selectedLocation, privacyConsent: true, privacyPolicyVersion: '2026-09-07' }),
       });
       const data = await readJsonResponse(response, 'O serviço de envio de e-mail não devolveu uma resposta válida');
       if (!response.ok) throw new Error(data.error || 'Não foi possível enviar o relatório.');
@@ -1554,7 +1607,7 @@
 
       button.textContent = document.documentElement.lang === 'pt' ? 'A enviar pedido…' : 'Sending request…';
       const response = await fetch('/.netlify/functions/enviar-pedido-reuniao', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ date, time, name, phone, email, privacyConsent: true, privacyPolicyVersion: '2026-09-02' })
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ date, time, name, phone, email, privacyConsent: true, privacyPolicyVersion: '2026-09-07' })
       });
       const data = await readJsonResponse(response, 'O pedido de reunião não devolveu uma resposta válida');
       if (!response.ok) {
@@ -1590,7 +1643,7 @@
     try {
       const response = await fetch('/.netlify/functions/enviar-pedido-orcamento', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, phone, description, documents, privacyConsent: true, privacyPolicyVersion: '2026-09-02' })
+        body: JSON.stringify({ name, email, phone, description, documents, privacyConsent: true, privacyPolicyVersion: '2026-09-07' })
       });
       const data = await readJsonResponse(response, 'O pedido de orçamento não devolveu uma resposta válida');
       if (!response.ok) throw new Error(data.error || `resposta ${response.status} do servidor`);
@@ -1664,7 +1717,7 @@
           basement:result.basement, technical:result.technical, pool:result.pool, exterior:result.exterior, walls:result.walls,
           slope:document.getElementById('costSlope').checked,
           difficultAccess:document.getElementById('costDifficultAccess').checked, vatMode:result.vatMode,
-          reducedShare:costNumber('costReducedShare',50), taxResponsibility:true, consent:true, privacyPolicyVersion:'2026-09-02',
+          reducedShare:costNumber('costReducedShare',50), taxResponsibility:true, consent:true, privacyPolicyVersion:'2026-09-07',
           company:document.getElementById('costCompany').value,
         }),
       });
