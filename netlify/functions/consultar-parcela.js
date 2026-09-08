@@ -22,6 +22,33 @@ const ALBUFEIRA_CRUS_TYPENAME = 'gmgml:CRUS_Albufeira_V';
 let collectionsCache;
 
 const ALGARVE = { minLat: 36.8, maxLat: 37.75, minLng: -9.2, maxLng: -7.05 };
+const CRUS_DGT_INFO = 'https://www.dgterritorio.gov.pt/atividades/ordenamento/crus';
+const CRUS_WFS_TOKENS = {
+  '0801': 'Albufeira', '0802': 'Alcoutim', '0803': 'Aljezur', '0804': 'CastroMarim',
+  '0805': 'Faro', '0806': 'Lagoa', '0807': 'Lagos', '0808': 'Loule',
+  '0809': 'Monchique', '0810': 'Olhao', '0811': 'Portimao', '0812': 'SaoBrasAlportel',
+  '0813': 'Silves', '0814': 'Tavira', '0815': 'VilaBispo', '0816': 'VilaRealSantoAntonio',
+};
+const ALGARVE_STANDARD_PROFILES = {
+  'aljezur': { nome: 'Aljezur', codigo: '0803' },
+  'castromarim': { nome: 'Castro Marim', codigo: '0804' },
+  'monchique': { nome: 'Monchique', codigo: '0809' },
+  'portimao': { nome: 'Portimão', codigo: '0811' },
+  'saobrasdealportel': { nome: 'São Brás de Alportel', codigo: '0812' },
+  'silves': { nome: 'Silves', codigo: '0813' },
+  'tavira': { nome: 'Tavira', codigo: '0814' },
+  'viladobispo': { nome: 'Vila do Bispo', codigo: '0815' },
+  'vilarealdesantoantonio': { nome: 'Vila Real de Santo António', codigo: '0816' },
+};
+function standardAlgarveProfile({ nome, codigo }) {
+  return {
+    nome, codigo,
+    estado: 'Classificação oficial do solo (CRUS) ativa; regras quantitativas em validação do regulamento municipal aplicável.',
+    geoportal: null,
+    regulamentos: [{ nome: `CRUS - ${nome} (Direção-Geral do Território)`, url: CRUS_DGT_INFO }],
+    capacidade: 'A ferramenta consulta a classe e a designação PDM pela CRUS vetorial oficial. Índices, cérceas, loteamentos e planos especiais só são apresentados depois de validados na fonte municipal e no regulamento aplicável.',
+  };
+}
 const MUNICIPAL_PROFILES = {
   'loule': { nome: 'Loulé', estado: 'Planos eficazes e zonas específicas por fonte vetorial; PDM geral publicado como carta raster, a confirmar pela planta de ordenamento', geoportal: 'https://geoloule.cm-loule.pt/', regulamentos: [{ nome: 'Regulamento oficial do PDM de Loulé', url: 'https://geoloule.cm-loule.pt/docs/regulamentos/pmots/PDM_Regulamento.pdf' }, { nome: 'RMUE de Loulé', url: 'https://files.diariodarepublica.pt/2s/2024/08/155000000/0034300423.pdf' }], capacidade: 'Parâmetros quantitativos apenas quando a zona específica/PU/PP for devolvida pela fonte vetorial municipal.' },
   'faro': { nome: 'Faro', estado: 'Regulamento e cartografia oficiais disponíveis; parâmetros automáticos apenas após atributo vetorial confirmado da Planta 1.1', geoportal: 'https://mapas.cm-faro.pt/geoportal/mapa/pmot', regulamentos: [{ nome: 'Regulamento do PDM de Faro', url: 'https://mapas.cm-faro.pt/geoportal/docs/pdm_2024/Regulamento.pdf' }], capacidade: 'Consulta visual WMS ativa; a associação automática de índices exige uma camada vetorial municipal com designação textual.' },
@@ -30,8 +57,10 @@ const MUNICIPAL_PROFILES = {
   'lagos': { nome: 'Lagos', estado: 'Perfil prioritário - planos municipais disponíveis', geoportal: 'https://lagos.city-platform.com/', regulamentos: [{ nome: 'Planos territoriais municipais de Lagos', url: 'https://www.cm-lagos.pt/index.php?Itemid=139&cid=80%3Aurbanismo&id=496%3Aplanos-municipais-de-ordenamento-do-territorio-496&lang=pt&option=com_flexicontent&view=item' }], capacidade: 'PDM, PU e diversos PP com regulamentos, zonamento/implantação e condicionantes.' },
   'albufeira': { nome: 'Albufeira', estado: 'PDM e classificação CRUS oficial ativos; alvará de loteamento e parâmetros do lote exigem confirmação pela operação urbanística', geoportal: 'https://sigapps.cm-albufeira.pt/geoportal/mapa/publico', regulamentos: [{ nome: 'Regulamento do PDM de Albufeira - Declaração n.º 15/2026/2', url: 'https://www.cm-albufeira.pt/sites/default/files/RepositorioDocumentos/2026/regulamentodec1520262.pdf' }, { nome: 'Planos municipais de Albufeira', url: 'https://www.cm-albufeira.pt/planos-municipais-de-ordenamento-do-territorio' }], capacidade: 'Classificação CRUS com designação PDM e regras regulamentares ativas. O Geoportal municipal publica também a camada de loteamentos; a identificação do alvará concreto depende de uma camada municipal consultável ou de documento do processo.' },
   'lagoa': { nome: 'Lagoa', estado: 'Perfil em validação técnica', geoportal: 'https://www.cm-lagoa.pt/investir/plano-diretor-municipal-pdm', regulamentos: [{ nome: 'PDM de Lagoa', url: 'https://www.cm-lagoa.pt/investir/plano-diretor-municipal-pdm' }], capacidade: 'PDM de 2021 disponível; integração cartográfica municipal em validação.' },
+  ...Object.fromEntries(Object.entries(ALGARVE_STANDARD_PROFILES).map(([key, profile]) => [key, standardAlgarveProfile(profile)])),
 };
 const MUNICIPALITY_CODES = { '0801': 'albufeira', '0802': 'alcoutim', '0803': 'aljezur', '0804': 'castromarim', '0805': 'faro', '0806': 'lagoa', '0807': 'lagos', '0808': 'loule', '0809': 'monchique', '0810': 'olhao', '0811': 'portimao', '0812': 'saobrasdealportel', '0813': 'silves', '0814': 'tavira', '0815': 'viladobispo', '0816': 'vilarealdesantoantonio' };
+const MUNICIPALITY_CODE_BY_SLUG = Object.fromEntries(Object.entries(MUNICIPALITY_CODES).map(([code, slug]) => [slug, code]));
 
 const json = (statusCode, payload) => ({ statusCode, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }, body: JSON.stringify(payload) });
 async function fetchJson(url) {
@@ -192,13 +221,25 @@ function municipalityProfile(name = '') {
   return MUNICIPAL_PROFILES[key] || MUNICIPAL_PROFILES[MUNICIPALITY_CODES[String(name).match(/^\d{4}/)?.[0]]] || null;
 }
 
+function crusWfsForMunicipality(municipality) {
+  const key = normalizedKey(municipality?.nome || '').replace(/[^a-z]/g, '');
+  const code = municipality?.codigo || MUNICIPALITY_CODE_BY_SLUG[key] || null;
+  const token = code ? CRUS_WFS_TOKENS[code] : null;
+  if (!code || !token) return null;
+  return {
+    code,
+    typeName: `gmgml:CRUS_${token}_V`,
+    url: `http://servicos.dgterritorio.pt/SDISNITWFSCRUS_${code}_1/service.svc/get`,
+  };
+}
+
 async function municipalityAt(lat, lng) {
   const caop = await findCollection('caop');
   const feature = await featureAt(caop, lat, lng);
   const rawName = municipalityName(feature?.properties || {});
   const code = propertyValue(feature?.properties || {}, ['dtmn', 'codigo_municipio', 'código_município', 'dicofre']);
   const profile = municipalityProfile(rawName) || municipalityProfile(code);
-  return profile ? { ...profile, fonte: 'Direção-Geral do Território - CAOP', propriedades: feature?.properties || {} } : rawName ? { nome: rawName, estado: 'Concelho do Algarve sem perfil municipal configurado', geoportal: null, regulamentos: [], capacidade: 'Aplicam-se apenas as camadas regionais e nacionais até validação do perfil municipal.', fonte: 'Direção-Geral do Território - CAOP', propriedades: feature?.properties || {} } : null;
+  return profile ? { ...profile, crusWfs: crusWfsForMunicipality(profile), fonte: 'Direção-Geral do Território - CAOP', propriedades: feature?.properties || {} } : rawName ? { nome: rawName, estado: 'Concelho do Algarve sem perfil municipal configurado', geoportal: null, regulamentos: [], capacidade: 'Aplicam-se apenas as camadas regionais e nacionais até validação do perfil municipal.', fonte: 'Direção-Geral do Território - CAOP', propriedades: feature?.properties || {} } : null;
 }
 
 async function municipalPlans(lat, lng) {
@@ -265,6 +306,22 @@ async function albufeiraCrusAt(lat, lng) {
     bbox: `${lat - delta},${lng - delta},${lat + delta},${lng + delta},EPSG:4326`, count: '20',
   });
   const payload = await fetchJson(`${ALBUFEIRA_CRUS_WFS}?${params}`);
+  const features = payload.features || [];
+  return features.find((feature) => containsPoint(feature, [lng, lat])) || features[0] || null;
+}
+
+async function municipalCrusAt(municipality, lat, lng) {
+  const config = municipality?.crusWfs || crusWfsForMunicipality(municipality);
+  if (!config) return null;
+  const delta = 0.00008;
+  const params = new URLSearchParams({
+    service: 'WFS', version: '2.0.0', request: 'GetFeature',
+    typeNames: config.typeName,
+    outputFormat: 'application/vnd.geo+json', srsName: 'EPSG:4326',
+    // Serviços WFS DGT em EPSG:4326 usam a ordem de eixos latitude, longitude.
+    bbox: `${lat - delta},${lng - delta},${lat + delta},${lng + delta},EPSG:4326`, count: '20',
+  });
+  const payload = await fetchJson(`${config.url}?${params}`);
   const features = payload.features || [];
   return features.find((feature) => containsPoint(feature, [lng, lat])) || features[0] || null;
 }
@@ -405,8 +462,14 @@ export const handler = async (event) => {
     const faroVisualOrdering = municipality?.nome === 'Faro'
       ? await faroVisualOrderingAt(analysisLat, analysisLng).catch((error) => { console.warn('faro_visual_ordering_unavailable', error.message); return null; })
       : null;
+    // A CRUS é a fonte vetorial nacional que preserva a designação do plano.
+    // Esta consulta aplica-se aos 16 municípios do Algarve; a regra quantitativa
+    // continua separada e só é apresentada quando existe regra municipal validada.
+    const municipalCrusOrdering = municipality
+      ? await municipalCrusAt(municipality, analysisLat, analysisLng).catch((error) => { console.warn('municipal_crus_unavailable', municipality.nome, error.message); return null; })
+      : null;
     const albufeiraOrdering = municipality?.nome === 'Albufeira'
-      ? albufeiraProbe || await albufeiraCrusAt(analysisLat, analysisLng).catch((error) => { console.warn('albufeira_crus_unavailable', error.message); return null; })
+      ? albufeiraProbe || municipalCrusOrdering
       : null;
     const faroVectorFeature = faroOrdering[0] || faroWfsOrdering[0] || null;
     const faroVectorClassification = officialClassification(faroVectorFeature?.attributes || faroVectorFeature?.properties || {});
@@ -421,7 +484,9 @@ export const handler = async (event) => {
     // não pode desbloquear índices ou regras quantitativas: falta-lhe o
     // atributo vetorial e a respetiva rastreabilidade de feição.
     const albufeiraClassification = albufeiraOrdering ? officialClassification(albufeiraOrdering.properties || {}) : null;
-    const regulatoryClassifications = faroVectorClassification ? [faroVectorClassification] : municipality?.nome === 'Albufeira' ? (albufeiraClassification ? [albufeiraClassification] : []) : municipality?.nome === 'Loulé' ? (implantationUseLabel ? [implantationUseLabel] : landUseLabels) : [];
+    const municipalCrusClassification = municipalCrusOrdering ? officialClassification(municipalCrusOrdering.properties || {}) : null;
+    const usesGenericCrusClassification = municipality && !['Loulé', 'Faro', 'Albufeira'].includes(municipality.nome);
+    const regulatoryClassifications = faroVectorClassification ? [faroVectorClassification] : municipality?.nome === 'Albufeira' ? (albufeiraClassification ? [albufeiraClassification] : []) : municipality?.nome === 'Loulé' ? (implantationUseLabel ? [implantationUseLabel] : landUseLabels) : usesGenericCrusClassification && municipalCrusClassification ? [municipalCrusClassification] : [];
     const regulatoryContexts = regulatoryClassifications.map((classification) => regulatoryContextFor(municipality?.nome, classification));
     const regulatoryRules = regulatoryContexts.flatMap((context) => context.rules).filter((rule, index, rules) => rules.findIndex((other) => `${other.camada}|${other.valor}` === `${rule.camada}|${rule.valor}`) === index);
     const regulatorySources = regulatoryContexts.flatMap((context) => context.sources).filter((source, index, sources) => sources.findIndex((other) => other.url === source.url) === index);
@@ -434,6 +499,7 @@ export const handler = async (event) => {
       ...(implantationUseLabel ? [{ camada: 'Regime de uso do solo (DGT) — ponto de implantação indicado', valor: implantationUseLabel, atributos: implantationUse.properties || {} }] : []),
       ...(faroClassification ? [{ camada: `Classificação do solo — PDM de Faro (${faroClassificationMethod})`, valor: faroClassification, atributos: faroVectorFeature?.attributes || faroVectorFeature?.properties || faroVisualOrdering?.properties || {} }] : []),
       ...(albufeiraClassification ? [{ camada: 'Classificação do solo — PDM de Albufeira (CRUS oficial DGT)', valor: albufeiraClassification, atributos: albufeiraOrdering?.properties || {} }] : []),
+      ...(usesGenericCrusClassification && municipalCrusClassification ? [{ camada: `Classificação do solo — PDM de ${municipality.nome} (CRUS oficial DGT)`, valor: municipalCrusClassification, atributos: municipalCrusOrdering?.properties || {} }] : []),
       ...regulatoryRules.map((rule) => ({ camada: rule.camada, valor: rule.valor, artigo: rule.artigo, pagina: rule.pagina, fonte: rule.fonte?.documento || 'Regulamento municipal' })),
       ...planFeatures.map((feature) => ({ camada: 'Plano municipal em vigor (CML)', valor: feature.attributes?.NOME || feature.attributes?.TIPO || null, atributos: feature.attributes || {} })),
       ...zoning.flatMap(zoningResult),
@@ -456,12 +522,13 @@ export const handler = async (event) => {
         ...(municipality?.nome === 'Faro' && !faroClassification ? ['Ainda não está configurado um serviço vetorial com atributos da Planta 1.1 do PDM de Faro. A aplicação não inventa uma categoria por cor; a análise fica limitada à CRUS e às restantes condicionantes oficiais até ser registado o WFS/ArcGIS oficial.'] : []),
         ...(municipality?.nome === 'Albufeira' && albufeiraClassification ? ['A classificação foi obtida da CRUS oficial da DGT, com a designação do PDM. Se o local estiver abrangido por alvará de loteamento, esse alvará prevalece nos parâmetros concretos do lote; a pré-análise não presume o respetivo número sem o identificar na camada municipal ou em documento.'] : []),
         ...(municipality?.nome === 'Albufeira' && !albufeiraClassification ? ['A fonte vetorial oficial CRUS de Albufeira não devolveu uma classe para este ponto nesta tentativa. A ferramenta não assume a existência de loteamento apenas pela imagem aérea; tente novamente ou anexe a planta/alvará.'] : []),
+        ...(usesGenericCrusClassification && municipalCrusClassification ? [`A classificação foi devolvida pela CRUS vetorial oficial para ${municipality.nome}. Os índices, cérceas, operações de loteamento, planos de urbanização e planos de pormenor só são indicados depois de os respetivos regulamentos e camadas municipais serem validados nesta plataforma.`] : []),
         ...(municipality?.geoportal ? [`Consulte também o geoportal municipal de ${municipality.nome} para confirmação das plantas e legendas em vigor: ${municipality.geoportal}`] : []),
         'A classificação cartográfica do plano é cruzada automaticamente quando a camada vetorial oficial estiver disponível. A aplicação final do regulamento depende da geometria exata da propriedade e da pretensão apresentada.',
         'O resultado é preliminar e deve ser confirmado pelos diplomas, regulamentos e representações gráficas oficiais.',
       ],
       municipio: municipality,
-      fontes: ['Direção-Geral do Território — OGC API: Cadastro Predial, CAOP e Carta do Regime de Uso do Solo (CC-BY 4.0)', ...(municipality?.geoportal ? [`Município de ${municipality.nome} — Geoportal/planos municipais`] : []), ...(albufeiraOrdering ? ['Direção-Geral do Território — CRUS de Albufeira, serviço vetorial WFS'] : []), ...(faroWfsOrdering.length ? ['Município de Faro — Planta 1.1 do PDM, serviço vetorial WFS'] : []), ...(faroOrdering.length ? ['Município de Faro — Planta 1.1 do PDM, serviço vetorial ArcGIS'] : []), ...regulatorySources.map((source) => `${source.documento} (${source.versao}) — ${source.url}`), ...(hasQuarteiraNorthEastPlan ? ['Câmara Municipal de Loulé — PU de Quarteira Norte-Nordeste: categorias de espaço e parâmetros cartográficos'] : [])], consultadoEm: new Date().toISOString(),
+      fontes: ['Direção-Geral do Território — OGC API: Cadastro Predial, CAOP e Carta do Regime de Uso do Solo (CC-BY 4.0)', ...(municipality?.geoportal ? [`Município de ${municipality.nome} — Geoportal/planos municipais`] : []), ...(municipalCrusOrdering ? [`Direção-Geral do Território — CRUS de ${municipality.nome}, serviço vetorial WFS`] : []), ...(faroWfsOrdering.length ? ['Município de Faro — Planta 1.1 do PDM, serviço vetorial WFS'] : []), ...(faroOrdering.length ? ['Município de Faro — Planta 1.1 do PDM, serviço vetorial ArcGIS'] : []), ...regulatorySources.map((source) => `${source.documento} (${source.versao}) — ${source.url}`), ...(hasQuarteiraNorthEastPlan ? ['Câmara Municipal de Loulé — PU de Quarteira Norte-Nordeste: categorias de espaço e parâmetros cartográficos'] : [])], consultadoEm: new Date().toISOString(),
     });
   } catch (error) { console.error('parcel_lookup_error', error); return json(502, { error: 'Não foi possível consultar as fontes geográficas oficiais neste momento.' }); }
 };
