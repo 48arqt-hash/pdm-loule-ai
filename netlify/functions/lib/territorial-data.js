@@ -10,8 +10,27 @@ const louleSource = {
   versao: '03-07-2017',
   url: 'https://geoloule.cm-loule.pt/docs/regulamentos/pmots/PDM_Regulamento.pdf',
 };
+const albufeiraSource = {
+  documento: 'Regulamento do PDM de Albufeira - Declaração n.º 15/2026/2',
+  versao: '20-02-2026',
+  url: 'https://www.cm-albufeira.pt/sites/default/files/RepositorioDocumentos/2026/regulamentodec1520262.pdf',
+};
 
 export const MUNICIPAL_DATA = {
+  albufeira: {
+    nome: 'Albufeira',
+    estado: 'Base regulamentar ativa para as classes da CRUS oficial; o alvará de loteamento concreto continua a ser o documento determinante do lote.',
+    fontes: [albufeiraSource],
+    regras: {
+      'espacos urbanos - zona de ocupacao turistica': [
+        { elemento: 'Enquadramento da zona', resultado: 'A zona de ocupação turística integra empreendimentos turísticos e áreas com alvarás de loteamento de ocupação preferencialmente turística cuja implementação é irreversível.', artigo: 'Artigo 30.º, n.º 1', pagina: '24' },
+        { elemento: 'Regra prioritária do loteamento', resultado: 'Quando exista alvará válido de loteamento ou obras de urbanização com ocupação preferencialmente turística, deve ser respeitada a ocupação nele definida. Assim, os parâmetros concretos do lote devem ser lidos no alvará e nas peças aprovadas, não apenas no PDM.', artigo: 'Artigo 30.º, n.º 2', pagina: '24' },
+        { elemento: 'Alteração ao loteamento ou empreendimento', resultado: 'Eventuais alterações ao alvará em vigor ou a empreendimento existente seguem o regime do artigo 28.º, n.º 6. A viabilidade depende da identificação do alvará, do lote e da operação pretendida.', artigo: 'Artigo 30.º, n.º 3', pagina: '24' },
+        { elemento: 'Sem alvará confirmado', resultado: 'Se a área turística intersticial não dispuser de alvará de loteamento, aplica-se o Anexo II do Regulamento; não é seguro apresentar índices do lote sem confirmar essa situação.', artigo: 'Artigo 30.º, n.os 4 e 5', pagina: '24-25' },
+        { elemento: 'Condições cumulativas', resultado: 'Podem aplicar-se adicionalmente as regras da Orla Costeira e das áreas de risco potencial significativo de inundações quando a cartografia oficial as delimitar no local.', artigo: 'Artigo 30.º, n.os 7 e 8', pagina: '25' },
+      ],
+    },
+  },
   loule: {
     nome: 'Loulé',
     estado: 'Base regulamentar ativa para classes CRUS compatíveis; a delimitação PDM deve ser confirmada na planta de ordenamento em vigor.',
