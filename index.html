@@ -1142,14 +1142,18 @@
 
   function initParcelMap(){
     if (!map){
-      map = L.map('parcelMap', { scrollWheelZoom: false }).setView([37.0179, -8.0187], 12);
+      // Estado de acolhimento: o mapa abre no concelho-base do atelier, com
+      // ortofoto e sem cadastro visualmente intrusivo. Os limites só são
+      // ligados pelo utilizador quando precisar de confirmar um prédio.
+      const louleBounds = L.latLngBounds([[36.86, -8.36], [37.42, -7.68]]);
+      map = L.map('parcelMap', { scrollWheelZoom: false }).fitBounds(louleBounds, { padding: [12, 12] });
       const streetMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 20, attribution: '&copy; OpenStreetMap contributors' });
       const aerialMap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: 'Tiles &copy; Esri' });
       const cadastreLayer = L.tileLayer.wms('https://snicws.dgterritorio.gov.pt/geoserver/inspire/ows', {
         layers: 'cadastralparcel', format: 'image/png', transparent: true, version: '1.3.0', opacity: .6,
         attribution: 'Carta Cadastral Digital — DGT',
       });
-      streetMap.addTo(map); cadastreLayer.addTo(map);
+      aerialMap.addTo(map);
       L.control.layers({ 'Mapa': streetMap, 'Vista aérea': aerialMap }, { 'Limites cadastrais DGT': cadastreLayer }, { collapsed:false, position:'topright' }).addTo(map);
       map.on('click', event => {
         if (mapSelectionMode === 'implantation') definirImplantacao(event.latlng.lat, event.latlng.lng);
