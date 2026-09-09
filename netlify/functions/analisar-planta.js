@@ -13,7 +13,10 @@ const MAX_TOTAL_DOCUMENT_BYTES = 4 * 1024 * 1024;
 const MAX_OFFICIAL_REGULATION_BYTES = 5 * 1024 * 1024;
 const MAX_CARTOGRAPHIC_EVIDENCE_BYTES = 1_200_000;
 // Deixa margem antes do limite de execução da Netlify, evitando uma página 504.
-const MAX_GEMINI_WAIT_MS = 11_000;
+// Alguns pedidos sem PDFs, mas com contexto territorial, podem demorar mais
+// do que 11 segundos. Mantemos margem para gerar/enviar o PDF, mas damos ao
+// agente tempo suficiente para responder antes de mostrar erro ao cliente.
+const MAX_GEMINI_WAIT_MS = 16_000;
 const ALLOWED_TYPES = new Set([
   'planta_localizacao',
   'caderneta_predial',
@@ -74,12 +77,12 @@ function enrichLouleDispersedBuildingRules(report, localizacao) {
 
 function providerMessage(status, payload = {}) {
   const reason = String(payload?.error?.message || '').toLowerCase();
-  if (status === 400) return 'A Gemini recusou o pedido. Confirme se os PDFs são legíveis e volte a tentar com apenas a Planta de Localização.';
-  if (status === 401 || status === 403 || reason.includes('api key')) return 'A chave da Gemini não foi aceite. Verifique a variável GEMINI_API_KEY na Netlify e faça novo deploy.';
-  if (status === 503 || reason.includes('high demand')) return 'A Gemini está temporariamente com procura elevada. O sistema tentou novamente; aguarde alguns minutos e repita a análise.';
-  if (status === 404 || reason.includes('not found') || reason.includes('no longer available')) return 'O modelo configurado não está disponível. Na Netlify, defina GEMINI_MODEL como gemini-3.6-flash e faça novo deploy.';
-  if (status === 429 || reason.includes('quota') || reason.includes('rate')) return 'O limite de utilização da Gemini foi atingido. Verifique a quota/faturação no Google AI Studio e tente novamente mais tarde.';
-  return 'O fornecedor de IA não conseguiu concluir a análise. Consulte os Function logs da Netlify para ver o motivo técnico.';
+  if (status === 400) return 'O agente de análise não conseguiu ler o pedido. Confirme se os PDFs são legíveis e volte a tentar apenas com a Planta de Localização.';
+  if (status === 401 || status === 403 || reason.includes('api key')) return 'O serviço de análise não está configurado corretamente. O atelier foi avisado para verificar a configuração.';
+  if (status === 503 || reason.includes('high demand')) return 'O agente de análise está temporariamente com elevada procura. Aguarde alguns minutos e repita a análise.';
+  if (status === 404 || reason.includes('not found') || reason.includes('no longer available')) return 'O agente de análise está temporariamente indisponível. Tente novamente dentro de alguns minutos.';
+  if (status === 429 || reason.includes('quota') || reason.includes('rate')) return 'O agente de análise atingiu temporariamente o limite de pedidos. Tente novamente mais tarde.';
+  return 'O agente de análise não conseguiu concluir o pedido neste momento. Tente novamente dentro de alguns minutos.';
 }
 
 const wait = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
@@ -96,7 +99,7 @@ async function fetchGeminiWithDeadline(url, requestBody) {
     });
   } catch (error) {
     if (error?.name === 'AbortError') {
-      const timeoutError = new Error('A Gemini não respondeu dentro do tempo previsto. Tente novamente dentro de alguns minutos.');
+      const timeoutError = new Error('O agente de análise não conseguiu responder dentro do tempo previsto. Tente novamente dentro de alguns minutos.');
       timeoutError.code = 'GEMINI_TIMEOUT';
       throw timeoutError;
     }
@@ -428,7 +431,7 @@ export const handler = async (event) => {
     if (!modelText.trim()) {
       console.error('provider_empty_response', JSON.stringify({ finishReason: responseBody.candidates?.[0]?.finishReason || null, promptFeedback: responseBody.promptFeedback || null }));
       await finishAnalysis(trackingRequestId, { status: 'provider_empty', model, durationMs: Date.now() - startedAt }).catch(() => {});
-      return json(502, { error: 'A Gemini devolveu uma resposta vazia. Tente novamente dentro de alguns minutos.' });
+      return json(502, { error: 'O agente de análise devolveu uma resposta incompleta. Tente novamente dentro de alguns minutos.' });
     }
     let report;
     try {
@@ -436,7 +439,7 @@ export const handler = async (event) => {
     } catch (parseFailure) {
       console.error('provider_invalid_json', JSON.stringify({ message: parseFailure.message, excerpt: modelText.slice(0, 300) }));
       await finishAnalysis(trackingRequestId, { status: 'invalid_json', model, durationMs: Date.now() - startedAt }).catch(() => {});
-      return json(502, { error: 'A Gemini concluiu a resposta, mas o formato do relatório foi inválido. Tente novamente.' });
+      return json(502, { error: 'O agente de análise concluiu a resposta, mas o relatório não ficou num formato válido. Tente novamente.' });
     }
     report = enrichLouleDispersedBuildingRules(report, body.localizacao);
     report = clarifyReportForAvailableEvidence(report, body.localizacao, documents);
