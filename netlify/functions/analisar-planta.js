@@ -140,27 +140,74 @@ function renderReport(report) {
   const conclusao = report.conclusao || {};
   return `
     <section>
-      <p><strong>Resultado preliminar:</strong> ${escapeHtml(conclusao.estado || 'Necessita validação técnica')}</p>
+      <p><strong>Conclusão da pré-análise:</strong> ${escapeHtml(conclusao.estado || 'Necessita validação técnica')}</p>
       <p>${escapeHtml(conclusao.resumo || 'A análise foi limitada à informação documental fornecida.')}</p>
     </section>
-    <h5>1. Documentação e identificação</h5>
+    <h5>1. Localização e elementos disponíveis</h5>
     <table><tbody>
       <tr><th>Localização / freguesia</th><td>${escapeHtml(identificacao.localizacao || 'Não confirmada')}</td></tr>
       <tr><th>Artigo matricial</th><td>${escapeHtml(identificacao.artigo_matricial || 'Não identificado')}</td></tr>
       <tr><th>Área indicada</th><td>${escapeHtml(identificacao.area || 'Não confirmada')}</td></tr>
       <tr><th>Coordenadas</th><td>${escapeHtml(identificacao.coordenadas || 'Não identificadas')}</td></tr>
     </tbody></table>
-    <h5>2. Elementos extraídos e parâmetros</h5>
+    <h5>2. Enquadramento territorial confirmado</h5>
     ${table(report.parametros)}
-    <h5>3. Regime e regras urbanísticas aplicáveis</h5>
+    <h5>3. Regras aplicáveis à pretensão</h5>
     ${table(report.regras_aplicaveis, 'Não foram confirmadas regras quantitativas no regulamento ou documentos analisados.')}
-    <h5>4. Divergências e verificações necessárias</h5>
+    <h5>4. O que precisa de validação</h5>
     ${itemList(report.divergencias, 'Não foram detetadas divergências evidentes nos documentos fornecidos.')}
-    <h5>5. Informação não confirmada</h5>
+    <h5>5. Informação ainda em falta</h5>
     ${itemList(report.nao_confirmado)}
-    <h5>6. Próximos passos recomendados</h5>
+    <h5>6. Próximo passo recomendado</h5>
     ${itemList(report.proximos_passos)}
     <p><small>Este relatório é uma pré-análise documental e não substitui informação prévia, parecer municipal, levantamento topográfico ou validação por técnico habilitado.</small></p>`;
+}
+
+function coordinateLabel(localizacao) {
+  const latitude = Number(localizacao?.coordenadas?.latitude);
+  const longitude = Number(localizacao?.coordenadas?.longitude);
+  return Number.isFinite(latitude) && Number.isFinite(longitude)
+    ? `${latitude.toFixed(6)}, ${longitude.toFixed(6)} (WGS84)`
+    : 'Não identificadas';
+}
+
+function clarifyReportForAvailableEvidence(report, localizacao, documents) {
+  const hasMunicipality = Boolean(localizacao?.municipio?.nome);
+  const hasManualBoundary = Boolean(localizacao?.parcela?.manual);
+  const hasDocuments = Array.isArray(documents) && documents.length > 0;
+  const fallbackIdentification = {
+    localizacao: hasMunicipality
+      ? `${localizacao.municipio.nome}${hasManualBoundary ? ' (limite aproximado desenhado no mapa)' : ''}`
+      : hasManualBoundary ? 'Limite aproximado desenhado no mapa - município ainda não confirmado' : 'Localização ainda não confirmada',
+    artigo_matricial: localizacao?.parcela?.declaracao || 'Não identificado',
+    area: 'Não confirmada',
+    coordenadas: coordinateLabel(localizacao),
+  };
+  const result = { ...(report || {}), identificacao: { ...fallbackIdentification, ...(report?.identificacao || {}) } };
+
+  // Se nenhuma fonte conseguiu identificar o concelho, a resposta deve ser
+  // clara e honesta. Este texto determinístico evita relatórios longos e
+  // contraditórios produzidos a partir da ausência de dados.
+  if (!hasMunicipality) {
+    return {
+      identificacao: fallbackIdentification,
+      parametros: [],
+      regras_aplicaveis: [{
+        elemento: 'Viabilidade preliminar da pretensão',
+        resultado: 'Ainda não pode ser avaliada: nesta tentativa não foi possível associar o limite desenhado a um município e à respetiva carta PDM.',
+        estado: 'Necessita verificação',
+        fonte: 'Consulta geográfica - município/PDM não identificado',
+      }],
+      divergencias: ['O limite foi desenhado de forma aproximada e não foi possível relacioná-lo, nesta consulta, com uma parcela cadastral ou com o município aplicável.'],
+      nao_confirmado: ['Delimitação rigorosa da propriedade', 'Artigo matricial, área e titularidade', 'Concelho, freguesia e enquadramento PDM aplicável'],
+      proximos_passos: ['Tente novamente selecionando um ponto dentro do terreno ou ajustando o limite desenhado.', ...(hasDocuments ? [] : ['Se disponível, anexe a Planta de Localização, caderneta predial ou certidão do registo para reforçar a identificação.'])],
+      conclusao: {
+        estado: 'Necessita validação técnica',
+        resumo: 'Foi registada uma localização aproximada no mapa, mas não foi possível confirmar o concelho nem obter a camada territorial aplicável. Por esse motivo, este relatório não apresenta regras do PDM ou índices urbanísticos.',
+      },
+    };
+  }
+  return result;
 }
 
 function officialRegulationSources(localizacao) {
@@ -270,6 +317,7 @@ Tarefa:
 6. Quando o cliente declarar uma pretensão, abre a secção "regras_aplicaveis" com a linha "Viabilidade preliminar da pretensão". Responde diretamente à pretensão, mas sem emitir decisão de licenciamento: "Viável em princípio, sujeito a confirmação" quando os usos e regras recebidos forem compatíveis; "Não demonstrada / não viável como apresentada" quando as regras recebidas exigirem condições que os dados da consulta não demonstram; ou "Dados insuficientes" quando não existir classificação aplicável. Se a parcela intersectar mais de uma classe e não existir "implantacao.confirmada", não apresentes uma conclusão única para todo o prédio: escreve "Dados insuficientes - depende da zona de implantação" e explica os cenários separadamente. Se existir "implantacao.confirmada", relaciona as regras apenas com a classe do ponto de implantação indicado; não mistures regras de outras zonas da parcela. Se "parcela.manual" for verdadeiro, chama sempre à geometria "limite aproximado desenhado pelo utilizador", nunca "parcela cadastral"; assinala que o cruzamento territorial é indicativo e que ficam por confirmar estremas, área, titularidade e artigo matricial. Em particular, para "Construir uma moradia" em RAN ou em solo rural agrícola de Loulé, esclarece que uma moradia NOVA comum não é viável apenas pela seleção do terreno: só pode haver enquadramento nas condições cumulativas da habitação do agricultor e, quando haja RAN, no respetivo regime jurídico. Contudo, se os PDFs ou a descrição demonstrarem uma construção pré-existente/ruína com estrutura e volumetria definida, apresenta obrigatoriamente um cenário separado: "Reconstrução, alteração ou ampliação de preexistência". Aplica exclusivamente as regras em "regrasPreexistencia", cita artigo e página, e conclui "Potencialmente admissível, sujeito a prova da preexistência e validação municipal". Nunca trates a ruína como confirmada sem prova documental, fotográfica ou levantamento; explica os elementos em falta. Indica quais as provas em falta e não transformes uma exceção em autorização.
 7. Distingue sempre: confirmado, necessita verificação, não identificado.
 8. Não apresentes aconselhamento jurídico nem uma decisão de licenciamento.
+9. Escreve em português europeu, com tom profissional e direto para um proprietário não técnico. A conclusão deve ter no máximo 3 frases e começar pelo que foi efetivamente confirmado. Não escrevas “a análise não pôde ser concluída” apenas porque não foram anexados PDFs: se existir localização ou PDM, explica antes o que foi possível apurar no mapa e depois o que falta confirmar. Evita repetir a mesma limitação em várias secções. Nas tabelas, usa frases curtas; não juntes palavras nem cabeçalhos, e não devolvas códigos técnicos sem uma designação legível. Em “próximos_passos”, indica no máximo 3 ações concretas e ordenadas.
 
 Responde exclusivamente com JSON válido, sem markdown, neste formato:
 {
@@ -391,6 +439,7 @@ export const handler = async (event) => {
       return json(502, { error: 'A Gemini concluiu a resposta, mas o formato do relatório foi inválido. Tente novamente.' });
     }
     report = enrichLouleDispersedBuildingRules(report, body.localizacao);
+    report = clarifyReportForAvailableEvidence(report, body.localizacao, documents);
     const usage = responseBody.usageMetadata || {};
     console.info('analysis_usage', JSON.stringify({
       model,

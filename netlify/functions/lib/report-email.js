@@ -33,8 +33,10 @@ export async function sendReportEmail({
   const payload = {
     from: process.env.REPORT_FROM_EMAIL,
     to: [recipient],
-    subject: `${documentTitle} - Arq. Leonel Mendes`,
-    html: `<p>Exmo.(a) Cliente,</p><p>Segue em anexo a sua <strong>${escapeHtml(documentTitle)}</strong>.</p><p>${escapeHtml(emailIntro)}</p><p style="font-size:11px;color:#57645f">Pedido submetido após leitura da informação de privacidade${privacyPolicyVersion ? ` (versão ${escapeHtml(privacyPolicyVersion)})` : ''}.</p><hr><pre style="white-space:pre-wrap;font-family:Arial,sans-serif;font-size:12px;color:#17201f">${escapeHtml(reportText)}</pre>`,
+    subject: `Segue em anexo o seu ${documentTitle} - Arq. Leonel Mendes`,
+    // O e-mail é uma comunicação de entrega, não uma cópia desformatada do
+    // relatório. A leitura técnica permanece no PDF profissional em anexo.
+    html: `<div style="max-width:620px;margin:0 auto;font-family:Arial,sans-serif;color:#183e5a;line-height:1.55"><p>Exmo.(a) Cliente,</p><p>Segue em anexo o seu <strong>${escapeHtml(documentTitle)}</strong>.</p><p>${escapeHtml(emailIntro)}</p><div style="margin:22px 0;padding:16px 18px;background:#f3f5f3;border-left:4px solid #bd8b37;color:#273238"><strong>Informação importante</strong><br>O documento é uma pré-análise técnica. Antes de qualquer compra, projeto, obra ou pedido de licenciamento, o enquadramento deve ser validado por técnico habilitado e, quando aplicável, pelas entidades competentes.</div><p>Para sua segurança, este pedido foi registado pelo atelier${privacyPolicyVersion ? ` de acordo com a informação de privacidade indicada (versão ${escapeHtml(privacyPolicyVersion)})` : ''}.</p><p>Com os melhores cumprimentos,<br><strong>Arq. Leonel Mendes</strong><br><span style="font-size:12px;color:#57645f">Arquitetura + Inteligência</span></p></div>`,
     attachments: [{ filename: attachmentFilename, content: pdf.toString('base64') }],
   };
   if (owner.toLowerCase() !== recipient.toLowerCase()) payload.bcc = [owner];

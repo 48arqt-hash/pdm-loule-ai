@@ -124,6 +124,17 @@ function manualPolygonGeometry(value) {
   return { type: 'Polygon', coordinates: [points] };
 }
 
+function geometryRepresentativePoint(geometry, fallback) {
+  const ring = ringsFromGeometry(geometry)[0] || [];
+  const vertices = ring.length > 1 ? ring.slice(0, -1) : ring;
+  if (!vertices.length) return fallback;
+  // Para um limite desenhado, o centro dos vértices é uma referência estável
+  // de consulta. Não substitui a geometria: as interseções continuam a ser
+  // feitas com todo o polígono mais abaixo.
+  const [longitude, latitude] = vertices.reduce((sum, point) => [sum[0] + Number(point[0]), sum[1] + Number(point[1])], [0, 0]);
+  return { latitude: latitude / vertices.length, longitude: longitude / vertices.length };
+}
+
 function orientation([ax, ay], [bx, by], [cx, cy]) { return (by - ay) * (cx - bx) - (bx - ax) * (cy - by); }
 function pointOnSegment([ax, ay], [bx, by], [cx, cy]) {
   return Math.abs(orientation([ax, ay], [bx, by], [cx, cy])) < 1e-12 && cx >= Math.min(ax, bx) && cx <= Math.max(ax, bx) && cy >= Math.min(ay, by) && cy <= Math.max(ay, by);
@@ -404,9 +415,12 @@ export const handler = async (event) => {
     if (submittedManualGeometry && !manualGeometry) return json(400, { error: 'O polígono manual é inválido. Desenhe pelo menos 3 vértices dentro do Algarve e conclua novamente.' });
     const requestedImplantation = Number.isFinite(Number(implantationLatitude)) && Number.isFinite(Number(implantationLongitude))
       ? { latitude: Number(implantationLatitude), longitude: Number(implantationLongitude) } : null;
+    const representativePoint = manualGeometry
+      ? geometryRepresentativePoint(manualGeometry, { latitude: lat, longitude: lng })
+      : { latitude: lat, longitude: lng };
     const [cadastre, municipalityResult] = await Promise.allSettled([
       findCollection('cadastro', 'predial').then((id) => featureAt(id, lat, lng)),
-      municipalityAt(lat, lng),
+      municipalityAt(representativePoint.latitude, representativePoint.longitude),
     ]);
     let municipality = municipalityResult.status === 'fulfilled' ? municipalityResult.value : null;
     const cadastralParcel = cadastre.status === 'fulfilled' ? cadastre.value : null;
@@ -416,8 +430,8 @@ export const handler = async (event) => {
     if (requestedImplantation && (!parcel?.geometry || !containsPoint(parcel, [requestedImplantation.longitude, requestedImplantation.latitude]))) {
       return json(400, { error: `O ponto de implantação deve estar dentro do ${parcel?.manual ? 'limite aproximado' : 'polígono cadastral'} selecionado.` });
     }
-    const analysisLat = requestedImplantation?.latitude || lat;
-    const analysisLng = requestedImplantation?.longitude || lng;
+    const analysisLat = requestedImplantation?.latitude || representativePoint.latitude;
+    const analysisLng = requestedImplantation?.longitude || representativePoint.longitude;
     // Salvaguarda de disponibilidade: se a CAOP nacional falhar, tentamos a
     // CRUS oficial de Albufeira. A própria feição devolve o município, pelo
     // que não se inventa a localização a partir de coordenadas aproximadas.
@@ -428,7 +442,6 @@ export const handler = async (event) => {
       const profile = MUNICIPAL_PROFILES.albufeira;
       municipality = { ...profile, fonte: 'Direção-Geral do Território - CRUS de Albufeira', propriedades: albufeiraProbe.properties || {} };
     }
-    const plans = municipality?.nome === 'Loulé' ? await Promise.allSettled([municipalPlans(analysisLat, analysisLng)]).then(([result]) => result.status === 'fulfilled' ? result.value : []) : [];
     // A classificação CRUS deixa de ser escolhida apenas pelo pixel onde o
     // utilizador carregou. Quando existe parcela cadastral, pesquisamos todas
     // as feições que intersectam o seu polígono. Assim uma zona RAN parcial
@@ -443,6 +456,17 @@ export const handler = async (event) => {
     const useFeatures = landUse.status === 'fulfilled' ? landUse.value : [];
     const labelledUses = useFeatures.map((feature) => ({ feature, label: readableValue(feature.properties || {}) })).filter((item) => item.label);
     const landUseLabels = [...new Set(labelledUses.map((item) => item.label))];
+    // A CAOP pode estar temporariamente indisponível. Quando a CRUS devolve a
+    // feição que intersecta o limite, aproveita-se o atributo municipal dessa
+    // fonte oficial para não deixar uma pré-análise sem concelho nem PDM.
+    if (!municipality) {
+      const crusMunicipality = municipalityName(useFeatures[0]?.properties || {});
+      const profile = municipalityProfile(crusMunicipality);
+      if (profile) municipality = { ...profile, crusWfs: crusWfsForMunicipality(profile), fonte: 'Direção-Geral do Território - CRUS', propriedades: useFeatures[0]?.properties || {} };
+    }
+    const plans = municipality?.nome === 'Loulé'
+      ? await Promise.allSettled([municipalPlans(analysisLat, analysisLng)]).then(([result]) => result.status === 'fulfilled' ? result.value : [])
+      : [];
     const implantationUse = requestedImplantation
       ? await findCollection('crus').then((id) => featureAt(id, analysisLat, analysisLng)).catch((error) => { console.warn('implantation_land_use_unavailable', error.message); return null; })
       : null;
@@ -506,7 +530,7 @@ export const handler = async (event) => {
       ...preventiveAreas.map((area) => ({ camada: `Condicionante territorial municipal (CML) — ${area.nome}`, valor: area.attributes.DESIG || 'Área abrangida', atributos: area.attributes, fonte: area.attributes.REGULAMENTO || 'Camada vetorial municipal' })),
     ];
     return json(200, {
-      coordenadas: { latitude: lat, longitude: lng }, implantacao: requestedImplantation ? { ...requestedImplantation, confirmada: true, metodo: `Ponto aproximado indicado pelo utilizador dentro d${parcel?.manual ? 'o limite manual' : 'a parcela cadastral'}` } : null, parcela: parcel ? (parcel.manual ? { id: null, referencia: null, declaracao: null, manual: true, propriedades: { origem: 'Limite aproximado desenhado pelo utilizador' }, geometria: parcel.geometry } : { id: parcel.id || null, ...cadastralIdentification(parcel.properties || {}, parcel.id || null), propriedades: parcel.properties || {}, geometria: parcel.geometry || null }) : null, pdm: results,
+      coordenadas: { latitude: analysisLat, longitude: analysisLng }, implantacao: requestedImplantation ? { ...requestedImplantation, confirmada: true, metodo: `Ponto aproximado indicado pelo utilizador dentro d${parcel?.manual ? 'o limite manual' : 'a parcela cadastral'}` } : null, parcela: parcel ? (parcel.manual ? { id: null, referencia: null, declaracao: null, manual: true, propriedades: { origem: 'Limite aproximado desenhado pelo utilizador' }, geometria: parcel.geometry } : { id: parcel.id || null, ...cadastralIdentification(parcel.properties || {}, parcel.id || null), propriedades: parcel.properties || {}, geometria: parcel.geometry || null }) : null, pdm: results,
       avisos: [
         ...(cadastre.status === 'rejected' ? ['A fonte do Cadastro Predial da DGT não respondeu nesta tentativa. Tente novamente dentro de alguns segundos; não foi selecionado qualquer polígono por aproximação.'] : []),
         ...(cadastre.status === 'fulfilled' && !cadastralParcel && !manualGeometry ? ['A Carta Cadastral Digital não devolveu uma parcela para este ponto. Pode tratar-se de cobertura incompleta, limite impreciso ou de prédio não representado na fonte pública.'] : []),
