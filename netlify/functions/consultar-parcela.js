@@ -426,7 +426,13 @@ export const handler = async (event) => {
     const cadastralParcel = cadastre.status === 'fulfilled' ? cadastre.value : null;
     // O desenho manual é alternativa apenas onde a fonte cadastral não devolve
     // parcela. Nunca substitui uma feição DGT existente.
-    const parcel = cadastralParcel || (manualGeometry ? { id: null, properties: {}, geometry: manualGeometry, manual: true } : null);
+    // Quando o utilizador desenha um limite, essa é deliberadamente a área
+    // da consulta. Um polígono cadastral que exista nas proximidades não pode
+    // substituir silenciosamente o desenho manual - sobretudo em zonas sem
+    // cadastro completo ou quando o prédio reúne várias parcelas.
+    const parcel = manualGeometry
+      ? { id: null, properties: {}, geometry: manualGeometry, manual: true }
+      : cadastralParcel;
     if (requestedImplantation && (!parcel?.geometry || !containsPoint(parcel, [requestedImplantation.longitude, requestedImplantation.latitude]))) {
       return json(400, { error: `O ponto de implantação deve estar dentro do ${parcel?.manual ? 'limite aproximado' : 'polígono cadastral'} selecionado.` });
     }

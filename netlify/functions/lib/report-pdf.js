@@ -179,7 +179,11 @@ function drawFooter(doc, pageNumber, disclaimer = 'Pré-análise assistida por I
 }
 
 function locationPoints(location = {}) {
-  const geometry = location?.parcela?.geometria?.geometry || location?.parcela?.geometria;
+  const supplied = location?.parcela?.geometria || location?.manualGeometry || location?.geometria;
+  // Aceita tanto GeoJSON Geometry como Feature. O cliente pode desenhar o
+  // polígono no Leaflet, pelo que a imagem do relatório nunca deve depender
+  // de uma forma única de encapsular o mesmo GeoJSON.
+  const geometry = supplied?.geometry || supplied;
   const points = [];
   const collect = (value) => {
     if (!Array.isArray(value)) return;
@@ -380,10 +384,16 @@ function drawLocationMap(doc, aerial, location, { compact = false } = {}) {
   const toPoint = ([lon, lat]) => [x + ((lon - minLon) / (maxLon - minLon)) * width, y + height - ((lat - minLat) / (maxLat - minLat)) * height];
   if (aerial.points.length > 1) {
     const [startX, startY] = toPoint(aerial.points[0]);
-    doc.save().opacity(0.18).fillColor(COLORS.gold).moveTo(startX, startY);
+    const boundaryColor = location?.parcela?.manual ? '#A13B2B' : COLORS.gold;
+    doc.save().opacity(0.22).fillColor(boundaryColor).moveTo(startX, startY);
     aerial.points.slice(1).forEach((point) => { const [px, py] = toPoint(point); doc.lineTo(px, py); });
     doc.closePath().fill().restore();
-    doc.save().lineWidth(2.3).strokeColor(COLORS.gold).moveTo(startX, startY);
+    // Um halo claro garante leitura sobre ortofoto escura; o traço vermelho
+    // identifica inequivocamente o limite aproximado desenhado pelo cliente.
+    doc.save().lineWidth(5).strokeColor('#FFFFFF').opacity(.9).moveTo(startX, startY);
+    aerial.points.slice(1).forEach((point) => { const [px, py] = toPoint(point); doc.lineTo(px, py); });
+    doc.closePath().stroke().restore();
+    doc.save().lineWidth(2.8).strokeColor(boundaryColor).moveTo(startX, startY);
     aerial.points.slice(1).forEach((point) => { const [px, py] = toPoint(point); doc.lineTo(px, py); });
     doc.closePath().stroke().restore();
   } else if (aerial.points.length === 1) {
@@ -444,7 +454,10 @@ function drawOfficialPlanOverlay(doc, plan, location) {
     doc.save().opacity(0.16).fillColor('#A13B2B').moveTo(startX, startY);
     points.slice(1).forEach((point) => { const [px, py] = toPoint(point); doc.lineTo(px, py); });
     doc.closePath().fill().restore();
-    doc.save().lineWidth(2.5).strokeColor('#A13B2B').moveTo(startX, startY);
+    doc.save().lineWidth(5).strokeColor('#FFFFFF').opacity(.9).moveTo(startX, startY);
+    points.slice(1).forEach((point) => { const [px, py] = toPoint(point); doc.lineTo(px, py); });
+    doc.closePath().stroke().restore();
+    doc.save().lineWidth(2.8).strokeColor('#A13B2B').moveTo(startX, startY);
     points.slice(1).forEach((point) => { const [px, py] = toPoint(point); doc.lineTo(px, py); });
     doc.closePath().stroke().restore();
   }

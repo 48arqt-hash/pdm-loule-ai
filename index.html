@@ -1093,6 +1093,28 @@
   let mapResizeObserver;
   let manualPolygonPoints = [];
   let manualPolygonLayer;
+  // Mantém o limite desenhado separado da camada visual. Assim, mesmo que o
+  // mapa seja redesenhado ou a consulta geográfica atualize a seleção, o
+  // mesmo polígono segue obrigatoriamente para a análise e para o PDF.
+  let selectedManualGeometry = null;
+
+  function locationForReport(){
+    if (!selectedLocation) return null;
+    const location = JSON.parse(JSON.stringify(selectedLocation));
+    const geometryFromLayer = manualPolygonLayer?.toGeoJSON?.()?.geometry || null;
+    const geometry = selectedManualGeometry || (location.parcela?.manual ? (location.parcela.geometria || geometryFromLayer) : null);
+    if (geometry) {
+      location.parcela = {
+        ...(location.parcela || {}),
+        manual: true,
+        referencia: null,
+        declaracao: null,
+        propriedades: { ...(location.parcela?.propriedades || {}), origem: 'Limite aproximado desenhado pelo utilizador' },
+        geometria: geometry,
+      };
+    }
+    return location;
+  }
 
   /* ---------- Logo / Sobre ---------- */
   function toggleAbout(){
@@ -1225,6 +1247,8 @@
 
   async function consultarLocalizacao(latitude, longitude, implantation = null, manualGeometry = null){
     const geometryForRequest = manualGeometry || (implantation && selectedLocation?.parcela?.manual ? selectedLocation.parcela.geometria : null);
+    if (geometryForRequest) selectedManualGeometry = geometryForRequest;
+    else if (!implantation) selectedManualGeometry = null;
     const status = document.getElementById('mapStatus');
     const resultBox = document.getElementById('mapResult');
     document.getElementById('journeyResult')?.classList.remove('ready');
@@ -1243,6 +1267,7 @@
       const data = await readJsonResponse(response, 'Não foi possível consultar esta localização');
       if (!response.ok) throw new Error(data.error || 'Não foi possível consultar esta localização.');
       selectedLocation = data;
+      if (data.parcela?.manual && data.parcela?.geometria) selectedManualGeometry = data.parcela.geometria;
       selectedParcelPoint = { latitude, longitude };
       if (data.parcela?.geometria){
         selectedParcelLayer = L.geoJSON(data.parcela.geometria, { style: { color: data.parcela.manual ? '#A13B2B' : '#B9954F', dashArray: data.parcela.manual ? '7 5' : null, weight:3, fillColor: data.parcela.manual ? '#A13B2B' : '#B9954F', fillOpacity:.12 } }).addTo(map);
@@ -1311,6 +1336,7 @@
     if (selectedParcelLayer) { map.removeLayer(selectedParcelLayer); selectedParcelLayer = null; }
     if (manualPolygonLayer) { map.removeLayer(manualPolygonLayer); manualPolygonLayer = null; }
     manualPolygonPoints = [];
+    selectedManualGeometry = null;
     selectedLocation = null;
     selectedParcelPoint = null;
     mapSelectionMode = 'manual-polygon';
@@ -1346,6 +1372,7 @@
     const ring = manualPolygonPoints.map(([lat, lng]) => [lng, lat]);
     ring.push([...ring[0]]);
     const manualGeometry = { type:'Polygon', coordinates:[ring] };
+    selectedManualGeometry = manualGeometry;
     const latitude = manualPolygonPoints.reduce((sum, point) => sum + point[0], 0) / manualPolygonPoints.length;
     const longitude = manualPolygonPoints.reduce((sum, point) => sum + point[1], 0) / manualPolygonPoints.length;
     document.getElementById('manualBoundaryActions').style.display = 'none';
@@ -1539,7 +1566,7 @@
     try {
       const resp = await fetch('/.netlify/functions/analisar-planta', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, documentos: documentsForAnalysis, localizacao: selectedLocation, objetivo: document.getElementById('pdmObjetivo').value, descricao: document.getElementById('pdmUserMsg').value.trim(), estimativaCusto: costEstimate, privacyConsent: true, privacyPolicyVersion: '2026-09-10' })
+        body: JSON.stringify({ email, documentos: documentsForAnalysis, localizacao: locationForReport(), objetivo: document.getElementById('pdmObjetivo').value, descricao: document.getElementById('pdmUserMsg').value.trim(), estimativaCusto: costEstimate, privacyConsent: true, privacyPolicyVersion: '2026-09-10' })
       });
       const data = await readJsonResponse(resp, 'A análise não devolveu uma resposta válida');
       if (!resp.ok) throw new Error(data.error || `Não foi possível concluir a análise (resposta ${resp.status} do servidor).`);
@@ -1661,7 +1688,7 @@
     try {
       const response = await fetch('/.netlify/functions/gerar-relatorio-pdf', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reportText: copy.innerText, reportHtml: copy.innerHTML, location: selectedLocation, documentPlan: orderingPlan ? { base64: orderingPlan.base64, mimeType: orderingPlan.mimeType, source: 'Planta de Localização oficial — PDM / Ordenamento; polígono assinalado pelo requerente' } : null }),
+        body: JSON.stringify({ reportText: copy.innerText, reportHtml: copy.innerHTML, location: locationForReport(), documentPlan: orderingPlan ? { base64: orderingPlan.base64, mimeType: orderingPlan.mimeType, source: 'Planta de Localização oficial — PDM / Ordenamento; polígono assinalado pelo requerente' } : null }),
       });
       if (!response.ok) throw new Error(await response.text() || 'Não foi possível gerar o PDF.');
       const blob = await response.blob();
