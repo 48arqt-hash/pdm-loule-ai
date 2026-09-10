@@ -1,4 +1,5 @@
 import { hasProfessionalAccess } from './lib/access.js';
+import { createHmac } from 'node:crypto';
 import { sendReportEmail, validEmail } from './lib/report-email.js';
 import { preexistenceRulesFor, regulatoryRuleCatalogFor, regulatoryRulesFor } from './lib/territorial-data.js';
 import { beginAnalysis, finishAnalysis } from './lib/operation-metrics.js';
@@ -17,7 +18,10 @@ const MAX_CARTOGRAPHIC_EVIDENCE_BYTES = 1_200_000;
 // Alguns pedidos sem PDFs, mas com contexto territorial, podem demorar mais
 // do que 11 segundos. Mantemos margem para gerar/enviar o PDF, mas damos ao
 // agente tempo suficiente para responder antes de mostrar erro ao cliente.
-const MAX_GEMINI_WAIT_MS = 16_000;
+// O modelo pode precisar de mais de 16 s quando cruza localização, regras e
+// documentos. Mantemos margem antes do limite da função, sem deixar o cliente
+// preso numa espera excessiva.
+const MAX_GEMINI_WAIT_MS = 40_000;
 const ALLOWED_TYPES = new Set([
   'planta_localizacao',
   'caderneta_predial',
@@ -235,6 +239,45 @@ function renderReport(report) {
     <p><small>Este relatório é uma pré-análise documental e não substitui informação prévia, parecer municipal, levantamento topográfico ou validação por técnico habilitado.</small></p>`;
 }
 
+function immediateAnalysisReport(localizacao = {}, objetivo = '', costEstimate = null) {
+  const parcel = localizacao.parcela || {};
+  const municipality = localizacao.municipio?.nome || 'Concelho a confirmar';
+  const coordinates = localizacao.coordenadas || {};
+  const location = [municipality, parcel.referencia ? `referência cadastral ${parcel.referencia}` : parcel.manual ? 'limite aproximado desenhado pelo utilizador' : 'localização selecionada no mapa'].filter(Boolean).join(' · ');
+  const spatial = Array.isArray(localizacao.pdm) ? localizacao.pdm : [];
+  const parameters = spatial.filter((item) => /regime de uso|classificação do solo|plano municipal|condicionante territorial|concelho identificado/i.test(item?.camada || '') && item?.valor)
+    .slice(0, 7).map((item) => ({ elemento: item.camada, resultado: item.valor, estado: /classificação do solo|plano municipal|concelho identificado/i.test(item.camada) ? 'Confirmado' : 'Necessita verificação', fonte: item.fonte || 'Consulta geográfica oficial disponível' }));
+  const rules = spatial.filter((item) => /^Regra urbanística/i.test(item?.camada || '') && item?.valor)
+    .slice(0, 8).map((item) => ({ elemento: String(item.camada).replace(/^Regra urbanística\s*[—-]\s*/i, ''), resultado: item.valor, estado: 'Necessita verificação', fonte: [item.fonte || 'Regulamento municipal', item.artigo, item.pagina ? `p. ${item.pagina}` : ''].filter(Boolean).join(' · ') }));
+  const primary = parameters.find((item) => /classificação do solo|regime de uso/i.test(item.elemento));
+  const conclusion = primary
+    ? `Foi identificado o enquadramento territorial disponível para ${municipality}: ${primary.resultado}. ${rules.length ? 'Foram encontradas referências regulamentares para confirmação técnica.' : 'A regra quantitativa aplicável será confirmada no relatório técnico aprofundado.'}`
+    : `A localização foi registada em ${municipality}. A classificação detalhada do plano será confirmada no relatório técnico aprofundado.`;
+  return {
+    identificacao: { localizacao: location, artigo_matricial: parcel.declaracao || 'Não identificado', area: parcel.propriedades?.area || parcel.propriedades?.area_m2 || 'Não confirmada', coordenadas: Number.isFinite(Number(coordinates.latitude)) ? `${coordinates.latitude}, ${coordinates.longitude}` : 'Não identificadas' },
+    parametros: parameters,
+    regras_aplicaveis: rules,
+    divergencias: localizacao.avisos?.slice(0, 2) || ['A delimitação e os parâmetros concretos carecem de validação técnica.'],
+    nao_confirmado: [objetivo ? `Viabilidade concreta da pretensão: ${objetivo}.` : 'Pretensão urbanística concreta.', 'Delimitação rigorosa, titularidade e artigo matricial, quando não constem de documentos oficiais.'],
+    proximos_passos: ['O relatório técnico aprofundado será preparado e enviado por e-mail.', 'Agendar uma reunião de consultoria com o Arq. Leonel Mendes para confirmar a estratégia do processo.'],
+    conclusao: { estado: 'Enquadramento imediato disponível', resumo: conclusion },
+    costEstimate,
+  };
+}
+
+function dispatchSecret() { return process.env.DOSSIER_ACCESS_SECRET || process.env.ANALYSIS_SESSION_SECRET || ''; }
+function dispatchSignature(payload) { return createHmac('sha256', dispatchSecret()).update(payload).digest('hex'); }
+
+async function queueDetailedAnalysis(body, cookie = '') {
+  if (!dispatchSecret()) throw new Error('missing_dispatch_secret');
+  const payload = JSON.stringify(body);
+  const baseUrl = String(process.env.URL || process.env.PUBLIC_SITE_URL || 'https://leonelmendes.com').replace(/\/$/, '');
+  const response = await fetch(`${baseUrl}/.netlify/functions/analisar-planta-background`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'X-LM-Analysis-Dispatch': dispatchSignature(payload), ...(cookie ? { Cookie: cookie } : {}) }, body: payload,
+  });
+  if (!response.ok && response.status !== 202) throw new Error(`background_dispatch_${response.status}`);
+}
+
 function coordinateLabel(localizacao) {
   const latitude = Number(localizacao?.coordenadas?.latitude);
   const longitude = Number(localizacao?.coordenadas?.longitude);
@@ -411,7 +454,7 @@ Responde exclusivamente com JSON válido, sem markdown, neste formato:
 }`;
 }
 
-export const handler = async (event) => {
+export const detailedAnalysisHandler = async (event) => {
   if (event.httpMethod !== 'POST') return json(405, { error: 'Método não permitido.' });
   const professionalAccess = hasProfessionalAccess(event.headers?.cookie || event.headers?.Cookie || '');
   if (process.env.ALLOW_DIRECT_ANALYSIS === 'false' && !professionalAccess) {
@@ -563,5 +606,32 @@ export const handler = async (event) => {
     console.error('analysis_error', error);
     if (error?.code === 'GEMINI_TIMEOUT') return json(503, { error: error.message });
     return json(500, { error: 'Não foi possível processar a análise. Tente novamente; se persistir, consulte os Function logs da Netlify.' });
+  }
+};
+
+// A resposta pública não espera pelo modelo. Entrega o enquadramento já
+// apurado pelo cadastro/PDM e coloca o relatório técnico completo em segundo
+// plano, para ser remetido por e-mail e associado ao Dossier Digital.
+export const handler = async (event) => {
+  if (event.httpMethod !== 'POST') return json(405, { error: 'Método não permitido.' });
+  const professionalAccess = hasProfessionalAccess(event.headers?.cookie || event.headers?.Cookie || '');
+  if (process.env.ALLOW_DIRECT_ANALYSIS === 'false' && !professionalAccess) return json(503, { error: 'A análise direta está temporariamente desativada.' });
+  try {
+    const body = JSON.parse(event.body || '{}');
+    const documents = Array.isArray(body.documentos) ? body.documentos : [];
+    const hasLocation = body.localizacao?.coordenadas && Number.isFinite(Number(body.localizacao.coordenadas.latitude)) && Number.isFinite(Number(body.localizacao.coordenadas.longitude));
+    if (body.privacyConsent !== true || !validEmail(body.email)) return json(400, { error: 'Indique um e-mail válido e aceite a Política de Privacidade para pedir a pré-análise.' });
+    if (!hasLocation && !documents.some((document) => document.tipo === 'planta_localizacao')) return json(400, { error: 'Selecione uma localização no mapa ou anexe a Planta de Localização.' });
+    if (documents.length > MAX_DOCUMENTS) return json(400, { error: `Pode anexar até ${MAX_DOCUMENTS} documentos.` });
+    const totalBytes = documents.reduce((total, document) => total + Math.floor((String(document?.base64 || '').length * 3) / 4), 0);
+    if (totalBytes > MAX_TOTAL_DOCUMENT_BYTES) return json(413, { error: 'Os documentos selecionados excedem o limite técnico de 4 MB para envio online.' });
+    const costEstimate = calculateRequestedCostEstimate(body.estimativaCusto);
+    const immediate = immediateAnalysisReport(body.localizacao || {}, body.objetivo || '', costEstimate);
+    const reply = `${renderReport(immediate)}${renderCostEstimateSection(costEstimate)}`;
+    try { await queueDetailedAnalysis(body, event.headers?.cookie || event.headers?.Cookie || ''); } catch (error) { console.error('analysis_background_dispatch_error', error.message); }
+    return json(202, { reply, resumo: immediate.conclusao.estado, detailedReportQueued: true, emailSent: false });
+  } catch (error) {
+    console.error('analysis_immediate_error', error);
+    return json(500, { error: 'Não foi possível preparar o enquadramento imediato. Tente novamente.' });
   }
 };

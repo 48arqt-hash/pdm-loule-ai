@@ -1545,6 +1545,7 @@
       if (!resp.ok) throw new Error(data.error || `Não foi possível concluir a análise (resposta ${resp.status} do servidor).`);
       loading.remove(); renderReport(data.reply);
       if (documentsSkipped) addMsg('ℹ Os PDFs selecionados não foram enviados por excederem o limite técnico. Esta pré-análise foi realizada pela parcela selecionada, cadastro e camadas territoriais disponíveis.', 'system');
+      if (data.detailedReportQueued) addMsg('✓ Enquadramento imediato disponível. O relatório técnico aprofundado está a ser preparado e será enviado por e-mail quando estiver concluído.', 'system');
       if (data.emailSent) addMsg(`✓ Relatório em PDF enviado para ${escapeText(email)} e registado no atelier.${data.dossierAvailable ? ' Recebeu também um link privado para o seu Dossier Digital.' : ''}`, 'system');
       if (data.emailError) addMsg(`⚠ ${escapeText(data.emailError)} Pode tentar o envio manual abaixo.`, 'system');
     } catch (err) {
