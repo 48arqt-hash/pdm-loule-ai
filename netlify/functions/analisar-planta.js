@@ -138,6 +138,56 @@ function table(rows, empty = 'Sem parâmetros confirmados nesta fase.') {
   return `<table><thead><tr><th>Elemento</th><th>Resultado</th><th>Estado</th><th>Fonte</th></tr></thead><tbody>${rows.map((row) => `<tr><td>${escapeHtml(row.elemento)}</td><td>${escapeHtml(row.resultado)}</td><td>${escapeHtml(row.estado)}</td><td>${escapeHtml(row.fonte)}</td></tr>`).join('')}</tbody></table>`;
 }
 
+const COST_RATES = {
+  economica: [1700, 2100], media: [2100, 2400], media_alta: [2400, 3200], superior: [3100, 4300], luxo: [4200, 6000],
+};
+const COST_WORK_LABELS = { nova: 'Construção nova', ampliacao: 'Ampliação', reabilitacao: 'Reabilitação' };
+const COST_QUALITY_LABELS = { economica: 'Económico', media: 'Médio', media_alta: 'Médio-alto', superior: 'Superior', luxo: 'Luxo' };
+const COST_EURO = new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
+const costValue = (value, minimum = 0, maximum = 100000) => Math.min(maximum, Math.max(minimum, Number.isFinite(Number(value)) ? Number(value) : 0));
+
+function calculateRequestedCostEstimate(request) {
+  if (!request?.enabled) return null;
+  const workType = Object.hasOwn(COST_WORK_LABELS, request.workType) ? request.workType : 'nova';
+  const quality = Object.hasOwn(COST_RATES, request.quality) ? request.quality : 'media_alta';
+  const habitable = costValue(request.habitable, 0, 3000);
+  if (habitable < 30) return null;
+  const terraces = costValue(request.terraces, 0, 1500);
+  const garage = costValue(request.garage, 0, 1000);
+  const technical = costValue(request.technical, 0, 1000);
+  const basement = costValue(request.basement, 0, 1500);
+  const pool = costValue(request.pool, 0, 1000);
+  const exterior = costValue(request.exterior, 0, 20000);
+  const walls = costValue(request.walls, 0, 10000);
+  const floors = costValue(request.floors || 1, 1, 8);
+  const [baseLow, baseHigh] = COST_RATES[quality];
+  const typeFactor = workType === 'reabilitacao' ? 1.15 : workType === 'ampliacao' ? 1.06 : 1;
+  const complexity = 1 + (floors - 1) * 0.025 + (request.slope ? 0.04 : 0) + (request.difficultAccess ? 0.03 : 0);
+  const coreLow = (habitable * baseLow + terraces * baseLow * 0.40 + garage * baseLow * 0.50 + technical * baseLow * 0.55) * typeFactor * complexity;
+  const coreHigh = (habitable * baseHigh + terraces * baseHigh * 0.40 + garage * baseHigh * 0.50 + technical * baseHigh * 0.55) * typeFactor * complexity;
+  const worksLow = coreLow + basement * 900 + pool * 900 + exterior * 140 + walls * 250;
+  const worksHigh = coreHigh + basement * 1400 + pool * 1600 + exterior * 240 + walls * 400;
+  const feesLow = Math.max(8000, worksLow * 0.05);
+  const feesHigh = Math.max(8000, worksHigh * 0.08);
+  const contingencyLow = worksLow * 0.08;
+  const contingencyHigh = worksHigh * 0.15;
+  return { workType, quality, habitable, terraces, garage, technical, basement, pool, exterior, walls, floors, worksLow, worksHigh, feesLow, feesHigh, contingencyLow, contingencyHigh, netLow: worksLow + feesLow + contingencyLow, netHigh: worksHigh + feesHigh + contingencyHigh };
+}
+
+function renderCostEstimateSection(estimate) {
+  if (!estimate) return '';
+  return `<h5>7. Estimativa indicativa de custo de obra</h5>
+    <p>Estimativa facultativa preparada a partir do programa indicado pelo cliente. Não constitui orçamento, proposta contratual ou confirmação de viabilidade.</p>
+    <table><thead><tr><th>Elemento</th><th>Intervalo indicativo</th></tr></thead><tbody>
+      <tr><td>Intervenção / padrão</td><td>${escapeHtml(COST_WORK_LABELS[estimate.workType])} / ${escapeHtml(COST_QUALITY_LABELS[estimate.quality])}</td></tr>
+      <tr><td>Execução da obra</td><td>${COST_EURO.format(estimate.worksLow)} a ${COST_EURO.format(estimate.worksHigh)}</td></tr>
+      <tr><td>Projetos e acompanhamento <small>(mínimo de 8.000 €)</small></td><td>${COST_EURO.format(estimate.feesLow)} a ${COST_EURO.format(estimate.feesHigh)}</td></tr>
+      <tr><td>Reserva para imprevistos</td><td>${COST_EURO.format(estimate.contingencyLow)} a ${COST_EURO.format(estimate.contingencyHigh)}</td></tr>
+      <tr><td><strong>Custo global estimado sem IVA</strong></td><td><strong>${COST_EURO.format(estimate.netLow)} a ${COST_EURO.format(estimate.netHigh)}</strong></td></tr>
+    </tbody></table>
+    <p><small>O custo final depende do projeto, medições, condições do local, especialidades, licenças, enquadramento fiscal e propostas de empreiteiros. A viabilidade urbanística indicada nas secções anteriores deve ser confirmada antes de assumir qualquer investimento.</small></p>`;
+}
+
 function renderReport(report) {
   const identificacao = report.identificacao || {};
   const conclusao = report.conclusao || {};
@@ -282,7 +332,7 @@ async function cartographicEvidence(localizacao) {
   ];
 }
 
-function buildPrompt({ objetivo, descricao, documents, localizacao, regulationSources = [], officialRegulations = [], cartographicLayers = [] }) {
+function buildPrompt({ objetivo, descricao, documents, localizacao, regulationSources = [], officialRegulations = [], cartographicLayers = [], costEstimate = null }) {
   const inventory = documents.length ? documents.map((doc) => `- ${doc.tipo}: ${doc.nome}${doc.origem === 'planta_localizacao_compactada' ? ' (imagem preparada localmente a partir da Planta de Localização oficial)' : ''}`).join('\n') : '- Sem documentos PDF anexados.';
   const preexistenceRules = preexistenceRulesFor(localizacao?.municipio?.nome);
   const mapEvidence = localizacao ? JSON.stringify({
@@ -305,6 +355,7 @@ function buildPrompt({ objetivo, descricao, documents, localizacao, regulationSo
 
 Objetivo declarado pelo cliente: ${objetivo || 'Não indicado'}
 Descrição do cliente: ${descricao || 'Não indicada'}
+${costEstimate ? `Programa de obra declarado para estimativa: ${COST_WORK_LABELS[costEstimate.workType]}, padrão ${COST_QUALITY_LABELS[costEstimate.quality]}, ${costEstimate.habitable} m² de área interior e ${costEstimate.floors} piso(s). Usa este programa apenas para enquadrar a pretensão urbanística; não apresentes custos, porque a estimativa é inserida separadamente no relatório.` : 'Não foi pedida estimativa de custo de obra.'}
 Documentos recebidos:\n${inventory}
 Consulta geográfica recebida (dados preliminares de fontes oficiais):\n${mapEvidence}
 Regulamentos oficiais relevantes identificados:\n${regulations}
@@ -389,6 +440,7 @@ export const handler = async (event) => {
     }
 
     const regulationSources = officialRegulationSources(body.localizacao);
+    const costEstimate = calculateRequestedCostEstimate(body.estimativaCusto);
     // PDFs completos de regulamentos podem ultrapassar o tempo máximo da função.
     // Só são anexados se esta opção for ligada expressamente na Netlify.
     const regulations = process.env.ATTACH_OFFICIAL_REGULATIONS === 'true'
@@ -403,7 +455,7 @@ export const handler = async (event) => {
         contents: [{
           role: 'user',
           parts: [
-            { text: buildPrompt({ objetivo: body.objetivo, descricao: body.descricao, documents, localizacao: body.localizacao, regulationSources, officialRegulations: regulations, cartographicLayers: visualLayers }) },
+            { text: buildPrompt({ objetivo: body.objetivo, descricao: body.descricao, documents, localizacao: body.localizacao, regulationSources, officialRegulations: regulations, cartographicLayers: visualLayers, costEstimate }) },
             ...visualLayers.flatMap((layer) => [
               { text: layer.tipo },
               { inlineData: { mimeType: layer.mimeType, data: layer.base64 } },
@@ -452,7 +504,7 @@ export const handler = async (event) => {
     }));
     await finishAnalysis(trackingRequestId, { status: 'completed', model, promptTokens: usage.promptTokenCount || null, outputTokens: usage.candidatesTokenCount || null, durationMs: Date.now() - startedAt }).catch((error) => console.warn('analysis_tracking_finish_unavailable', error.message));
 
-    const reply = renderReport(report);
+    const reply = `${renderReport(report)}${renderCostEstimateSection(costEstimate)}`;
     const reportText = reply.replace(/<br\s*\/?\s*>/gi, '\n').replace(/<\/p>|<\/li>|<\/tr>/gi, '\n').replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#039;/g, "'").replace(/\n\s*/g, '\n').trim();
     let emailSent = false;
     let emailError = null;

@@ -731,6 +731,24 @@
           <option>Apenas conhecer o potencial do terreno</option>
         </select>
         <textarea id="pdmUserMsg" class="textarea-field" data-i18n-placeholder="analysisDescription" placeholder="Ex.: Moradia T4 com cerca de 300 m² e piscina. Indique dúvidas ou dados relevantes."></textarea>
+        <label class="cost-consent" style="margin-top:12px;"><input id="pdmIncludeCost" type="checkbox" onchange="togglePdmCostEstimate()"><span><strong>Incluir estimativa indicativa de custo de obra</strong> no mesmo relatório.</span></label>
+        <div id="pdmCostEstimateFields" class="cost-fieldset" style="display:none; margin-top:12px;">
+          <p class="guided-step-lead">Preencha apenas se pretender receber uma estimativa integrada. Os valores são indicativos e não substituem medições, projeto ou orçamento de empreiteiro.</p>
+          <div class="input-grid">
+            <div><label for="pdmCostWorkType">Tipo de intervenção</label><select id="pdmCostWorkType" class="input-field"><option value="nova">Construção nova</option><option value="ampliacao">Ampliação</option><option value="reabilitacao">Reabilitação</option></select></div>
+            <div><label for="pdmCostQuality">Padrão de construção</label><select id="pdmCostQuality" class="input-field"><option value="economica">Económico</option><option value="media">Médio</option><option value="media_alta" selected>Médio-alto</option><option value="superior">Superior</option><option value="luxo">Luxo</option></select></div>
+            <div><label for="pdmCostHabitable">Área interior prevista (m²) *</label><input id="pdmCostHabitable" class="input-field" type="number" min="0" value="200"></div>
+            <div><label for="pdmCostFloors">Pisos</label><input id="pdmCostFloors" class="input-field" type="number" min="1" max="8" value="2"></div>
+            <div><label for="pdmCostTerraces">Terraços e alpendres (m²)</label><input id="pdmCostTerraces" class="input-field" type="number" min="0" value="30"></div>
+            <div><label for="pdmCostGarage">Garagem coberta (m²)</label><input id="pdmCostGarage" class="input-field" type="number" min="0" value="30"></div>
+            <div><label for="pdmCostBasement">Cave (m²)</label><input id="pdmCostBasement" class="input-field" type="number" min="0" value="0"></div>
+            <div><label for="pdmCostTechnical">Áreas técnicas e arrumos (m²)</label><input id="pdmCostTechnical" class="input-field" type="number" min="0" value="0"></div>
+            <div><label for="pdmCostPool">Piscina (m²)</label><input id="pdmCostPool" class="input-field" type="number" min="0" value="0"></div>
+            <div><label for="pdmCostExterior">Arranjos exteriores (m²)</label><input id="pdmCostExterior" class="input-field" type="number" min="0" value="0"></div>
+            <div><label for="pdmCostWalls">Muros e vedações (ml)</label><input id="pdmCostWalls" class="input-field" type="number" min="0" value="0"></div>
+          </div>
+          <div class="cost-checks"><label><input id="pdmCostSlope" type="checkbox"><span>Terreno inclinado</span></label><label><input id="pdmCostDifficultAccess" type="checkbox"><span>Acesso difícil</span></label></div>
+        </div>
         <div class="guided-step-actions"><button type="button" class="btn-submit" onclick="avancarParaContacto()">Continuar →</button></div>
       </section>
 
@@ -1471,9 +1489,34 @@
     setTimeout(() => document.getElementById('pdmEmail')?.focus(), 120);
   }
 
+  function togglePdmCostEstimate(){
+    const enabled = document.getElementById('pdmIncludeCost')?.checked;
+    const fields = document.getElementById('pdmCostEstimateFields');
+    if (fields) fields.style.display = enabled ? 'block' : 'none';
+  }
+
+  function pdmCostNumber(id, fallback = 0){
+    const value = Number(document.getElementById(id)?.value);
+    return Number.isFinite(value) ? Math.max(0, value) : fallback;
+  }
+
+  function collectPdmCostEstimate(){
+    if (!document.getElementById('pdmIncludeCost')?.checked) return null;
+    return {
+      enabled:true,
+      workType:document.getElementById('pdmCostWorkType')?.value || 'nova',
+      quality:document.getElementById('pdmCostQuality')?.value || 'media_alta',
+      habitable:pdmCostNumber('pdmCostHabitable'), floors:Math.min(8, Math.max(1, pdmCostNumber('pdmCostFloors', 2))),
+      terraces:pdmCostNumber('pdmCostTerraces'), garage:pdmCostNumber('pdmCostGarage'), pool:pdmCostNumber('pdmCostPool'), exterior:pdmCostNumber('pdmCostExterior'),
+      technical:pdmCostNumber('pdmCostTechnical'), basement:pdmCostNumber('pdmCostBasement'), walls:pdmCostNumber('pdmCostWalls'),
+      slope:Boolean(document.getElementById('pdmCostSlope')?.checked), difficultAccess:Boolean(document.getElementById('pdmCostDifficultAccess')?.checked),
+    };
+  }
+
   async function pedirAnalisePdm(){
     const email = document.getElementById('pdmEmail').value.trim();
     const consent = document.getElementById('pdmConsent').checked;
+    const costEstimate = collectPdmCostEstimate();
     const erroEl = document.getElementById('pdmError');
     const btn = document.getElementById('pdmSubmitBtn');
     erroEl.style.display = 'none';
@@ -1486,13 +1529,14 @@
     if (!email || !email.includes('@')) { erroEl.textContent = 'Introduza um e-mail válido.'; erroEl.style.display = 'block'; return; }
     if (!selectedLocation && !documentsForAnalysis.some(doc => doc.tipo === 'planta_localizacao')) { erroEl.textContent = 'Selecione o terreno no mapa ou anexe uma Planta de Localização com menos de 4 MB.'; erroEl.style.display = 'block'; return; }
     if (!consent) { erroEl.textContent = 'Confirme a autorização para tratar os documentos nesta análise.'; erroEl.style.display = 'block'; return; }
+    if (costEstimate && costEstimate.habitable < 30) { erroEl.textContent = 'Para incluir a estimativa de custo, indique uma área interior prevista de pelo menos 30 m².'; erroEl.style.display = 'block'; return; }
 
-    btn.disabled = true; btn.textContent = documentsSkipped ? 'A analisar mapa e cadastro…' : 'A analisar documentação…';
-    const loading = addMsg('<span class="spinner"></span> A ler os documentos, cruzar os dados e preparar a pré-análise…', 'system processing');
+    btn.disabled = true; btn.textContent = costEstimate ? 'A preparar relatório integrado…' : (documentsSkipped ? 'A analisar mapa e cadastro…' : 'A analisar documentação…');
+    const loading = addMsg(costEstimate ? '<span class="spinner"></span> A cruzar o terreno, verificar a pretensão e calcular a estimativa de obra…' : '<span class="spinner"></span> A ler os documentos, cruzar os dados e preparar a pré-análise…', 'system processing');
     try {
       const resp = await fetch('/.netlify/functions/analisar-planta', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, documentos: documentsForAnalysis, localizacao: selectedLocation, objetivo: document.getElementById('pdmObjetivo').value, descricao: document.getElementById('pdmUserMsg').value.trim(), privacyConsent: true, privacyPolicyVersion: '2026-09-10' })
+        body: JSON.stringify({ email, documentos: documentsForAnalysis, localizacao: selectedLocation, objetivo: document.getElementById('pdmObjetivo').value, descricao: document.getElementById('pdmUserMsg').value.trim(), estimativaCusto: costEstimate, privacyConsent: true, privacyPolicyVersion: '2026-09-10' })
       });
       const data = await readJsonResponse(resp, 'A análise não devolveu uma resposta válida');
       if (!resp.ok) throw new Error(data.error || `Não foi possível concluir a análise (resposta ${resp.status} do servidor).`);
@@ -1583,11 +1627,23 @@
       <div class="report-actions">
         <button class="btn-submit" type="button" onclick="guardarRelatorioPdf(this)">Guardar / imprimir PDF</button>
         <button class="btn-submit secondary" type="button" onclick="enviarRelatorioPorEmail(this)">Reenviar PDF por e-mail</button>
+        <button class="btn-submit secondary" type="button" onclick="pedirPropostaDaPreAnalise()">Pedir acompanhamento ao Arq. Leonel Mendes</button>
       </div>
     `;
     output.replaceChildren(div);
     document.getElementById('journeyResult')?.classList.add('ready');
     div.scrollIntoView({ behavior:'smooth', block:'start' });
+  }
+
+  function pedirPropostaDaPreAnalise(){
+    togglePanel('quotePanel', null);
+    const description = document.getElementById('quoteDescription');
+    const email = document.getElementById('pdmEmail')?.value?.trim();
+    const quoteEmail = document.getElementById('quoteEmail');
+    const municipality = selectedLocation?.municipio?.nome || 'a confirmar';
+    if (description && !description.value.trim()) description.value = `Pretendo acompanhamento técnico após a pré-análise urbanística do terreno selecionado no concelho de ${municipality}.`;
+    if (quoteEmail && email && !quoteEmail.value.trim()) quoteEmail.value = email;
+    setTimeout(() => description?.focus(), 160);
   }
 
   async function guardarRelatorioPdf(button){
