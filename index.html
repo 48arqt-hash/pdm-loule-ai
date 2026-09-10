@@ -1211,12 +1211,14 @@
     if (!query) return;
     status.textContent = 'A procurar localização…';
     try {
-      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=pt&q=${encodeURIComponent(`${query}, Algarve, Portugal`)}`);
-      const result = (await response.json())[0];
-      if (!result) throw new Error('Localização não encontrada. Experimente uma localidade, rua ou coordenadas.');
-      const lat = Number(result.lat), lng = Number(result.lon);
+      const response = await fetch('/.netlify/functions/pesquisar-localizacao', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query }),
+      });
+      const result = await readJsonResponse(response, 'Não foi possível pesquisar a localização');
+      if (!response.ok) throw new Error(result.error || 'Localização não encontrada. Experimente uma localidade, rua ou coordenadas.');
+      const lat = Number(result.latitude), lng = Number(result.longitude);
       if (lat < 36.8 || lat > 37.75 || lng < -9.2 || lng > -7.05) throw new Error('Selecione uma localização dentro do Algarve.');
-      map.setView([lat, lng], 17); consultarLocalizacao(lat, lng);
+      map.setView([lat, lng], result.source === 'referência local' ? 15 : 17); consultarLocalizacao(lat, lng);
     } catch (error) { status.textContent = error.message; }
   }
 
