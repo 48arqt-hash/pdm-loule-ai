@@ -1,6 +1,7 @@
 import { hasProfessionalAccess } from './lib/access.js';
 import { sendReportEmail, validEmail } from './lib/report-email.js';
 import { recordOperation } from './lib/operation-metrics.js';
+import { createDossier } from './lib/dossier-store.js';
 
 const json = (statusCode, payload) => ({
   statusCode,
@@ -22,11 +23,19 @@ export const handler = async (event) => {
       && documentPlan.base64.length <= 2_500_000
       ? { image: Buffer.from(documentPlan.base64, 'base64'), source: String(documentPlan.source || 'Planta de Localização oficial') }
       : null;
-    const sent = await sendReportEmail({ to, reportText, reportHtml, location, privacyPolicyVersion: privacyPolicyVersion || null, documentPlan: validPlan });
+    let dossier = null;
+    try {
+      dossier = await createDossier({ email: to, location: location || null, reportHtml, reportText });
+    } catch (dossierError) {
+      console.warn('manual_report_dossier_unavailable', dossierError?.message || 'unknown');
+    }
+    const siteUrl = String(process.env.PUBLIC_SITE_URL || 'https://leonelmendes.com').replace(/\/$/, '');
+    const dossierLink = dossier?.available ? `${siteUrl}/dossier.html?id=${encodeURIComponent(dossier.id)}&token=${encodeURIComponent(dossier.token)}` : null;
+    const sent = await sendReportEmail({ to, reportText, reportHtml, location, privacyPolicyVersion: privacyPolicyVersion || null, documentPlan: validPlan, dossierLink });
     await recordOperation({ eventType: 'report_resend', email: to, municipality: location?.municipio?.nome || null }).catch((error) => console.warn('report_resend_tracking_unavailable', error.message));
     console.info('privacy_consent_recorded', JSON.stringify({ service: 'reenvio-relatorio', policyVersion: privacyPolicyVersion || 'não indicado', at: new Date().toISOString() }));
     console.info('report_email_sent', JSON.stringify(sent));
-    return json(200, { sent: true });
+    return json(200, { sent: true, dossierAvailable: Boolean(dossier?.available) });
   } catch (error) {
     console.error('report_email_error', error);
     return json(500, { error: 'Não foi possível preparar ou enviar o relatório por e-mail.' });
