@@ -821,6 +821,7 @@
         <input type="tel" id="meetingPhone" data-i18n-placeholder="phone" placeholder="Contacto telefónico" class="input-field" required>
         <input type="email" id="meetingEmail" data-i18n-placeholder="email" placeholder="Seu email" class="input-field" required>
       </div>
+      <input type="hidden" id="meetingContext" value="">
 
       <div class="checkbox-container"><input type="checkbox" id="meetingConsent"> <span>Li e aceito a <button type="button" class="privacy-link" onclick="openPrivacyPolicy()">Política de Privacidade</button> para tratamento dos meus dados no pedido de reunião.</span></div>
       <button class="btn-submit" id="meetingSubmitBtn" onclick="processMeetingBooking()" data-i18n="requestBooking">Solicitar agendamento</button>
@@ -1629,7 +1630,7 @@
       <div class="report-actions">
         <button class="btn-submit" type="button" onclick="guardarRelatorioPdf(this)">Guardar / imprimir PDF</button>
         <button class="btn-submit secondary" type="button" onclick="enviarRelatorioPorEmail(this)">Reenviar PDF por e-mail</button>
-        <button class="btn-submit secondary" type="button" onclick="pedirPropostaDaPreAnalise()">Pedir acompanhamento ao Arq. Leonel Mendes</button>
+        <button class="btn-submit secondary" type="button" onclick="pedirReuniaoDaPreAnalise()">Agendar reunião com o Arq. Leonel Mendes</button>
       </div>
     `;
     output.replaceChildren(div);
@@ -1637,15 +1638,15 @@
     div.scrollIntoView({ behavior:'smooth', block:'start' });
   }
 
-  function pedirPropostaDaPreAnalise(){
-    togglePanel('quotePanel', null);
-    const description = document.getElementById('quoteDescription');
+  function pedirReuniaoDaPreAnalise(){
+    togglePanel('meetingPanel', null);
     const email = document.getElementById('pdmEmail')?.value?.trim();
-    const quoteEmail = document.getElementById('quoteEmail');
+    const meetingEmail = document.getElementById('meetingEmail');
+    const meetingContext = document.getElementById('meetingContext');
     const municipality = selectedLocation?.municipio?.nome || 'a confirmar';
-    if (description && !description.value.trim()) description.value = `Pretendo acompanhamento técnico após a pré-análise urbanística do terreno selecionado no concelho de ${municipality}.`;
-    if (quoteEmail && email && !quoteEmail.value.trim()) quoteEmail.value = email;
-    setTimeout(() => description?.focus(), 160);
+    if (meetingContext) meetingContext.value = `Pedido iniciado após pré-análise urbanística de terreno no concelho de ${municipality}.`;
+    if (meetingEmail && email && !meetingEmail.value.trim()) meetingEmail.value = email;
+    setTimeout(() => document.getElementById('meetingDate')?.focus(), 160);
   }
 
   async function guardarRelatorioPdf(button){
@@ -1722,6 +1723,7 @@
     const name = document.getElementById('meetingName').value.trim();
     const phone = document.getElementById('meetingPhone').value.trim();
     const email = document.getElementById('meetingEmail').value.trim();
+    const context = document.getElementById('meetingContext')?.value?.trim();
 
     if (!date || !time){ alert('Selecione a data e o horário preferencial para a reunião.'); return; }
     if (!name || !phone || !email || !email.includes('@')){ alert('Preencha os seus dados de contacto com um e-mail válido.'); return; }
@@ -1740,7 +1742,7 @@
 
       button.textContent = document.documentElement.lang === 'pt' ? 'A enviar pedido…' : 'Sending request…';
       const response = await fetch('/.netlify/functions/enviar-pedido-reuniao', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ date, time, name, phone, email, privacyConsent: true, privacyPolicyVersion: '2026-09-10' })
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ date, time, name, phone, email, context, privacyConsent: true, privacyPolicyVersion: '2026-09-10' })
       });
       const data = await readJsonResponse(response, 'O pedido de reunião não devolveu uma resposta válida');
       if (!response.ok) {
