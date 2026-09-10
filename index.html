@@ -869,6 +869,18 @@
             <div id="costReducedShareWrap" style="display:none"><label for="costReducedShare" data-i18n="costReducedShare">Parcela sujeita a 6% (%)</label><input id="costReducedShare" class="input-field" type="number" min="0" max="100" value="50" oninput="updateCostEstimate()"></div>
             <label class="cost-consent"><input id="costTaxResponsibility" type="checkbox"><span data-i18n="costTaxConsent">Confirmo que devo validar o enquadramento fiscal aplicável.</span></label>
           </fieldset>
+          <fieldset class="cost-fieldset">
+            <legend><span data-i18n="costFinanceTitle">Financiamento da obra</span> <small data-i18n="costOptional">(opcional)</small></legend>
+            <p data-i18n="costFinanceIntro">Escolha uma modalidade apenas para simular o esforço financeiro. Não é uma proposta de crédito, recomendação bancária ou confirmação de aprovação.</p>
+            <div class="input-grid">
+              <div><label for="costFinanceType" data-i18n="costFinanceType">Modalidade</label><select id="costFinanceType" class="input-field" onchange="updateCostEstimate()"><option value="none" data-i18n="costFinanceNone">Sem financiamento / apenas capitais próprios</option><option value="construction" data-i18n="costFinanceConstruction">Crédito à habitação para construção</option><option value="works" data-i18n="costFinanceWorks">Crédito hipotecário para obras</option><option value="personal" data-i18n="costFinancePersonal">Crédito pessoal para obras</option></select></div>
+              <div><label for="costOwnCapital" data-i18n="costOwnCapital">Capitais próprios disponíveis (€)</label><input id="costOwnCapital" class="input-field" type="number" min="0" value="0" oninput="updateCostEstimate()"></div>
+              <div><label for="costLoanAmount" data-i18n="costLoanAmount">Montante a financiar (€)</label><input id="costLoanAmount" class="input-field" type="number" min="0" value="0" oninput="updateCostEstimate()"></div>
+              <div><label for="costLoanYears" data-i18n="costLoanYears">Prazo (anos)</label><input id="costLoanYears" class="input-field" type="number" min="1" max="40" value="30" oninput="updateCostEstimate()"></div>
+              <div><label for="costLoanRate" data-i18n="costLoanRate">Taxa anual indicada pelo banco (%)</label><input id="costLoanRate" class="input-field" type="number" min="0" max="25" step="0.01" value="3.00" oninput="updateCostEstimate()"></div>
+            </div>
+            <p class="cost-note" data-i18n="costFinanceNote">Compare propostas pela TAEG, MTIC e Ficha de Informação Normalizada (FIN). Em crédito para construção, as libertações de capital podem ocorrer por fases de obra.</p>
+          </fieldset>
           <h4 data-i18n="costContact">Receber a estimativa em PDF</h4>
           <div class="input-grid"><input id="costName" class="input-field" data-i18n-placeholder="fullName" placeholder="Nome completo"><input id="costEmail" class="input-field" type="email" data-i18n-placeholder="reportEmail" placeholder="E-mail para receber o relatório"></div>
           <div class="cost-consent"><input id="costConsent" type="checkbox"><span>Li e aceito a <button type="button" class="privacy-link" onclick="openPrivacyPolicy()">Política de Privacidade</button>, incluindo o tratamento destes dados para gerar e enviar esta estimativa.</span></div>
@@ -882,6 +894,7 @@
           <p id="costResultLabel" data-i18n="costWithoutVat">Custo estimado sem IVA</p>
           <hr>
           <p id="costBreakdown">Inclui execução da obra, projetos/acompanhamento e reserva para imprevistos.</p>
+          <div id="costFinanceResult" class="cost-note" style="display:none"></div>
           <p class="cost-note" data-i18n="costDisclaimer">Não inclui aquisição do terreno, licenças, taxas, impostos, mobiliário ou validação fiscal. O valor final depende do projeto, medições e propostas de empreiteiros.</p>
         </aside>
       </div>
@@ -912,11 +925,11 @@
     <section class="privacy-dialog">
       <button class="privacy-close" type="button" aria-label="Fechar" onclick="closePrivacyPolicy()">×</button>
       <h2 id="privacyTitle">Privacidade e cookies</h2>
-      <p class="policy-meta"><strong>Versão: 7 de setembro de 2026.</strong> Esta informação explica, em linguagem simples, que dados tratamos para prestar os serviços do site e que armazenamento técnico é utilizado.</p>
+      <p class="policy-meta"><strong>Versão: 10 de setembro de 2026.</strong> Esta informação explica, em linguagem simples, que dados tratamos para prestar os serviços do site e que armazenamento técnico é utilizado.</p>
       <h3>Responsável pelo tratamento</h3>
       <p>Arq. Leonel Mendes, Av. José da Costa Mealha, n.º 133, 8100-500 Loulé. Contacto: <a href="mailto:geral@leonelmendes.com">geral@leonelmendes.com</a> · +351 960 010 870.</p>
       <h3>Dados e finalidades</h3>
-      <p>Consoante o serviço pedido, tratamos nome, e-mail, telefone, localização do prédio, intenção urbanística, elementos descritivos, documentos que decida anexar e resultados produzidos. Estes dados servem exclusivamente para responder a pedidos de reunião ou orçamento, elaborar e enviar pré-análises urbanísticas e estimativas de custo, e assegurar o respetivo acompanhamento técnico. Não vendemos dados nem os usamos para publicidade comportamental.</p>
+      <p>Consoante o serviço pedido, tratamos nome, e-mail, telefone, localização do prédio, intenção urbanística, elementos descritivos, documentos que decida anexar e resultados produzidos. Se usar a simulação opcional de financiamento, tratamos ainda os valores que introduzir de capitais próprios, montante, prazo e taxa exclusivamente para calcular a estimativa pedida; não apresentamos pedidos de crédito, não tomamos decisões de crédito e não comunicamos esses dados a bancos. Estes dados servem exclusivamente para responder a pedidos de reunião ou orçamento, elaborar e enviar pré-análises urbanísticas e estimativas de custo, e assegurar o respetivo acompanhamento técnico. Não vendemos dados nem os usamos para publicidade comportamental.</p>
       <h3>Base jurídica e conservação</h3>
       <p>Quando nos pede uma pré-análise, reunião, estimativa ou orçamento, o tratamento é necessário para responder às diligências pré-contratuais pedidas por si. A caixa em cada formulário confirma que leu esta informação e que os dados indicados podem ser usados para esse pedido; não é uma autorização para comunicações de marketing. Conservamos os elementos do pedido por até 24 meses, salvo se iniciar uma relação profissional, solicitar eliminação antes desse prazo ou existir obrigação legal de conservação.</p>
       <h3>IA, análise automática e decisão humana</h3>
@@ -966,6 +979,7 @@
   const ptTranslations = {};
   document.querySelectorAll('[data-i18n]').forEach((element) => { ptTranslations[element.dataset.i18n] = element.textContent.trim(); });
   document.querySelectorAll('[data-i18n-placeholder]').forEach((element) => { ptTranslations[element.dataset.i18nPlaceholder] = element.placeholder; });
+  Object.assign(ptTranslations, { costYearsShort:'anos' });
   const purposeOptions = {
     pt:['Selecione a intenção (recomendado)','Construir uma moradia','Construir várias moradias','Alterar ou ampliar construção existente','Loteamento','Turismo / alojamento','Apenas conhecer o potencial do terreno'],
     en:['Select your intention (recommended)','Build one home','Build several homes','Alter or extend an existing building','Subdivision','Tourism / accommodation','Only learn about the land potential'],
@@ -985,6 +999,10 @@
   Object.assign(translations.fr, { costService:'🧮 Estimateur de coût des travaux', costServiceCopy:'Obtenez une fourchette indicative pour une construction, extension ou réhabilitation.', costTitle:'Estimation du coût des travaux', costTrial:'Accès gratuit pendant la phase de test', costIntro:'Obtenez une estimation indicative pour soutenir une première décision. Le résultat inclut les travaux, les études/suivi et une provision pour imprévus ; il ne remplace pas un métré, un projet ou un devis d’entreprise.', costLocation:'Localisation du projet *', costLocationPlaceholder:'Adresse, localité ou référence cadastrale', costWorkType:'Type d’intervention', costQuality:'Niveau de construction', costArea:'Surface brute construite (m²) *', costFloors:'Étages', costPlotArea:'Surface du terrain (m²)', costDetails:'Éléments à considérer (facultatif)', costBasement:'Sous-sol (m²)', costPool:'Piscine (m²)', costExterior:'Aménagements extérieurs (m²)', costWalls:'Murs / clôtures (m)', costSlope:'Terrain en pente', costAccess:'Accès difficile', costVat:'Simulation optionnelle de TVA', costVatHelp:'Le taux est seulement une simulation indicative. L’éligibilité doit être confirmée par le client auprès d’un professionnel compétent ou de l’administration fiscale.', costVatNone:'Sans TVA - coût de base', costVat6:'TVA à 6%', costVat23:'TVA à 23%', costVatMixed:'Répartition entre 6% et 23%', costReducedShare:'Part soumise à 6% (%)', costTaxConsent:'Je confirme devoir valider le régime fiscal applicable.', costContact:'Recevoir l’estimation en PDF', costConsent:'J’autorise le traitement de ces données afin de générer et envoyer cette estimation.', costSend:'Générer et envoyer l’estimation PDF', costResultEyebrow:'Estimation indicative', costWithoutVat:'Coût estimé hors TVA', costDisclaimer:'N’inclut pas l’acquisition du terrain, licences, taxes, mobilier ou validation fiscale. La valeur finale dépend du projet, des métrés et des offres d’entreprises.' });
   Object.assign(translations.de, { costService:'🧮 Baukostenrechner', costServiceCopy:'Erhalten Sie eine unverbindliche Spanne für Neubau, Erweiterung oder Sanierung.', costTitle:'Baukostenschätzung', costTrial:'Kostenloser Zugang während der Testphase', costIntro:'Erhalten Sie eine unverbindliche Schätzung für eine erste Entscheidung. Das Ergebnis umfasst Bau, Planung/Begleitung und einen Risikopuffer; es ersetzt keine Mengenberechnung, Planung oder Unternehmerangebot.', costLocation:'Projektstandort *', costLocationPlaceholder:'Adresse, Ort oder Katasterreferenz', costWorkType:'Art der Maßnahme', costQuality:'Ausbaustandard', costArea:'Bruttogeschossfläche (m²) *', costFloors:'Geschosse', costPlotArea:'Grundstücksfläche (m²)', costDetails:'Zu berücksichtigende Elemente (optional)', costBasement:'Untergeschoss (m²)', costPool:'Pool (m²)', costExterior:'Außenanlagen (m²)', costWalls:'Mauern / Zäune (lfm)', costSlope:'Hanglage', costAccess:'Schwierige Zufahrt', costVat:'Optionale MwSt.-Simulation', costVatHelp:'Der Satz dient nur als unverbindliche Simulation. Die Berechtigung muss vom Kunden mit einer fachkundigen Person oder Steuerbehörde geprüft werden.', costVatNone:'Ohne MwSt. - Basiskosten', costVat6:'MwSt. 6%', costVat23:'MwSt. 23%', costVatMixed:'Aufteilung zwischen 6% und 23%', costReducedShare:'Anteil mit 6% (%)', costTaxConsent:'Ich bestätige, dass ich die steuerliche Einordnung prüfen muss.', costContact:'Schätzung als PDF erhalten', costConsent:'Ich stimme der Verarbeitung dieser Daten zur Erstellung und Zusendung dieser Schätzung zu.', costSend:'PDF-Schätzung erstellen und senden', costResultEyebrow:'Unverbindliche Schätzung', costWithoutVat:'Geschätzte Kosten ohne MwSt.', costDisclaimer:'Nicht enthalten sind Grundstückserwerb, Genehmigungen, Gebühren, Steuern, Einrichtung oder steuerliche Prüfung. Der Endwert hängt von Planung, Mengen und Angeboten ab.' });
   Object.assign(translations.es, { costService:'🧮 Estimador de coste de obra', costServiceCopy:'Obtenga un intervalo indicativo para obra nueva, ampliación o rehabilitación.', costTitle:'Estimación de coste de obra', costTrial:'Acceso gratuito durante la fase de pruebas', costIntro:'Obtenga una estimación orientativa para apoyar una decisión inicial. El resultado incluye obra, proyectos/seguimiento y una reserva de imprevistos; no sustituye mediciones, proyecto ni presupuesto de contratista.', costLocation:'Ubicación de la obra *', costLocationPlaceholder:'Dirección, localidad o referencia catastral', costWorkType:'Tipo de intervención', costQuality:'Nivel de construcción', costArea:'Superficie bruta construida (m²) *', costFloors:'Plantas', costPlotArea:'Superficie del terreno (m²)', costDetails:'Elementos a considerar (opcionales)', costBasement:'Sótano (m²)', costPool:'Piscina (m²)', costExterior:'Urbanización exterior (m²)', costWalls:'Muros / cerramientos (m)', costSlope:'Terreno inclinado', costAccess:'Acceso difícil', costVat:'Simulación opcional de IVA', costVatHelp:'El tipo es solo una simulación orientativa. La elegibilidad debe ser confirmada por el cliente ante profesional cualificado o administración tributaria.', costVatNone:'Sin IVA - coste base', costVat6:'IVA al 6%', costVat23:'IVA al 23%', costVatMixed:'Reparto entre 6% y 23%', costReducedShare:'Parte sujeta al 6% (%)', costTaxConsent:'Confirmo que debo validar el encuadre fiscal aplicable.', costContact:'Recibir la estimación en PDF', costConsent:'Autorizo el tratamiento de estos datos para generar y enviar esta estimación.', costSend:'Generar y enviar estimación en PDF', costResultEyebrow:'Estimación orientativa', costWithoutVat:'Coste estimado sin IVA', costDisclaimer:'No incluye adquisición del terreno, licencias, tasas, impuestos, mobiliario ni validación fiscal. El valor final depende del proyecto, mediciones y ofertas de contratistas.' });
+  Object.assign(translations.en, { costFinanceTitle:'Construction financing', costOptional:'(optional)', costFinanceIntro:'Choose an option only to simulate the financial commitment. This is not a credit offer, banking recommendation or approval confirmation.', costFinanceType:'Type', costFinanceNone:'No financing / own funds only', costFinanceConstruction:'Mortgage for construction', costFinanceWorks:'Secured loan for works', costFinancePersonal:'Personal loan for works', costOwnCapital:'Available own funds (€)', costLoanAmount:'Amount to finance (€)', costLoanYears:'Term (years)', costLoanRate:'Annual rate stated by the bank (%)', costFinanceNote:'Compare proposals using APR, total amount payable and the Standardised Information Sheet. For construction credit, capital may be released in stages.', costFinanceResultTitle:'Financing simulation', costFinanceMonthly:'Estimated monthly payment', costFinanceInterest:'Estimated interest over the term', costFinanceResources:'Funds indicated', costFinanceGap:'Indicative difference to estimated cost', costYearsShort:'years' });
+  Object.assign(translations.fr, { costFinanceTitle:'Financement des travaux', costOptional:'(facultatif)', costFinanceIntro:'Choisissez une option uniquement pour simuler l’effort financier. Il ne s’agit ni d’une offre de crédit, ni d’une recommandation bancaire, ni d’une confirmation d’accord.', costFinanceType:'Modalité', costFinanceNone:'Sans financement / fonds propres uniquement', costFinanceConstruction:'Crédit immobilier pour construction', costFinanceWorks:'Crédit hypothécaire pour travaux', costFinancePersonal:'Crédit personnel pour travaux', costOwnCapital:'Fonds propres disponibles (€)', costLoanAmount:'Montant à financer (€)', costLoanYears:'Durée (années)', costLoanRate:'Taux annuel indiqué par la banque (%)', costFinanceNote:'Comparez les propositions selon le TAEG, le montant total dû et la fiche d’information normalisée. Pour la construction, le capital peut être libéré par étapes.', costFinanceResultTitle:'Simulation de financement', costFinanceMonthly:'Mensualité estimée', costFinanceInterest:'Intérêts estimés sur la durée', costFinanceResources:'Fonds indiqués', costFinanceGap:'Écart indicatif avec le coût estimé', costYearsShort:'ans' });
+  Object.assign(translations.de, { costFinanceTitle:'Baufinanzierung', costOptional:'(optional)', costFinanceIntro:'Wählen Sie eine Option nur zur Simulation der finanziellen Belastung. Dies ist weder ein Kreditangebot noch eine Bankempfehlung oder Zusage.', costFinanceType:'Art', costFinanceNone:'Keine Finanzierung / nur Eigenmittel', costFinanceConstruction:'Baufinanzierung', costFinanceWorks:'Besichertes Darlehen für Arbeiten', costFinancePersonal:'Ratenkredit für Arbeiten', costOwnCapital:'Verfügbare Eigenmittel (€)', costLoanAmount:'Finanzierungsbetrag (€)', costLoanYears:'Laufzeit (Jahre)', costLoanRate:'Von der Bank genannter Jahreszins (%)', costFinanceNote:'Vergleichen Sie Angebote anhand des effektiven Jahreszinses, Gesamtbetrags und Standardinformationsblatts. Bei Baukrediten kann Kapital in Bauphasen ausgezahlt werden.', costFinanceResultTitle:'Finanzierungssimulation', costFinanceMonthly:'Geschätzte Monatsrate', costFinanceInterest:'Geschätzte Zinsen über die Laufzeit', costFinanceResources:'Angegebene Mittel', costFinanceGap:'Indikativer Unterschied zu den geschätzten Kosten', costYearsShort:'Jahre' });
+  Object.assign(translations.es, { costFinanceTitle:'Financiación de obra', costOptional:'(opcional)', costFinanceIntro:'Elija una opción solo para simular el esfuerzo financiero. No es una oferta de crédito, recomendación bancaria ni confirmación de aprobación.', costFinanceType:'Modalidad', costFinanceNone:'Sin financiación / solo fondos propios', costFinanceConstruction:'Crédito hipotecario para construcción', costFinanceWorks:'Crédito con garantía para obras', costFinancePersonal:'Crédito personal para obras', costOwnCapital:'Fondos propios disponibles (€)', costLoanAmount:'Importe a financiar (€)', costLoanYears:'Plazo (años)', costLoanRate:'Tipo anual indicado por el banco (%)', costFinanceNote:'Compare propuestas por TAEG, importe total adeudado y ficha europea de información normalizada. En construcción, el capital puede liberarse por fases.', costFinanceResultTitle:'Simulación de financiación', costFinanceMonthly:'Cuota mensual estimada', costFinanceInterest:'Intereses estimados en el plazo', costFinanceResources:'Fondos indicados', costFinanceGap:'Diferencia indicativa frente al coste estimado', costYearsShort:'años' });
   function t(key){ return (translations[document.documentElement.lang] || ptTranslations)[key] || ptTranslations[key] || key; }
   function setLanguage(language){
     const lang = translations[language] ? language : 'pt';
@@ -1474,7 +1492,7 @@
     try {
       const resp = await fetch('/.netlify/functions/analisar-planta', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, documentos: documentsForAnalysis, localizacao: selectedLocation, objetivo: document.getElementById('pdmObjetivo').value, descricao: document.getElementById('pdmUserMsg').value.trim(), privacyConsent: true, privacyPolicyVersion: '2026-09-07' })
+        body: JSON.stringify({ email, documentos: documentsForAnalysis, localizacao: selectedLocation, objetivo: document.getElementById('pdmObjetivo').value, descricao: document.getElementById('pdmUserMsg').value.trim(), privacyConsent: true, privacyPolicyVersion: '2026-09-10' })
       });
       const data = await readJsonResponse(resp, 'A análise não devolveu uma resposta válida');
       if (!resp.ok) throw new Error(data.error || `Não foi possível concluir a análise (resposta ${resp.status} do servidor).`);
@@ -1611,7 +1629,7 @@
     try {
       const response = await fetch('/.netlify/functions/enviar-relatorio', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ to: email, reportText: copy.innerText, reportHtml: copy.innerHTML, location: selectedLocation, documentPlan: orderingPlan ? { base64: orderingPlan.base64, mimeType: orderingPlan.mimeType, source: 'Planta de Localização oficial — PDM / Ordenamento; polígono assinalado pelo requerente' } : null, privacyConsent: true, privacyPolicyVersion: '2026-09-07' }),
+        body: JSON.stringify({ to: email, reportText: copy.innerText, reportHtml: copy.innerHTML, location: selectedLocation, documentPlan: orderingPlan ? { base64: orderingPlan.base64, mimeType: orderingPlan.mimeType, source: 'Planta de Localização oficial — PDM / Ordenamento; polígono assinalado pelo requerente' } : null, privacyConsent: true, privacyPolicyVersion: '2026-09-10' }),
       });
       const data = await readJsonResponse(response, 'O serviço de envio de e-mail não devolveu uma resposta válida');
       if (!response.ok) throw new Error(data.error || 'Não foi possível enviar o relatório.');
@@ -1664,7 +1682,7 @@
 
       button.textContent = document.documentElement.lang === 'pt' ? 'A enviar pedido…' : 'Sending request…';
       const response = await fetch('/.netlify/functions/enviar-pedido-reuniao', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ date, time, name, phone, email, privacyConsent: true, privacyPolicyVersion: '2026-09-07' })
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ date, time, name, phone, email, privacyConsent: true, privacyPolicyVersion: '2026-09-10' })
       });
       const data = await readJsonResponse(response, 'O pedido de reunião não devolveu uma resposta válida');
       if (!response.ok) {
@@ -1700,7 +1718,7 @@
     try {
       const response = await fetch('/.netlify/functions/enviar-pedido-orcamento', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, phone, description, documents, privacyConsent: true, privacyPolicyVersion: '2026-09-07' })
+        body: JSON.stringify({ name, email, phone, description, documents, privacyConsent: true, privacyPolicyVersion: '2026-09-10' })
       });
       const data = await readJsonResponse(response, 'O pedido de orçamento não devolveu uma resposta válida');
       if (!response.ok) throw new Error(data.error || `resposta ${response.status} do servidor`);
@@ -1711,11 +1729,24 @@
   }
 
   /* ---------- Estimativa de custo de obra ---------- */
-  const COST_RATES = { economica:[1800,2200], media:[2100,2600], media_alta:[2400,3200], superior:[3100,4300], luxo:[4200,6000] };
+  const COST_RATES = { economica:[1700,2100], media:[2100,2400], media_alta:[2400,3200], superior:[3100,4300], luxo:[4200,6000] };
   const euro = new Intl.NumberFormat('pt-PT', { style:'currency', currency:'EUR', maximumFractionDigits:0 });
   function costNumber(id, fallback = 0){
     const value = Number(document.getElementById(id)?.value);
     return Number.isFinite(value) ? Math.max(0, value) : fallback;
+  }
+  function calculateFinancing(){
+    const type = document.getElementById('costFinanceType')?.value || 'none';
+    const ownCapital = costNumber('costOwnCapital');
+    const amount = costNumber('costLoanAmount');
+    const years = Math.min(40, Math.max(1, costNumber('costLoanYears', 30)));
+    const annualRate = Math.min(25, costNumber('costLoanRate', 3));
+    if (type === 'none' || amount <= 0) return { type, ownCapital, amount:0, years, annualRate, monthly:0, total:0, interest:0 };
+    const months = Math.round(years * 12);
+    const monthlyRate = annualRate / 100 / 12;
+    const monthly = monthlyRate === 0 ? amount / months : amount * monthlyRate / (1 - Math.pow(1 + monthlyRate, -months));
+    const total = monthly * months;
+    return { type, ownCapital, amount, years, annualRate, monthly, total, interest:Math.max(0, total - amount) };
   }
   function calculateCostEstimate(){
     const habitable = costNumber('costHabitable', 200), terraces = costNumber('costTerraces', 30), garage = costNumber('costGarage', 30), basement = costNumber('costBasement'), technical = costNumber('costTechnical', 10), pool = costNumber('costPool'), exterior = costNumber('costExterior'), walls = costNumber('costWalls');
@@ -1724,13 +1755,12 @@
     const workType = document.getElementById('costWorkType').value;
     const quality = document.getElementById('costQuality').value;
     const [baseLow, baseHigh] = COST_RATES[quality] || COST_RATES.media_alta;
-    const typeFactor = workType === 'reabilitacao' ? 1.15 : workType === 'ampliacao' ? 1.08 : 1;
-    const complexity = 1 + (floors - 1) * .025 + (document.getElementById('costSlope').checked ? .06 : 0) + (document.getElementById('costDifficultAccess').checked ? .04 : 0);
-    const qualityFactor = quality === 'economica' ? .82 : quality === 'media' ? .94 : quality === 'media_alta' ? 1 : quality === 'superior' ? 1.22 : 1.55;
-    const coreLow = (habitable * baseLow + terraces * baseLow * .45 + garage * baseLow * .55 + technical * baseLow * .60) * typeFactor * complexity;
-    const coreHigh = (habitable * baseHigh + terraces * baseHigh * .45 + garage * baseHigh * .55 + technical * baseHigh * .60) * typeFactor * complexity;
-    const extrasLow = (basement * 900 + pool * 1050 + exterior * 140 + walls * 280) * qualityFactor;
-    const extrasHigh = (basement * 1400 + pool * 1600 + exterior * 240 + walls * 480) * qualityFactor;
+    const typeFactor = workType === 'reabilitacao' ? 1.15 : workType === 'ampliacao' ? 1.06 : 1;
+    const complexity = 1 + (floors - 1) * .025 + (document.getElementById('costSlope').checked ? .04 : 0) + (document.getElementById('costDifficultAccess').checked ? .03 : 0);
+    const coreLow = (habitable * baseLow + terraces * baseLow * .40 + garage * baseLow * .50 + technical * baseLow * .55) * typeFactor * complexity;
+    const coreHigh = (habitable * baseHigh + terraces * baseHigh * .40 + garage * baseHigh * .50 + technical * baseHigh * .55) * typeFactor * complexity;
+    const extrasLow = basement * 900 + pool * 900 + exterior * 140 + walls * 250;
+    const extrasHigh = basement * 1400 + pool * 1600 + exterior * 240 + walls * 400;
     const worksLow = coreLow + extrasLow;
     const worksHigh = coreHigh + extrasHigh;
     const feesLow = worksLow * .08, feesHigh = worksHigh * .13;
@@ -1739,7 +1769,7 @@
     const vatMode = document.getElementById('costVatMode').value;
     const share = Math.min(100, costNumber('costReducedShare', 50));
     const vatRate = vatMode === 'vat23' ? .23 : vatMode === 'vat6' ? .06 : vatMode === 'mixed' ? share / 100 * .06 + (1 - share / 100) * .23 : 0;
-    return { habitable, terraces, garage, basement, technical, pool, exterior, walls, area, floors, netLow, netHigh, totalLow:netLow * (1 + vatRate), totalHigh:netHigh * (1 + vatRate), vatMode };
+    return { habitable, terraces, garage, basement, technical, pool, exterior, walls, area, floors, netLow, netHigh, totalLow:netLow * (1 + vatRate), totalHigh:netHigh * (1 + vatRate), vatMode, financing:calculateFinancing() };
   }
   function updateCostEstimate(){
     const result = calculateCostEstimate();
@@ -1751,6 +1781,18 @@
     document.getElementById('costBreakdown').textContent = document.documentElement.lang === 'pt'
       ? `Baseado num programa de ${result.area.toLocaleString('pt-PT')} m² de área construída descrita, incluindo execução, projetos/acompanhamento e reserva para imprevistos.`
       : `Based on a described construction programme of ${result.area.toLocaleString('pt-PT')} m², including construction, design/support and contingency.`;
+    const financeBox = document.getElementById('costFinanceResult');
+    const finance = result.financing;
+    if (finance.amount > 0) {
+      const typeLabels = { construction:t('costFinanceConstruction'), works:t('costFinanceWorks'), personal:t('costFinancePersonal') };
+      const availableFunds = finance.ownCapital + finance.amount;
+      const estimatedCostLow = hasVat ? result.totalLow : result.netLow;
+      const estimatedCostHigh = hasVat ? result.totalHigh : result.netHigh;
+      const gapLow = Math.max(0, estimatedCostLow - availableFunds);
+      const gapHigh = Math.max(0, estimatedCostHigh - availableFunds);
+      financeBox.style.display = 'block';
+      financeBox.innerHTML = `<strong>${t('costFinanceResultTitle')}</strong><br>${typeLabels[finance.type] || t('costFinanceTitle')}: ${euro.format(finance.amount)} · ${finance.years} ${t('costYearsShort')} · ${finance.annualRate.toLocaleString('pt-PT',{maximumFractionDigits:2})}%.<br>${t('costFinanceMonthly')}: <strong>${euro.format(finance.monthly)}</strong> · ${t('costFinanceInterest').toLowerCase()}: ${euro.format(finance.interest)}.<br>${t('costFinanceResources')}: ${euro.format(availableFunds)} · ${t('costFinanceGap')}: ${gapHigh > 0 ? `${euro.format(gapLow)} a ${euro.format(gapHigh)}` : '—'}.<br><span style="font-size:.82em">${t('costFinanceNote')}</span>`;
+    } else financeBox.style.display = 'none';
   }
   async function sendCostEstimate(){
     const name = document.getElementById('costName').value.trim();
@@ -1774,7 +1816,9 @@
           basement:result.basement, technical:result.technical, pool:result.pool, exterior:result.exterior, walls:result.walls,
           slope:document.getElementById('costSlope').checked,
           difficultAccess:document.getElementById('costDifficultAccess').checked, vatMode:result.vatMode,
-          reducedShare:costNumber('costReducedShare',50), taxResponsibility:true, consent:true, privacyPolicyVersion:'2026-09-07',
+          financeType:result.financing.type, ownCapital:result.financing.ownCapital, loanAmount:result.financing.amount,
+          loanYears:result.financing.years, loanRate:result.financing.annualRate,
+          reducedShare:costNumber('costReducedShare',50), taxResponsibility:true, consent:true, privacyPolicyVersion:'2026-09-10',
           company:document.getElementById('costCompany').value,
         }),
       });
