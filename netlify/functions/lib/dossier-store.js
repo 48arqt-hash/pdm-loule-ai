@@ -6,7 +6,11 @@ const { Pool } = pg;
 let pool;
 let schemaPromise;
 
-const databaseUrl = () => process.env.NETLIFY_DB_URL || process.env.NETLIFY_DATABASE_URL || process.env.DATABASE_URL || '';
+// A ligação sem pool é a opção mais fiável para escrita curta de dossiers em
+// funções serverless. Mantemos as restantes variantes para instalações já
+// existentes, mas evitamos que o endpoint pooled com credencial antiga
+// bloqueie a criação do Dossier Digital.
+const databaseUrl = () => process.env.NETLIFY_DATABASE_URL_UNPOOLED || process.env.NETLIFY_DB_URL || process.env.NETLIFY_DATABASE_URL || process.env.DATABASE_URL || '';
 const accessSecret = () => process.env.DOSSIER_ACCESS_SECRET || process.env.ANALYSIS_SESSION_SECRET || '';
 
 function database() {

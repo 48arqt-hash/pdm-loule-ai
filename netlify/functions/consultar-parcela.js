@@ -253,6 +253,27 @@ async function municipalityAt(lat, lng) {
   return profile ? { ...profile, crusWfs: crusWfsForMunicipality(profile), fonte: 'Direção-Geral do Território - CAOP', propriedades: feature?.properties || {} } : rawName ? { nome: rawName, estado: 'Concelho do Algarve sem perfil municipal configurado', geoportal: null, regulamentos: [], capacidade: 'Aplicam-se apenas as camadas regionais e nacionais até validação do perfil municipal.', fonte: 'Direção-Geral do Território - CAOP', propriedades: feature?.properties || {} } : null;
 }
 
+async function fallbackMunicipalityAt(lat, lng) {
+  // A CAOP/DGT continua a ser a fonte territorial principal. Esta consulta
+  // só é usada em caso de indisponibilidade, para saber que carta municipal
+  // oficial deve ser pedida para o relatório - nunca para classificar o solo.
+  const url = new URL('https://nominatim.openstreetmap.org/reverse');
+  url.search = new URLSearchParams({ format: 'jsonv2', lat: String(lat), lon: String(lng), zoom: '10', addressdetails: '1' }).toString();
+  try {
+    const response = await fetch(url, { headers: { Accept: 'application/json', 'User-Agent': 'LeonelMendes-Urbanismo/1.0 (geral@leonelmendes.com)' }, signal: AbortSignal.timeout(4_500) });
+    if (!response.ok) return null;
+    const payload = await response.json();
+    const address = payload?.address || {};
+    const candidates = [address.municipality, address.county, address.city, address.town, address.village, address.city_district].filter(Boolean);
+    const candidate = candidates.find((value) => municipalityProfile(value));
+    const profile = municipalityProfile(candidate || '');
+    return profile ? { ...profile, crusWfs: crusWfsForMunicipality(profile), fonte: 'Identificação territorial de recurso (OpenStreetMap/Nominatim; PDM confirmado em fonte municipal)', propriedades: {} } : null;
+  } catch (error) {
+    console.warn('municipality_fallback_unavailable', error.message);
+    return null;
+  }
+}
+
 async function municipalPlans(lat, lng) {
   const params = new URLSearchParams({ f: 'json', geometry: JSON.stringify({ x: lng, y: lat, spatialReference: { wkid: 4326 } }), geometryType: 'esriGeometryPoint', inSR: '4326', spatialRel: 'esriSpatialRelIntersects', outFields: 'NOME,FREGUESIA,REGULAMENTO,CONDICIONANTES,TIPO,DATAVIGOR', returnGeometry: 'false' });
   return (await fetchJson(`${LOULÉ_PLANS}?${params}`)).features || [];
@@ -470,6 +491,7 @@ export const handler = async (event) => {
       const profile = municipalityProfile(crusMunicipality);
       if (profile) municipality = { ...profile, crusWfs: crusWfsForMunicipality(profile), fonte: 'Direção-Geral do Território - CRUS', propriedades: useFeatures[0]?.properties || {} };
     }
+    if (!municipality) municipality = await fallbackMunicipalityAt(representativePoint.latitude, representativePoint.longitude);
     const plans = municipality?.nome === 'Loulé'
       ? await Promise.allSettled([municipalPlans(analysisLat, analysisLng)]).then(([result]) => result.status === 'fulfilled' ? result.value : [])
       : [];
