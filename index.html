@@ -1763,7 +1763,7 @@
     const extrasHigh = basement * 1400 + pool * 1600 + exterior * 240 + walls * 400;
     const worksLow = coreLow + extrasLow;
     const worksHigh = coreHigh + extrasHigh;
-    const feesLow = worksLow * .08, feesHigh = worksHigh * .13;
+    const feesLow = Math.max(8000, worksLow * .05), feesHigh = Math.max(8000, worksHigh * .08);
     const contingencyLow = worksLow * .08, contingencyHigh = worksHigh * .15;
     const netLow = worksLow + feesLow + contingencyLow, netHigh = worksHigh + feesHigh + contingencyHigh;
     const vatMode = document.getElementById('costVatMode').value;
