@@ -171,15 +171,33 @@ function calculateRequestedCostEstimate(request) {
   const feesHigh = Math.max(8000, worksHigh * 0.08);
   const contingencyLow = worksLow * 0.08;
   const contingencyHigh = worksHigh * 0.15;
-  return { workType, quality, habitable, terraces, garage, technical, basement, pool, exterior, walls, floors, worksLow, worksHigh, feesLow, feesHigh, contingencyLow, contingencyHigh, netLow: worksLow + feesLow + contingencyLow, netHigh: worksHigh + feesHigh + contingencyHigh };
+  return { workType, quality, habitable, terraces, garage, technical, basement, pool, exterior, walls, floors, slope: Boolean(request.slope), difficultAccess: Boolean(request.difficultAccess), worksLow, worksHigh, feesLow, feesHigh, contingencyLow, contingencyHigh, netLow: worksLow + feesLow + contingencyLow, netHigh: worksHigh + feesHigh + contingencyHigh };
 }
 
 function renderCostEstimateSection(estimate) {
   if (!estimate) return '';
-  return `<h5>7. Estimativa indicativa de custo de obra</h5>
-    <p>Estimativa facultativa preparada a partir do programa indicado pelo cliente. Não constitui orçamento, proposta contratual ou confirmação de viabilidade.</p>
-    <table><thead><tr><th>Elemento</th><th>Intervalo indicativo</th></tr></thead><tbody>
+  const programme = [
+    `Área interior prevista: ${estimate.habitable} m²`,
+    `Pisos: ${estimate.floors}`,
+    estimate.terraces ? `Terraços e alpendres: ${estimate.terraces} m²` : '',
+    estimate.garage ? `Garagem coberta: ${estimate.garage} m²` : '',
+    estimate.basement ? `Cave: ${estimate.basement} m²` : '',
+    estimate.technical ? `Áreas técnicas e arrumos: ${estimate.technical} m²` : '',
+    estimate.pool ? `Piscina: ${estimate.pool} m²` : '',
+    estimate.exterior ? `Arranjos exteriores: ${estimate.exterior} m²` : '',
+    estimate.walls ? `Muros e vedações: ${estimate.walls} ml` : '',
+  ].filter(Boolean).join(' · ');
+  const conditions = [estimate.slope ? 'terreno inclinado' : '', estimate.difficultAccess ? 'acesso difícil' : ''].filter(Boolean).join(' · ') || 'sem condicionantes adicionais indicadas';
+  return `<h5>7. Estimativa indicativa de custo de obra - dados indicados</h5>
+    <p>Programa introduzido pelo cliente para esta simulação. Não confirma a viabilidade urbanística, as áreas licenciáveis ou o orçamento final.</p>
+    <table><thead><tr><th>Elemento</th><th>Indicação do cliente</th></tr></thead><tbody>
       <tr><td>Intervenção / padrão</td><td>${escapeHtml(COST_WORK_LABELS[estimate.workType])} / ${escapeHtml(COST_QUALITY_LABELS[estimate.quality])}</td></tr>
+      <tr><td>Programa de áreas</td><td>${escapeHtml(programme)}</td></tr>
+      <tr><td>Condições assinaladas</td><td>${escapeHtml(conditions)}</td></tr>
+    </tbody></table>
+    <h5>7.1 Estimativa indicativa de custo de obra - cálculo do atelier</h5>
+    <p>Intervalo calculado pelo atelier a partir do programa acima, sem IVA.</p>
+    <table><thead><tr><th>Componente</th><th>Intervalo indicativo</th></tr></thead><tbody>
       <tr><td>Execução da obra</td><td>${COST_EURO.format(estimate.worksLow)} a ${COST_EURO.format(estimate.worksHigh)}</td></tr>
       <tr><td>Projetos e acompanhamento <small>(mínimo de 8.000 €)</small></td><td>${COST_EURO.format(estimate.feesLow)} a ${COST_EURO.format(estimate.feesHigh)}</td></tr>
       <tr><td>Reserva para imprevistos</td><td>${COST_EURO.format(estimate.contingencyLow)} a ${COST_EURO.format(estimate.contingencyHigh)}</td></tr>
@@ -261,6 +279,13 @@ function clarifyReportForAvailableEvidence(report, localizacao, documents) {
     };
   }
   return result;
+}
+
+function prioritizeArchitectMeeting(report) {
+  const meeting = 'Agendar uma reunião de consultoria com o Arq. Leonel Mendes para aprofundar a viabilidade, confirmar os elementos em falta e definir a estratégia do processo.';
+  const existing = Array.isArray(report?.proximos_passos) ? report.proximos_passos : [];
+  const remaining = existing.filter((item) => !/reuni[aã]o.*leonel mendes|arq\.?\s*leonel mendes/i.test(String(item)));
+  return { ...report, proximos_passos: [meeting, ...remaining] };
 }
 
 function officialRegulationSources(localizacao) {
@@ -495,6 +520,7 @@ export const handler = async (event) => {
     }
     report = enrichLouleDispersedBuildingRules(report, body.localizacao);
     report = clarifyReportForAvailableEvidence(report, body.localizacao, documents);
+    report = prioritizeArchitectMeeting(report);
     const usage = responseBody.usageMetadata || {};
     console.info('analysis_usage', JSON.stringify({
       model,

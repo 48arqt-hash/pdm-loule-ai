@@ -102,7 +102,7 @@ function drawExecutiveSummary(doc, report, location) {
 
 function drawSectionTitle(doc, title) {
   ensureSpace(doc, 34);
-  doc.font('Helvetica-Bold').fontSize(12).fillColor(COLORS.navy).text(title.replace(/^\d+\.\s*/, ''), 47, doc.y);
+  doc.font('Helvetica-Bold').fontSize(12).fillColor(COLORS.navy).text(title.replace(/^\d+(?:\.\d+)?\.?\s*/, ''), 47, doc.y);
   doc.moveDown(0.32);
   doc.strokeColor(COLORS.gold).lineWidth(1.5).moveTo(47, doc.y).lineTo(548, doc.y).stroke();
   doc.moveDown(0.55);
@@ -353,11 +353,11 @@ async function officialPlanContext(location) {
   }
 }
 
-function drawLocationMap(doc, aerial, location) {
+function drawLocationMap(doc, aerial, location, { compact = false } = {}) {
   if (!aerial) return;
-  ensureSpace(doc, 360);
+  ensureSpace(doc, compact ? 238 : 360);
   drawSectionTitle(doc, 'Localização analisada');
-  const x = 47; const y = doc.y; const width = 501; const height = 300;
+  const x = 47; const y = doc.y; const width = 501; const height = compact ? 180 : 300;
   if (aerial.image) {
     if (!safeImage(doc, aerial.image, x, y, { width, height }, 'vista aérea')) return;
   } else {
@@ -542,9 +542,10 @@ export async function createProfessionalPdf({
       doc.moveDown(0.9);
     });
 
+    // A fotografia aérea é a referência visual mais importante para o cliente:
+    // entra logo na capa, em formato compacto, antes das secções técnicas.
+    drawLocationMap(doc, aerial, location, { compact: true });
     drawExecutiveSummary(doc, report, location);
-
-    drawLocationMap(doc, aerial, location);
     // A planta entregue pelo cliente tem prioridade: contém a peça emitida
     // pela entidade e o polígono que serviu de base à análise, qualquer que
     // seja o município. Se não existir, usa-se o serviço cartográfico oficial
