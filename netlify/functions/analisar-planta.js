@@ -2,6 +2,7 @@ import { hasProfessionalAccess } from './lib/access.js';
 import { sendReportEmail, validEmail } from './lib/report-email.js';
 import { preexistenceRulesFor, regulatoryRuleCatalogFor, regulatoryRulesFor } from './lib/territorial-data.js';
 import { beginAnalysis, finishAnalysis } from './lib/operation-metrics.js';
+import { addDossierDocuments, createDossier } from './lib/dossier-store.js';
 
 // Uma Planta de Localização grande pode originar duas imagens leves (PDM e
 // legenda), mantendo os quatro documentos originais indicados ao utilizador.
@@ -532,6 +533,18 @@ export const handler = async (event) => {
 
     const reply = `${renderReport(report)}${renderCostEstimateSection(costEstimate)}`;
     const reportText = reply.replace(/<br\s*\/?\s*>/gi, '\n').replace(/<\/p>|<\/li>|<\/tr>/gi, '\n').replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#039;/g, "'").replace(/\n\s*/g, '\n').trim();
+    let dossier = null;
+    try {
+      dossier = await createDossier({ email: body.email, location: body.localizacao || null, reportHtml: reply, reportText, costEstimate });
+      if (dossier?.available && documents.length) await addDossierDocuments({ id: dossier.id, token: dossier.token, documents });
+    } catch (dossierError) {
+      // O dossier é complementar: uma indisponibilidade nunca pode impedir a
+      // entrega da pré-análise nem expor dados do pedido no log.
+      console.warn('dossier_create_unavailable', dossierError?.message || 'unknown');
+      dossier = null;
+    }
+    const siteUrl = String(process.env.PUBLIC_SITE_URL || 'https://leonelmendes.com').replace(/\/$/, '');
+    const dossierLink = dossier?.available ? `${siteUrl}/dossier.html?id=${encodeURIComponent(dossier.id)}&token=${encodeURIComponent(dossier.token)}` : null;
     let emailSent = false;
     let emailError = null;
     try {
@@ -539,13 +552,13 @@ export const handler = async (event) => {
       const documentPlan = orderingPlan?.base64 && ['image/jpeg', 'image/png'].includes(orderingPlan.mimeType)
         ? { image: Buffer.from(orderingPlan.base64, 'base64'), source: 'Planta de Localização oficial — PDM / Ordenamento; polígono assinalado pelo requerente' }
         : null;
-      await sendReportEmail({ to: body.email, reportText, reportHtml: reply, location: body.localizacao || null, privacyPolicyVersion: body.privacyPolicyVersion || null, documentPlan });
+      await sendReportEmail({ to: body.email, reportText, reportHtml: reply, location: body.localizacao || null, privacyPolicyVersion: body.privacyPolicyVersion || null, documentPlan, dossierLink });
       emailSent = true;
     } catch (emailFailure) {
       console.error('automatic_report_email_error', emailFailure);
       emailError = 'A análise foi concluída, mas não foi possível enviar automaticamente o relatório por e-mail.';
     }
-    return json(200, { reply, resumo: report.conclusao?.estado || 'Concluído', emailSent, emailError });
+    return json(200, { reply, resumo: report.conclusao?.estado || 'Concluído', emailSent, emailError, dossierAvailable: Boolean(dossier?.available), dossierLink });
   } catch (error) {
     console.error('analysis_error', error);
     if (error?.code === 'GEMINI_TIMEOUT') return json(503, { error: error.message });

@@ -950,7 +950,7 @@
       <h3>Dados e finalidades</h3>
       <p>Consoante o serviço pedido, tratamos nome, e-mail, telefone, localização do prédio, intenção urbanística, elementos descritivos, documentos que decida anexar e resultados produzidos. Se usar a simulação opcional de financiamento, tratamos ainda os valores que introduzir de capitais próprios, montante, prazo e taxa exclusivamente para calcular a estimativa pedida; não apresentamos pedidos de crédito, não tomamos decisões de crédito e não comunicamos esses dados a bancos. Estes dados servem exclusivamente para responder a pedidos de reunião ou orçamento, elaborar e enviar pré-análises urbanísticas e estimativas de custo, e assegurar o respetivo acompanhamento técnico. Não vendemos dados nem os usamos para publicidade comportamental.</p>
       <h3>Base jurídica e conservação</h3>
-      <p>Quando nos pede uma pré-análise, reunião, estimativa ou orçamento, o tratamento é necessário para responder às diligências pré-contratuais pedidas por si. A caixa em cada formulário confirma que leu esta informação e que os dados indicados podem ser usados para esse pedido; não é uma autorização para comunicações de marketing. Conservamos os elementos do pedido por até 24 meses, salvo se iniciar uma relação profissional, solicitar eliminação antes desse prazo ou existir obrigação legal de conservação.</p>
+      <p>Quando nos pede uma pré-análise, reunião, estimativa ou orçamento, o tratamento é necessário para responder às diligências pré-contratuais pedidas por si. A caixa em cada formulário confirma que leu esta informação e que os dados indicados podem ser usados para esse pedido; não é uma autorização para comunicações de marketing. Quando o Dossier Digital estiver ativo, associamos o relatório, localização e documentos ao respetivo dossier e enviamos um link privado para aceder e acrescentar documentos. O link é uma credencial de acesso: não o reencaminhe. Conservamos os elementos do pedido por até 24 meses, salvo se iniciar uma relação profissional, solicitar eliminação antes desse prazo ou existir obrigação legal de conservação.</p>
       <h3>IA, análise automática e decisão humana</h3>
       <p>Na pré-análise, os documentos e elementos do pedido podem ser processados pelo Google Gemini para gerar um relatório assistido por IA. O resultado é preliminar, não decide licenças nem produz efeitos jurídicos. Pode pedir revisão humana pelo Atelier antes de tomar decisões com base no relatório.</p>
       <h3>Fornecedores e fontes externas</h3>
@@ -1545,7 +1545,7 @@
       if (!resp.ok) throw new Error(data.error || `Não foi possível concluir a análise (resposta ${resp.status} do servidor).`);
       loading.remove(); renderReport(data.reply);
       if (documentsSkipped) addMsg('ℹ Os PDFs selecionados não foram enviados por excederem o limite técnico. Esta pré-análise foi realizada pela parcela selecionada, cadastro e camadas territoriais disponíveis.', 'system');
-      if (data.emailSent) addMsg(`✓ Relatório em PDF enviado para ${escapeText(email)} e registado no atelier.`, 'system');
+      if (data.emailSent) addMsg(`✓ Relatório em PDF enviado para ${escapeText(email)} e registado no atelier.${data.dossierAvailable ? ' Recebeu também um link privado para o seu Dossier Digital.' : ''}`, 'system');
       if (data.emailError) addMsg(`⚠ ${escapeText(data.emailError)} Pode tentar o envio manual abaixo.`, 'system');
     } catch (err) {
       loading.remove(); erroEl.textContent = err.message || 'Não foi possível processar a análise.'; erroEl.style.display = 'block';
