@@ -4,6 +4,14 @@ const COLORS = { navy: '#173D58', teal: '#24565D', gold: '#B9954F', ink: '#17201
 const FOOTER_Y = 762;
 // Reserva espaço para o aviso legal imediatamente antes da linha do rodapé.
 const CONTENT_END_Y = 724;
+// As Functions da Netlify usam normalmente UTC. Esta conversão fixa a hora
+// legal de Portugal continental e acompanha automaticamente verão/inverno.
+function portugalDateTime(value = new Date()) {
+  return new Intl.DateTimeFormat('pt-PT', {
+    timeZone: 'Europe/Lisbon', year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+  }).format(value);
+}
 const LOGO_PNG = 'iVBORw0KGgoAAAANSUhEUgAAAWgAAAFoCAYAAAB65WHVAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAA99JREFUeNrs2NFtglAUgGFp2KNuUrsGT92AMIFuQNgAX5gDN8EN3ECPG7TGe2zp9yU3PN6cE/gf2GwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA+CUqKyir7ad90lXL0DXHhHne4/GVNNMcM53M9NBMH/HYJc00xkxnX/vz1VZQ3CHrw49zTLhnmzjT/Z6TmR6yS373BLqANysAEGgABBpAoAEQaACBBkCgARBoAIEGQKABBBoAgQZAoAEEGgCBBhBoAAQaQKABEGgABBpAoAEQaACBBkCgARBoAIEGQKABBBoAgQYQaAAEGgCBBhBoAAQaQKABEGgABBpAoAEQaACBBkCgAQQaAIEGQKABBBoAgQYQaAAEGgCBBhBoAAQaQKABEGgABBpAoAEQaACBBkCgAQQaAIEGQKABBBoAgQYQaAAEGgCBBhBoAAQaQKABEGgAgQZAoAEQaACBBkCgAQQaAIEGQKABBBoAgQYQaAAEGkCgARBoAAQaQKABEGgAgQZAoAEQaACBBkCgAQQaAIEGQKABBBoAgQYQaAAEGkCgARBoAAQaQKABEGgAgQZAoAEQaACBBkCgAQQaAIEGEGgABBoAgQYQaAAEGkCgARBoAAQaQKABEGgAgQZAoAEEGgCBBkCgAQQaAIEGEGgABBoAgQYQaAAEGkCgARBoAAQaQKABEGgAgQZAoAEEGgCBBkCgAQQaAIEGEGgABBoAgQYQaAAEGkCgARBoAIEGQKABEGgAgQZAoAEEGgCBBkCgAQQaAIEGEGgABBpAoAEQaAAEGkCgARBoAIEGQKABEGgAgQZAoAEEGgCBBkCgAQQaAIEGEGgABBpAoAEQaAAEGkCgARBogFWrrYAfusSZk+5arJv/rLKCstp+uiZdNQ9d82njsB5+cQAINAACDSDQAAg0gEADINAACDSAQAMg0AACDYBAAyDQAAINgEADCDQAAg0g0AAINAACDSDQAAg0gEADINAACDTAH1BZQVltP12TrlrijDbOC4xD15yt4flqK1iNbZyDNfACcxyBLsAvDgCBBkCgAQQaAIEGEGgABBoAgQYQaAAEGkCgARBoAAQaQKABEGgAgQZAoAEEGgCBBkCgAQQaAIEGEGgABBoAgQYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgO+7CTAADjYuvdIeZVQAAAAASUVORK5CYII=';
 
 function decodeHtml(value = '') {
@@ -532,7 +540,7 @@ export async function createProfessionalPdf({
     const report = parseReport(reportHtml, reportText, documentTitle);
     drawHeader(doc, documentLabel);
     doc.font('Helvetica-Bold').fontSize(20).fillColor(COLORS.navy).text(report.title, 47, doc.y);
-    doc.font('Helvetica').fontSize(9).fillColor(COLORS.muted).text(`Gerado em ${new Date().toLocaleString('pt-PT')}`, 47, doc.y + 5);
+    doc.font('Helvetica').fontSize(9).fillColor(COLORS.muted).text(`Gerado em ${portugalDateTime()}`, 47, doc.y + 5);
     doc.moveDown(1.4);
     const status = report.summary.find((line) => /^Resultado preliminar:/i.test(line))?.replace(/^Resultado preliminar:\s*/i, '');
     drawStatus(doc, status);
