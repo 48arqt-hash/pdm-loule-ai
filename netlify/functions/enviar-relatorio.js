@@ -31,7 +31,7 @@ export const handler = async (event) => {
     }
     const siteUrl = String(process.env.PUBLIC_SITE_URL || 'https://leonelmendes.com').replace(/\/$/, '');
     const dossierLink = dossier?.available ? `${siteUrl}/dossier.html?id=${encodeURIComponent(dossier.id)}&token=${encodeURIComponent(dossier.token)}` : null;
-    const sent = await sendReportEmail({ to, reportText, reportHtml, location, privacyPolicyVersion: privacyPolicyVersion || null, documentPlan: validPlan, dossierLink });
+    const sent = await sendReportEmail({ to, reportText, reportHtml, location, privacyPolicyVersion: privacyPolicyVersion || null, documentPlan: validPlan, dossierLink, reportReference: dossier?.reportReference || null });
     await recordOperation({ eventType: 'report_resend', email: to, municipality: location?.municipio?.nome || null }).catch((error) => console.warn('report_resend_tracking_unavailable', error.message));
     console.info('privacy_consent_recorded', JSON.stringify({ service: 'reenvio-relatorio', policyVersion: privacyPolicyVersion || 'não indicado', at: new Date().toISOString() }));
     console.info('report_email_sent', JSON.stringify(sent));

@@ -46,11 +46,12 @@ function parseReport(reportHtml = '', reportText = '', title = 'Relatório de Pr
   };
 }
 
-function drawHeader(doc, documentLabel = 'PRÉ-ANÁLISE URBANÍSTICA') {
+function drawHeader(doc, documentLabel = 'PRÉ-ANÁLISE URBANÍSTICA', reportReference = null) {
   doc.image(Buffer.from(LOGO_PNG, 'base64'), 22, 16, { fit: [72, 72] });
   doc.font('Helvetica-Bold').fontSize(10).fillColor(COLORS.navy).text('Arq. Leonel Mendes', 97, 45);
   doc.font('Helvetica').fontSize(7.5).fillColor(COLORS.muted).text('ARQUITETURA + INTELIGÊNCIA', 97, 59);
   doc.font('Helvetica-Bold').fontSize(7.5).fillColor(COLORS.gold).text(documentLabel, 360, 48, { width: 188, align: 'right' });
+  if (reportReference) doc.font('Helvetica').fontSize(6.8).fillColor(COLORS.muted).text(`RELATÓRIO N.º ${reportReference}`, 360, 61, { width: 188, align: 'right' });
   doc.strokeColor(COLORS.line).lineWidth(1).moveTo(47, 82).lineTo(548, 82).stroke();
   doc.y = 104;
 }
@@ -538,6 +539,7 @@ export async function createProfessionalPdf({
   location = null,
   documentTitle = 'Relatório de Pré-Análise Urbanística',
   documentLabel = 'PRÉ-ANÁLISE URBANÍSTICA',
+  reportReference = null,
   disclaimer = 'Pré-análise assistida por IA. Não constitui parecer municipal nem decisão de licenciamento.',
   documentPlan = null,
 }) {
@@ -548,10 +550,10 @@ export async function createProfessionalPdf({
     doc.on('data', (chunk) => chunks.push(chunk));
     doc.on('error', reject);
     doc.on('end', () => resolve(Buffer.concat(chunks)));
-    doc.on('pageAdded', () => drawHeader(doc, documentLabel));
+    doc.on('pageAdded', () => drawHeader(doc, documentLabel, reportReference));
 
     const report = parseReport(reportHtml, reportText, documentTitle);
-    drawHeader(doc, documentLabel);
+    drawHeader(doc, documentLabel, reportReference);
     doc.font('Helvetica-Bold').fontSize(20).fillColor(COLORS.navy).text(report.title, 47, doc.y);
     doc.font('Helvetica').fontSize(9).fillColor(COLORS.muted).text(`Gerado em ${portugalDateTime()}`, 47, doc.y + 5);
     doc.moveDown(1.4);

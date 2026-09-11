@@ -27,6 +27,7 @@ async function ready() {
     CREATE TABLE IF NOT EXISTS lm_dossiers (
       id UUID PRIMARY KEY,
       public_id TEXT UNIQUE NOT NULL,
+      report_reference TEXT UNIQUE,
       access_hash TEXT NOT NULL,
       email TEXT NOT NULL,
       origin TEXT NOT NULL DEFAULT 'leonelmendes',
@@ -35,6 +36,11 @@ async function ready() {
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       last_accessed_at TIMESTAMPTZ
+    );
+    ALTER TABLE lm_dossiers ADD COLUMN IF NOT EXISTS report_reference TEXT UNIQUE;
+    CREATE TABLE IF NOT EXISTS lm_report_sequences (
+      report_year INTEGER PRIMARY KEY,
+      next_number INTEGER NOT NULL
     );
     CREATE TABLE IF NOT EXISTS lm_dossier_reports (
       id UUID PRIMARY KEY,
@@ -75,9 +81,19 @@ export async function createDossier({ email, location = null, reportHtml, report
   const client = await db.connect();
   try {
     await client.query('BEGIN');
+    const year = new Date().getFullYear();
+    // A atribuição é atómica: dois relatórios criados em simultâneo nunca
+    // recebem o mesmo número. A referência é reiniciada automaticamente em
+    // cada ano civil, no formato simples pedido: 1/2026, 2/2026, etc.
+    const sequence = await client.query(`
+      INSERT INTO lm_report_sequences (report_year,next_number) VALUES ($1,2)
+      ON CONFLICT (report_year) DO UPDATE SET next_number=lm_report_sequences.next_number+1
+      RETURNING next_number-1 AS report_number
+    `, [year]);
+    const reportReference = `${sequence.rows[0].report_number}/${year}`;
     await client.query(
-      'INSERT INTO lm_dossiers (id,public_id,access_hash,email,origin,municipality,location) VALUES ($1,$2,$3,$4,$5,$6,$7)',
-      [id, idPublic, tokenHash(token), String(email).trim().toLowerCase(), origin, location?.municipio?.nome || null, location || null],
+      'INSERT INTO lm_dossiers (id,public_id,report_reference,access_hash,email,origin,municipality,location) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)',
+      [id, idPublic, reportReference, tokenHash(token), String(email).trim().toLowerCase(), origin, location?.municipio?.nome || null, location || null],
     );
     await client.query(
       'INSERT INTO lm_dossier_reports (id,dossier_id,report_html,report_text,cost_estimate) VALUES ($1,$2,$3,$4,$5)',
@@ -88,7 +104,7 @@ export async function createDossier({ email, location = null, reportHtml, report
     await client.query('ROLLBACK');
     throw error;
   } finally { client.release(); }
-  return { available: true, id: idPublic, token };
+  return { available: true, id: idPublic, token, reportReference };
 }
 
 async function findDossier(publicId, token) {
@@ -106,7 +122,7 @@ export async function readDossier({ id, token }) {
   await db.query('UPDATE lm_dossiers SET last_accessed_at=NOW(),updated_at=NOW() WHERE id=$1', [dossier.id]);
   const reports = await db.query('SELECT report_html,report_text,cost_estimate,created_at FROM lm_dossier_reports WHERE dossier_id=$1 ORDER BY created_at DESC LIMIT 1', [dossier.id]);
   const documents = await db.query('SELECT id,filename,mime_type,size_bytes,category,uploaded_at FROM lm_dossier_documents WHERE dossier_id=$1 ORDER BY uploaded_at DESC', [dossier.id]);
-  return { available: true, authorised: true, dossier: { id: dossier.public_id, municipality: dossier.municipality, location: dossier.location, createdAt: dossier.created_at, report: reports.rows[0] || null, documents: documents.rows } };
+  return { available: true, authorised: true, dossier: { id: dossier.public_id, reportReference: dossier.report_reference || null, municipality: dossier.municipality, location: dossier.location, createdAt: dossier.created_at, report: reports.rows[0] || null, documents: documents.rows } };
 }
 
 export async function addDossierDocuments({ id, token, documents = [] }) {

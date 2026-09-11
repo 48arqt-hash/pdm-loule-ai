@@ -595,13 +595,13 @@ export const detailedAnalysisHandler = async (event) => {
       const documentPlan = orderingPlan?.base64 && ['image/jpeg', 'image/png'].includes(orderingPlan.mimeType)
         ? { image: Buffer.from(orderingPlan.base64, 'base64'), source: 'Planta de Localização oficial — PDM / Ordenamento; polígono assinalado pelo requerente' }
         : null;
-      await sendReportEmail({ to: body.email, reportText, reportHtml: reply, location: body.localizacao || null, privacyPolicyVersion: body.privacyPolicyVersion || null, documentPlan, dossierLink });
+      await sendReportEmail({ to: body.email, reportText, reportHtml: reply, location: body.localizacao || null, privacyPolicyVersion: body.privacyPolicyVersion || null, documentPlan, dossierLink, reportReference: dossier?.reportReference || null });
       emailSent = true;
     } catch (emailFailure) {
       console.error('automatic_report_email_error', emailFailure);
       emailError = 'A análise foi concluída, mas não foi possível enviar automaticamente o relatório por e-mail.';
     }
-    return json(200, { reply, resumo: report.conclusao?.estado || 'Concluído', emailSent, emailError, dossierAvailable: Boolean(dossier?.available), dossierLink });
+    return json(200, { reply, resumo: report.conclusao?.estado || 'Concluído', emailSent, emailError, dossierAvailable: Boolean(dossier?.available), dossierLink, reportReference: dossier?.reportReference || null });
   } catch (error) {
     console.error('analysis_error', error);
     if (error?.code === 'GEMINI_TIMEOUT') return json(503, { error: error.message });
