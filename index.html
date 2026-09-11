@@ -776,7 +776,7 @@
         <button class="btn-submit" id="pdmSubmitBtn" onclick="pedirAnalisePdm()" data-i18n="generateReport">Gerar pré-análise documental →</button>
         <p class="secure-note" data-i18n="preliminaryNote">A análise é preliminar. A confirmação de viabilidade requer validação técnica e, quando aplicável, resposta da Câmara.</p>
       </section>
-        <div id="professionalActive" class="professional-active" role="status" aria-live="polite"><strong>✓ Modo profissional ativo</strong><span>Acesso validado nesta sessão. Pode utilizar as funcionalidades profissionais do site.</span></div>
+        <div id="professionalActive" class="professional-active" role="status" aria-live="polite"><strong>✓ Modo profissional ativo</strong><span>Acesso validado nesta sessão. Pode utilizar as funcionalidades profissionais do site.</span><a href="gestao-dossiers.html" style="font-weight:700;color:var(--teal-deep);margin-top:5px">Gerir Dossiers Digitais →</a></div>
         <div id="pdmReportOutput" aria-live="polite"></div>
         <div class="chat-history" id="pdmChat" aria-live="polite" style="display:none"></div>
         <button class="btn-submit secondary" type="button" onclick="mostrarAcessoProfissional()" data-i18n="professionalAccess">Acesso profissional</button>
@@ -1617,7 +1617,7 @@
       document.getElementById('professionalCode').value = '';
       document.getElementById('professionalActive').style.display = 'block';
       document.getElementById('professionalAccess').style.display = 'none';
-      addMsg('✓ Acesso profissional ativo nesta sessão. Pode gerar análises sem passar pelo pagamento. As métricas internas estão temporariamente desativadas.', 'system');
+      addMsg('✓ Acesso profissional ativo nesta sessão. Pode gerar análises sem passar pelo pagamento e gerir os Dossiers Digitais na área profissional.', 'system');
     } catch (err) { error.textContent = err.message; error.style.display = 'block'; }
   }
 

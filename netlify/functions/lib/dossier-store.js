@@ -125,6 +125,27 @@ export async function readDossier({ id, token }) {
   return { available: true, authorised: true, dossier: { id: dossier.public_id, reportReference: dossier.report_reference || null, municipality: dossier.municipality, location: dossier.location, createdAt: dossier.created_at, report: reports.rows[0] || null, documents: documents.rows } };
 }
 
+// Lista estritamente para o painel profissional. Não expõe links privados,
+// tokens, conteúdo dos relatórios nem ficheiros; esses elementos continuam
+// acessíveis apenas pelo link individual enviado ao cliente.
+export async function listDossiers({ limit = 100 } = {}) {
+  const db = await ready();
+  if (!db) return { available: false, dossiers: [] };
+  const result = await db.query(`
+    SELECT d.public_id, d.report_reference, d.email, d.municipality, d.created_at, d.updated_at, d.last_accessed_at,
+      (SELECT COUNT(*)::int FROM lm_dossier_documents dd WHERE dd.dossier_id=d.id) AS document_count,
+      (SELECT COUNT(*)::int FROM lm_dossier_reports dr WHERE dr.dossier_id=d.id) AS report_count
+    FROM lm_dossiers d
+    ORDER BY d.updated_at DESC
+    LIMIT $1
+  `, [Math.max(1, Math.min(200, Number(limit) || 100))]);
+  return { available: true, dossiers: result.rows.map((row) => ({
+    id: row.public_id, reportReference: row.report_reference || null, email: row.email,
+    municipality: row.municipality || null, createdAt: row.created_at, updatedAt: row.updated_at,
+    lastAccessedAt: row.last_accessed_at, documentCount: Number(row.document_count || 0), reportCount: Number(row.report_count || 0),
+  })) };
+}
+
 export async function addDossierDocuments({ id, token, documents = [] }) {
   const { db, dossier } = await findDossier(id, token);
   if (!db) return { available: false, reason: 'database_not_configured' };
