@@ -329,6 +329,8 @@
   .map-search .input-field{ margin:0; }
   .map-search button{ width:auto; margin:0; white-space:nowrap; }
   #parcelMap{ height:clamp(380px, 58vh, 620px); border:1px solid var(--line); border-radius:7px; overflow:hidden; margin:8px 0 10px; }
+  #parcelMap .leaflet-container{ cursor:grab; touch-action:none; }
+  #parcelMap .leaflet-container.leaflet-drag-target{ cursor:grabbing; }
   /* Estilos de reserva: mantêm o mapa utilizável se a folha CSS externa do Leaflet falhar. */
   .leaflet-container{ position:relative; overflow:hidden; background:#E7E5DE; outline:0; font:inherit; -webkit-tap-highlight-color:transparent; }
   .leaflet-pane,.leaflet-tile,.leaflet-marker-icon,.leaflet-marker-shadow{ position:absolute; left:0; top:0; }
@@ -1093,6 +1095,7 @@
   let mapResizeObserver;
   let manualPolygonPoints = [];
   let manualPolygonLayer;
+  let mapDragUntil = 0;
   // Mantém o limite desenhado separado da camada visual. Assim, mesmo que o
   // mapa seja redesenhado ou a consulta geográfica atualize a seleção, o
   // mesmo polígono segue obrigatoriamente para a análise e para o PDF.
@@ -1188,14 +1191,12 @@
   async function readJsonResponse(response, fallbackMessage){
     const raw = await response.text();
     if (!raw) {
-      const reference = response.status ? ` (resposta ${response.status} do servidor)` : '';
-      throw new Error(`${fallbackMessage}${reference}. A função não devolveu detalhe técnico; consulte os Function logs da Netlify.`);
+      throw new Error(`${fallbackMessage}. Tente novamente dentro de alguns minutos.`);
     }
     try {
       return JSON.parse(raw);
     } catch {
-      const reference = response.status ? ` (resposta ${response.status} do servidor)` : '';
-      throw new Error(`${fallbackMessage}${reference}. Tente novamente; se persistir, consulte os Function logs da Netlify.`);
+      throw new Error(`${fallbackMessage}. Tente novamente dentro de alguns minutos.`);
     }
   }
 
@@ -1205,7 +1206,20 @@
       // ortofoto e sem cadastro visualmente intrusivo. Os limites só são
       // ligados pelo utilizador quando precisar de confirmar um prédio.
       const louleBounds = L.latLngBounds([[36.86, -8.36], [37.42, -7.68]]);
-      map = L.map('parcelMap', { scrollWheelZoom: false }).fitBounds(louleBounds, { padding: [12, 12] });
+      map = L.map('parcelMap', {
+        dragging: true,
+        inertia: true,
+        inertiaDeceleration: 2400,
+        inertiaMaxSpeed: 1800,
+        touchZoom: true,
+        doubleClickZoom: true,
+        boxZoom: true,
+        keyboard: true,
+        scrollWheelZoom: true,
+        zoomSnap: .25,
+        zoomDelta: .5,
+        worldCopyJump: true,
+      }).fitBounds(louleBounds, { padding: [12, 12] });
       const streetMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 20, attribution: '&copy; OpenStreetMap contributors' });
       const aerialMap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: 'Tiles &copy; Esri' });
       const cadastreLayer = L.tileLayer.wms('https://snicws.dgterritorio.gov.pt/geoserver/inspire/ows', {
@@ -1214,7 +1228,12 @@
       });
       aerialMap.addTo(map);
       L.control.layers({ 'Mapa': streetMap, 'Vista aérea': aerialMap }, { 'Limites cadastrais DGT': cadastreLayer }, { collapsed:false, position:'topright' }).addTo(map);
+      // Um arrasto serve apenas para explorar o mapa. Durante uma pequena
+      // janela após PAN, nenhum clique é interpretado como seleção de terreno.
+      map.on('dragstart', () => { mapDragUntil = Date.now() + 450; });
+      map.on('dragend', () => { mapDragUntil = Date.now() + 260; });
       map.on('click', event => {
+        if (Date.now() < mapDragUntil) return;
         if (mapSelectionMode === 'implantation') definirImplantacao(event.latlng.lat, event.latlng.lng);
         else if (mapSelectionMode === 'manual-polygon') adicionarPontoPoligono(event.latlng.lat, event.latlng.lng);
         else consultarLocalizacao(event.latlng.lat, event.latlng.lng);
@@ -1569,7 +1588,7 @@
         body: JSON.stringify({ email, documentos: documentsForAnalysis, localizacao: locationForReport(), objetivo: document.getElementById('pdmObjetivo').value, descricao: document.getElementById('pdmUserMsg').value.trim(), estimativaCusto: costEstimate, privacyConsent: true, privacyPolicyVersion: '2026-09-10' })
       });
       const data = await readJsonResponse(resp, 'A análise não devolveu uma resposta válida');
-      if (!resp.ok) throw new Error(data.error || `Não foi possível concluir a análise (resposta ${resp.status} do servidor).`);
+      if (!resp.ok) throw new Error(data.error || 'Não foi possível concluir a análise neste momento. Tente novamente dentro de alguns minutos.');
       loading.remove(); renderReport(data.reply);
       if (documentsSkipped) addMsg('ℹ Os PDFs selecionados não foram enviados por excederem o limite técnico. Esta pré-análise foi realizada pela parcela selecionada, cadastro e camadas territoriais disponíveis.', 'system');
       if (data.detailedReportQueued) addMsg('✓ Enquadramento imediato disponível. O relatório técnico aprofundado está a ser preparado e será enviado por e-mail quando estiver concluído.', 'system');
@@ -1720,7 +1739,7 @@
       });
       const data = await readJsonResponse(response, 'O serviço de envio de e-mail não devolveu uma resposta válida');
       if (!response.ok) throw new Error(data.error || 'Não foi possível enviar o relatório.');
-      addMsg(`✓ Relatório em PDF enviado para ${escapeText(email)}.${data.dossierAvailable ? ' O e-mail inclui agora o link privado para o Dossier Digital.' : ' O Dossier Digital não ficou disponível neste envio; o atelier pode consultar os Function logs se persistir.'}`, 'system');
+      addMsg(`✓ Relatório em PDF enviado para ${escapeText(email)}.${data.dossierAvailable ? ' O e-mail inclui agora o link privado para o seu Dossier Digital.' : ' O Dossier Digital está a ser preparado e o acesso será enviado assim que estiver disponível.'}`, 'system');
     } catch (error) {
       alert(error.message || 'Não foi possível enviar o relatório por e-mail.');
     } finally {
@@ -1774,8 +1793,7 @@
       });
       const data = await readJsonResponse(response, 'O pedido de reunião não devolveu uma resposta válida');
       if (!response.ok) {
-        const detail = data.error || `resposta ${response.status} do servidor`;
-        throw new Error(`Não foi possível enviar o pedido de reunião: ${detail}`);
+        throw new Error(data.error || 'Não foi possível enviar o pedido de reunião neste momento. Tente novamente dentro de alguns minutos.');
       }
 
       alert(
@@ -1809,7 +1827,7 @@
         body: JSON.stringify({ name, email, phone, description, documents, privacyConsent: true, privacyPolicyVersion: '2026-09-10' })
       });
       const data = await readJsonResponse(response, 'O pedido de orçamento não devolveu uma resposta válida');
-      if (!response.ok) throw new Error(data.error || `resposta ${response.status} do servidor`);
+      if (!response.ok) throw new Error(data.error || 'Não foi possível enviar o pedido de orçamento neste momento. Tente novamente dentro de alguns minutos.');
       alert('Pedido de orçamento enviado com sucesso. Entraremos em contacto para dar seguimento.');
     } catch (error) {
       alert(`Não foi possível enviar o pedido de orçamento: ${error.message || 'tente novamente.'}`);

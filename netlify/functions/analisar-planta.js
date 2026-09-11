@@ -460,7 +460,7 @@ export const detailedAnalysisHandler = async (event) => {
   if (process.env.ALLOW_DIRECT_ANALYSIS === 'false' && !professionalAccess) {
     return json(503, { error: 'A análise direta está temporariamente desativada.' });
   }
-  if (!process.env.GEMINI_API_KEY) return json(503, { error: 'O serviço de análise não está configurado.' });
+  if (!process.env.GEMINI_API_KEY) return json(503, { error: 'O serviço de pré-análise está temporariamente indisponível. Tente novamente dentro de alguns minutos.' });
 
   try {
     const body = JSON.parse(event.body || '{}');
@@ -605,7 +605,7 @@ export const detailedAnalysisHandler = async (event) => {
   } catch (error) {
     console.error('analysis_error', error);
     if (error?.code === 'GEMINI_TIMEOUT') return json(503, { error: error.message });
-    return json(500, { error: 'Não foi possível processar a análise. Tente novamente; se persistir, consulte os Function logs da Netlify.' });
+    return json(500, { error: 'Não foi possível processar a análise neste momento. Tente novamente dentro de alguns minutos.' });
   }
 };
 

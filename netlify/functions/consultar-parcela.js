@@ -61,11 +61,15 @@ const MUNICIPAL_PROFILES = {
 };
 const MUNICIPALITY_CODES = { '0801': 'albufeira', '0802': 'alcoutim', '0803': 'aljezur', '0804': 'castromarim', '0805': 'faro', '0806': 'lagoa', '0807': 'lagos', '0808': 'loule', '0809': 'monchique', '0810': 'olhao', '0811': 'portimao', '0812': 'saobrasdealportel', '0813': 'silves', '0814': 'tavira', '0815': 'viladobispo', '0816': 'vilarealdesantoantonio' };
 const MUNICIPALITY_CODE_BY_SLUG = Object.fromEntries(Object.entries(MUNICIPALITY_CODES).map(([code, slug]) => [slug, code]));
+// A consulta do mapa deve responder mesmo quando um geoportal público está
+// lento. Informação indisponível é devolvida como aviso; não pode provocar um
+// timeout 504 ao utilizador.
+const SOURCE_TIMEOUT_MS = 1_800;
 
 const json = (statusCode, payload) => ({ statusCode, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }, body: JSON.stringify(payload) });
 async function fetchJson(url) {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 9_000);
+  const timeout = setTimeout(() => controller.abort(), SOURCE_TIMEOUT_MS);
   try {
     const response = await fetch(url, { headers: { Accept: 'application/json' }, signal: controller.signal });
     if (!response.ok) throw new Error(`Fonte oficial indisponível (${response.status}).`);
@@ -260,7 +264,7 @@ async function fallbackMunicipalityAt(lat, lng) {
   const url = new URL('https://nominatim.openstreetmap.org/reverse');
   url.search = new URLSearchParams({ format: 'jsonv2', lat: String(lat), lon: String(lng), zoom: '10', addressdetails: '1' }).toString();
   try {
-    const response = await fetch(url, { headers: { Accept: 'application/json', 'User-Agent': 'LeonelMendes-Urbanismo/1.0 (geral@leonelmendes.com)' }, signal: AbortSignal.timeout(4_500) });
+    const response = await fetch(url, { headers: { Accept: 'application/json', 'User-Agent': 'LeonelMendes-Urbanismo/1.0 (geral@leonelmendes.com)' }, signal: AbortSignal.timeout(1_200) });
     if (!response.ok) return null;
     const payload = await response.json();
     const address = payload?.address || {};
@@ -492,34 +496,38 @@ export const handler = async (event) => {
       if (profile) municipality = { ...profile, crusWfs: crusWfsForMunicipality(profile), fonte: 'Direção-Geral do Território - CRUS', propriedades: useFeatures[0]?.properties || {} };
     }
     if (!municipality) municipality = await fallbackMunicipalityAt(representativePoint.latitude, representativePoint.longitude);
-    const plans = municipality?.nome === 'Loulé'
-      ? await Promise.allSettled([municipalPlans(analysisLat, analysisLng)]).then(([result]) => result.status === 'fulfilled' ? result.value : [])
-      : [];
-    const implantationUse = requestedImplantation
-      ? await findCollection('crus').then((id) => featureAt(id, analysisLat, analysisLng)).catch((error) => { console.warn('implantation_land_use_unavailable', error.message); return null; })
-      : null;
+    // As fontes seguintes são independentes. Fazê-las em paralelo reduz o
+    // tempo do clique no mapa de várias esperas consecutivas para uma única
+    // janela curta de disponibilidade.
+    const isLoule = municipality?.nome === 'Loulé';
+    const isFaro = municipality?.nome === 'Faro';
+    const [plansResult, implantationResult, preventiveResult, faroOrderingResult, faroWfsResult, faroVisualResult, municipalCrusResult] = await Promise.allSettled([
+      isLoule ? municipalPlans(analysisLat, analysisLng) : Promise.resolve([]),
+      requestedImplantation ? findCollection('crus').then((id) => featureAt(id, analysisLat, analysisLng)) : Promise.resolve(null),
+      isLoule ? Promise.all(LOULÉ_PREVENTIVE_AREAS.map(async (area) => ({ ...area, features: await municipalPreventiveArea(area.id, analysisLat, analysisLng) }))) : Promise.resolve([]),
+      isFaro ? municipalOrderingFeatures(process.env.FARO_PDM_ORDERING_QUERY_URL, analysisLat, analysisLng) : Promise.resolve([]),
+      isFaro ? municipalWfsFeatures(process.env.FARO_PDM_WFS_URL, process.env.FARO_PDM_WFS_TYPENAME, analysisLat, analysisLng) : Promise.resolve([]),
+      isFaro ? faroVisualOrderingAt(analysisLat, analysisLng) : Promise.resolve(null),
+      municipality ? municipalCrusAt(municipality, analysisLat, analysisLng) : Promise.resolve(null),
+    ]);
+    const plans = plansResult.status === 'fulfilled' ? plansResult.value : [];
+    const implantationUse = implantationResult.status === 'fulfilled' ? implantationResult.value : null;
+    if (implantationResult.status === 'rejected') console.warn('implantation_land_use_unavailable', implantationResult.reason?.message || 'indisponível');
     const implantationUseLabel = implantationUse ? readableValue(implantationUse.properties || {}) : null;
     const planFeatures = plans;
     const hasQuarteiraNorthEastPlan = planFeatures.some((feature) => /quarteira.*norte|norte.*nordeste/i.test(`${feature.attributes?.NOME || ''} ${feature.attributes?.TIPO || ''}`));
     const zoning = hasQuarteiraNorthEastPlan ? await quarteiraNorthEastRules(analysisLat, analysisLng) : [];
-    const preventiveAreas = municipality?.nome === 'Loulé'
-      ? (await Promise.allSettled(LOULÉ_PREVENTIVE_AREAS.map(async (area) => ({ ...area, features: await municipalPreventiveArea(area.id, analysisLat, analysisLng) })))).flatMap((result) => result.status === 'fulfilled' ? result.value.features.map((feature) => ({ ...result.value, attributes: feature.attributes || {} })) : [])
+    const preventiveAreas = preventiveResult.status === 'fulfilled'
+      ? preventiveResult.value.flatMap((area) => area.features.map((feature) => ({ ...area, attributes: feature.attributes || {} })))
       : [];
-    const faroOrdering = municipality?.nome === 'Faro'
-      ? await municipalOrderingFeatures(process.env.FARO_PDM_ORDERING_QUERY_URL, analysisLat, analysisLng).catch((error) => { console.warn('faro_ordering_unavailable', error.message); return []; })
-      : [];
-    const faroWfsOrdering = municipality?.nome === 'Faro'
-      ? await municipalWfsFeatures(process.env.FARO_PDM_WFS_URL, process.env.FARO_PDM_WFS_TYPENAME, analysisLat, analysisLng).catch((error) => { console.warn('faro_wfs_ordering_unavailable', error.message); return []; })
-      : [];
-    const faroVisualOrdering = municipality?.nome === 'Faro'
-      ? await faroVisualOrderingAt(analysisLat, analysisLng).catch((error) => { console.warn('faro_visual_ordering_unavailable', error.message); return null; })
-      : null;
+    const faroOrdering = faroOrderingResult.status === 'fulfilled' ? faroOrderingResult.value : [];
+    const faroWfsOrdering = faroWfsResult.status === 'fulfilled' ? faroWfsResult.value : [];
+    const faroVisualOrdering = faroVisualResult.status === 'fulfilled' ? faroVisualResult.value : null;
     // A CRUS é a fonte vetorial nacional que preserva a designação do plano.
     // Esta consulta aplica-se aos 16 municípios do Algarve; a regra quantitativa
     // continua separada e só é apresentada quando existe regra municipal validada.
-    const municipalCrusOrdering = municipality
-      ? await municipalCrusAt(municipality, analysisLat, analysisLng).catch((error) => { console.warn('municipal_crus_unavailable', municipality.nome, error.message); return null; })
-      : null;
+    const municipalCrusOrdering = municipalCrusResult.status === 'fulfilled' ? municipalCrusResult.value : null;
+    if (municipalCrusResult.status === 'rejected') console.warn('municipal_crus_unavailable', municipality?.nome || 'desconhecido', municipalCrusResult.reason?.message || 'indisponível');
     const albufeiraOrdering = municipality?.nome === 'Albufeira'
       ? albufeiraProbe || municipalCrusOrdering
       : null;
