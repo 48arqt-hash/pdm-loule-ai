@@ -714,15 +714,15 @@
           </span>
         </div>
         <div id="implantationControl" class="map-decision" style="display:none">
-          <strong>Localização aproximada da construção</strong>
-          <p id="implantationStatus">Se pretende construir ou ampliar, marque no mapa o ponto aproximado de implantação. Assim distinguimos a zona aplicável dentro da parcela.</p>
-          <button type="button" class="btn-submit secondary" id="implantationButton" onclick="ativarMarcacaoImplantacao()">Marcar implantação no mapa</button>
+          <strong data-i18n="implantationTitle">Localização aproximada da construção</strong>
+          <p id="implantationStatus" data-i18n="implantationHelp">Se pretende construir ou ampliar, marque no mapa o ponto aproximado de implantação. Assim distinguimos a zona aplicável dentro da parcela.</p>
+          <button type="button" class="btn-submit secondary" id="implantationButton" onclick="ativarMarcacaoImplantacao()" data-i18n="markImplantation">Marcar implantação no mapa</button>
         </div>
       </section>
 
       <section id="guidedPurpose" class="guided-step">
-        <h4>2. O que pretende fazer?</h4>
-        <p class="guided-step-lead">Escolha a intenção principal. Isto permite relacionar a análise com aquilo que pretende concretamente.</p>
+        <h4 data-i18n="purposeStepTitle">2. O que pretende fazer?</h4>
+        <p class="guided-step-lead" data-i18n="purposeStepLead">Escolha a intenção principal. Isto permite relacionar a análise com aquilo que pretende concretamente.</p>
         <select id="pdmObjetivo" class="input-field">
           <option value="" data-i18n="purposePlaceholder">Selecione a intenção (recomendado)</option>
           <option>Construir uma moradia</option>
@@ -733,9 +733,9 @@
           <option>Apenas conhecer o potencial do terreno</option>
         </select>
         <textarea id="pdmUserMsg" class="textarea-field" data-i18n-placeholder="analysisDescription" placeholder="Ex.: Moradia T4 com cerca de 300 m² e piscina. Indique dúvidas ou dados relevantes."></textarea>
-        <label class="cost-consent" style="margin-top:12px;"><input id="pdmIncludeCost" type="checkbox" onchange="togglePdmCostEstimate()"><span><strong>Incluir estimativa indicativa de custo de obra</strong> no mesmo relatório.</span></label>
+        <label class="cost-consent" style="margin-top:12px;"><input id="pdmIncludeCost" type="checkbox" onchange="togglePdmCostEstimate()"><span data-i18n="includeCostReport"><strong>Incluir estimativa indicativa de custo de obra</strong> no mesmo relatório.</span></label>
         <div id="pdmCostEstimateFields" class="cost-fieldset" style="display:none; margin-top:12px;">
-          <p class="guided-step-lead">Preencha apenas se pretender receber uma estimativa integrada. Os valores são indicativos e não substituem medições, projeto ou orçamento de empreiteiro.</p>
+        <p class="guided-step-lead" data-i18n="integratedCostHelp">Preencha apenas se pretender receber uma estimativa integrada. Os valores são indicativos e não substituem medições, projeto ou orçamento de empreiteiro.</p>
           <div class="input-grid">
             <div><label for="pdmCostWorkType">Tipo de intervenção</label><select id="pdmCostWorkType" class="input-field"><option value="nova">Construção nova</option><option value="ampliacao">Ampliação</option><option value="reabilitacao">Reabilitação</option></select></div>
             <div><label for="pdmCostQuality">Padrão de construção</label><select id="pdmCostQuality" class="input-field"><option value="economica">Económico</option><option value="media">Médio</option><option value="media_alta" selected>Médio-alto</option><option value="superior">Superior</option><option value="luxo">Luxo</option></select></div>
@@ -755,8 +755,8 @@
       </section>
 
       <section id="guidedContact" class="guided-step">
-        <h4>3. Receber a pré-análise</h4>
-        <p class="guided-step-lead">Indique o e-mail para receber o relatório. Os documentos são opcionais, mas ajudam a confirmar a análise.</p>
+        <h4 data-i18n="receiveReportTitle">3. Receber a pré-análise</h4>
+        <p class="guided-step-lead" data-i18n="receiveReportLead">Indique o e-mail para receber o relatório. Os documentos são opcionais, mas ajudam a confirmar a análise.</p>
         <h4 data-i18n="documents">Documentos opcionais</h4>
         <div class="upload-zone" onclick="document.getElementById('pdmPdfInput').click()">
         <span id="pdmUploadText" data-i18n="locationPlan">📁 Planta de Localização (opcional, PDF)</span>
@@ -1000,7 +1000,16 @@
   const ptTranslations = {};
   document.querySelectorAll('[data-i18n]').forEach((element) => { ptTranslations[element.dataset.i18n] = element.textContent.trim(); });
   document.querySelectorAll('[data-i18n-placeholder]').forEach((element) => { ptTranslations[element.dataset.i18nPlaceholder] = element.placeholder; });
-  Object.assign(ptTranslations, { costYearsShort:'anos' });
+  Object.assign(ptTranslations, {
+    costYearsShort:'anos',
+    purposeStepTitle:'2. O que pretende fazer?', purposeStepLead:'Escolha a intenção principal. Isto permite relacionar a análise com aquilo que pretende concretamente.',
+    includeCostReport:'Incluir estimativa indicativa de custo de obra no mesmo relatório.', integratedCostHelp:'Preencha apenas se pretender receber uma estimativa integrada. Os valores são indicativos e não substituem medições, projeto ou orçamento de empreiteiro.',
+    receiveReportTitle:'3. Receber a pré-análise', receiveReportLead:'Indique o e-mail para receber o relatório. Os documentos são opcionais, mas ajudam a confirmar a análise.',
+    implantationTitle:'Localização aproximada da construção', implantationHelp:'Se pretende construir ou ampliar, marque no mapa o ponto aproximado de implantação. Assim distinguimos a zona aplicável dentro da parcela.', markImplantation:'Marcar implantação no mapa',
+    mapLocated:'Terreno localizado', mapConfirmed:'Terreno confirmado. Indique a pretensão e o e-mail para receber o relatório.', mapReady:'Tudo pronto. Pode gerar a pré-análise; o relatório será também enviado para o seu e-mail.', mapStartStatus:'Comece por selecionar o terreno. Os documentos são opcionais nesta fase.',
+    geographicDone:'Consulta geográfica concluída. Confirme se o limite destacado corresponde ao terreno pretendido e, se aplicável, marque a implantação aproximada.', geographicDoneWithPoint:'Consulta geográfica concluída com ponto de implantação. Confirme no mapa o limite e o ponto assinalado.',
+    drawingActive:'Modo de desenho ativo: assinale pelo menos 3 vértices do limite aproximado do terreno.', implantationMode:'Modo de implantação ativo: clique no ponto aproximado da construção.', technicalDetails:'Ver informação técnica complementar', implantationSet:'Implantação indicada. As regras urbanísticas do relatório serão relacionadas com este ponto, sem substituir confirmação municipal.', changeImplantation:'Alterar implantação', implantationClick:'Clique agora dentro da parcela destacada, no local aproximado onde pretende implantar a obra.', waitingMapClick:'A aguardar clique no mapa…'
+  });
   const purposeOptions = {
     pt:['Selecione a intenção (recomendado)','Construir uma moradia','Construir várias moradias','Alterar ou ampliar construção existente','Loteamento','Turismo / alojamento','Apenas conhecer o potencial do terreno'],
     en:['Select your intention (recommended)','Build one home','Build several homes','Alter or extend an existing building','Subdivision','Tourism / accommodation','Only learn about the land potential'],
@@ -1012,7 +1021,14 @@
   Object.assign(translations.fr, { landServiceCopy:'Sélectionnez la parcelle sur la carte et recevez un premier cadre technique.', meetingServiceCopy:'Clarifiez la faisabilité, la stratégie et les prochaines étapes de votre dossier.', quoteServiceCopy:'Demandez une proposition informée pour les projets, spécialités et études.', processOneTitle:'01 · Localiser', processOneText:'Sélectionnez le terrain ou indiquez une adresse.', processTwoTitle:'02 · Analyser', processTwoText:'Nous croisons cadastre, plans et données territoriales disponibles.', processThreeTitle:'03 · Décider', processThreeText:'Recevez un rapport et identifiez les prochaines étapes.' });
   Object.assign(translations.de, { landServiceCopy:'Wählen Sie das Grundstück auf der Karte und erhalten Sie eine erste technische Einordnung.', meetingServiceCopy:'Klären Sie Machbarkeit, Strategie und die nächsten Schritte Ihres Vorhabens.', quoteServiceCopy:'Fordern Sie ein fundiertes Angebot für Projekte, Fachplanungen und Studien an.', processOneTitle:'01 · Lokalisieren', processOneText:'Grundstück auswählen oder Adresse eingeben.', processTwoTitle:'02 · Analysieren', processTwoText:'Wir gleichen Kataster, Pläne und verfügbare Gebietsdaten ab.', processThreeTitle:'03 · Entscheiden', processThreeText:'Erhalten Sie einen Bericht mit den nächsten Schritten.' });
   Object.assign(translations.es, { landServiceCopy:'Seleccione la parcela en el mapa y reciba un encuadre técnico inicial.', meetingServiceCopy:'Aclare la viabilidad, estrategia y próximos pasos de su solicitud.', quoteServiceCopy:'Solicite una propuesta informada de proyectos, especialidades y estudios.', processOneTitle:'01 · Localizar', processOneText:'Seleccione el terreno o indique una dirección.', processTwoTitle:'02 · Analizar', processTwoText:'Cruzamos catastro, planes y datos territoriales disponibles.', processThreeTitle:'03 · Decidir', processThreeText:'Reciba un informe y conozca los próximos pasos.' });
+  Object.assign(translations.en, { purposeStepTitle:'2. What would you like to do?', purposeStepLead:'Choose your main intention. This lets us relate the assessment to what you want to achieve.', includeCostReport:'Include an indicative construction cost estimate in the same report.', integratedCostHelp:'Complete this only if you would like an integrated estimate. Values are indicative and do not replace quantities, design or a contractor quote.', receiveReportTitle:'3. Receive the pre-assessment', receiveReportLead:'Enter your email to receive the report. Documents are optional, but help confirm the assessment.', implantationTitle:'Approximate building location', implantationHelp:'If you intend to build or extend, mark the approximate building location on the map. This helps distinguish the applicable area within the plot.', markImplantation:'Mark building location on the map', mapLocated:'Land located', mapConfirmed:'Land confirmed. State your intention and email to receive the report.', mapReady:'Everything is ready. You can generate the pre-assessment; the report will also be sent to your email.', mapStartStatus:'Start by selecting the land. Documents are optional at this stage.', geographicDone:'Geographic check complete. Confirm whether the highlighted boundary corresponds to the intended land and, where applicable, mark the approximate building location.', geographicDoneWithPoint:'Geographic check complete with a building point. Confirm the boundary and marked point on the map.', drawingActive:'Drawing mode active: mark at least 3 vertices of the approximate land boundary.', implantationMode:'Building-location mode active: click the approximate construction point.', technicalDetails:'View supplementary technical information', implantationSet:'Building location indicated. The report will relate planning rules to this point, without replacing municipal confirmation.', changeImplantation:'Change building location', implantationClick:'Click inside the highlighted plot, at the approximate place where you intend to build.', waitingMapClick:'Waiting for a click on the map…' });
+  Object.assign(translations.fr, { purposeStepTitle:'2. Que souhaitez-vous faire ?', purposeStepLead:'Choisissez votre intention principale. Cela permet de relier l’analyse à votre projet concret.', includeCostReport:'Inclure une estimation indicative du coût des travaux dans le même rapport.', integratedCostHelp:'Remplissez cette partie uniquement si vous souhaitez une estimation intégrée. Les valeurs sont indicatives et ne remplacent pas un métré, un projet ou un devis.', receiveReportTitle:'3. Recevoir la pré-analyse', receiveReportLead:'Indiquez votre e-mail pour recevoir le rapport. Les documents sont facultatifs, mais aident à confirmer l’analyse.', implantationTitle:'Emplacement approximatif de la construction', implantationHelp:'Si vous souhaitez construire ou agrandir, marquez l’emplacement approximatif sur la carte.', markImplantation:'Marquer l’implantation sur la carte', mapLocated:'Terrain localisé', mapConfirmed:'Terrain confirmé. Indiquez votre projet et votre e-mail pour recevoir le rapport.', mapReady:'Tout est prêt. Vous pouvez générer la pré-analyse ; le rapport sera aussi envoyé par e-mail.', mapStartStatus:'Commencez par sélectionner le terrain. Les documents sont facultatifs à ce stade.', geographicDone:'Consultation géographique terminée. Vérifiez que la limite mise en évidence correspond au terrain prévu et, si nécessaire, marquez l’implantation approximative.', geographicDoneWithPoint:'Consultation géographique terminée avec point d’implantation. Vérifiez la limite et le point indiqué sur la carte.', drawingActive:'Mode dessin actif : indiquez au moins 3 sommets de la limite approximative du terrain.', implantationMode:'Mode implantation actif : cliquez sur le point approximatif de la construction.' });
+  Object.assign(translations.de, { purposeStepTitle:'2. Was möchten Sie tun?', purposeStepLead:'Wählen Sie Ihr Hauptvorhaben. So kann die Analyse auf Ihr konkretes Ziel bezogen werden.', includeCostReport:'Unverbindliche Baukostenschätzung im selben Bericht aufnehmen.', integratedCostHelp:'Nur ausfüllen, wenn Sie eine integrierte Schätzung wünschen. Die Werte sind unverbindlich und ersetzen keine Mengenermittlung, Planung oder ein Unternehmerangebot.', receiveReportTitle:'3. Voranalyse erhalten', receiveReportLead:'Geben Sie Ihre E-Mail-Adresse ein, um den Bericht zu erhalten. Dokumente sind optional, helfen aber bei der Bestätigung.', implantationTitle:'Ungefährer Gebäudestandort', implantationHelp:'Wenn Sie bauen oder erweitern möchten, markieren Sie den ungefähren Standort auf der Karte.', markImplantation:'Gebäudestandort auf Karte markieren', mapLocated:'Grundstück lokalisiert', mapConfirmed:'Grundstück bestätigt. Geben Sie Ihr Vorhaben und Ihre E-Mail-Adresse für den Bericht an.', mapReady:'Alles ist bereit. Sie können die Voranalyse erstellen; der Bericht wird zusätzlich per E-Mail gesendet.', mapStartStatus:'Beginnen Sie mit der Auswahl des Grundstücks. Dokumente sind in dieser Phase optional.', geographicDone:'Geografische Abfrage abgeschlossen. Bestätigen Sie, dass die markierte Grenze dem gewünschten Grundstück entspricht, und markieren Sie gegebenenfalls den ungefähren Gebäudestandort.', geographicDoneWithPoint:'Geografische Abfrage mit Gebäudepunkt abgeschlossen. Bestätigen Sie Grenze und markierten Punkt auf der Karte.', drawingActive:'Zeichenmodus aktiv: Markieren Sie mindestens 3 Eckpunkte der ungefähren Grundstücksgrenze.', implantationMode:'Gebäudestandort-Modus aktiv: Klicken Sie auf den ungefähren Baupunkt.' });
+  Object.assign(translations.es, { purposeStepTitle:'2. ¿Qué desea hacer?', purposeStepLead:'Elija su intención principal. Esto permite relacionar el análisis con lo que desea realizar.', includeCostReport:'Incluir estimación indicativa del coste de obra en el mismo informe.', integratedCostHelp:'Rellene esta parte solo si desea recibir una estimación integrada. Los valores son orientativos y no sustituyen mediciones, proyecto ni presupuesto.', receiveReportTitle:'3. Recibir el preanálisis', receiveReportLead:'Indique su correo electrónico para recibir el informe. Los documentos son opcionales, pero ayudan a confirmar el análisis.', implantationTitle:'Ubicación aproximada de la construcción', implantationHelp:'Si desea construir o ampliar, marque en el mapa el punto aproximado de implantación.', markImplantation:'Marcar implantación en el mapa', mapLocated:'Terreno localizado', mapConfirmed:'Terreno confirmado. Indique su intención y correo para recibir el informe.', mapReady:'Todo está listo. Puede generar el preanálisis; el informe también se enviará a su correo.', mapStartStatus:'Empiece por seleccionar el terreno. Los documentos son opcionales en esta fase.', geographicDone:'Consulta geográfica completada. Confirme que el límite resaltado corresponde al terreno previsto y, si procede, marque la implantación aproximada.', geographicDoneWithPoint:'Consulta geográfica completada con punto de implantación. Confirme el límite y el punto marcado en el mapa.', drawingActive:'Modo de dibujo activo: señale al menos 3 vértices del límite aproximado del terreno.', implantationMode:'Modo de implantación activo: haga clic en el punto aproximado de construcción.' });
   Object.assign(translations.en, { heroTitle:'What can you do with your land?', heroText:'Locate it on the map and receive an urban-planning pre-assessment with clear next steps.', heroCta:'Analyse a plot →', landService:'🔍 Urban-planning land assessment', landServiceCopy:'Start with the land location. We cross-check the available territorial sources and email you a pre-assessment.' });
+  Object.assign(translations.fr, { technicalDetails:'Voir les informations techniques complémentaires', implantationSet:'Implantation indiquée. Les règles du rapport seront liées à ce point, sans remplacer la confirmation municipale.', changeImplantation:'Modifier l’implantation', implantationClick:'Cliquez dans la parcelle mise en évidence, à l’emplacement approximatif de la construction.', waitingMapClick:'En attente d’un clic sur la carte…' });
+  Object.assign(translations.de, { technicalDetails:'Ergänzende technische Informationen anzeigen', implantationSet:'Gebäudestandort angegeben. Die Regeln im Bericht werden diesem Punkt zugeordnet, ohne eine kommunale Bestätigung zu ersetzen.', changeImplantation:'Gebäudestandort ändern', implantationClick:'Klicken Sie innerhalb des markierten Grundstücks auf den ungefähren Bauort.', waitingMapClick:'Warte auf einen Klick auf die Karte…' });
+  Object.assign(translations.es, { technicalDetails:'Ver información técnica complementaria', implantationSet:'Implantación indicada. Las reglas del informe se relacionarán con este punto, sin sustituir la confirmación municipal.', changeImplantation:'Cambiar implantación', implantationClick:'Haga clic dentro de la parcela resaltada, en el lugar aproximado donde desea construir.', waitingMapClick:'Esperando un clic en el mapa…' });
   Object.assign(translations.fr, { heroTitle:'Que pouvez-vous faire sur votre terrain ?', heroText:'Localisez-le sur la carte et recevez une pré-analyse urbanistique avec des étapes claires.', heroCta:'Analyser un terrain →', landService:'🔍 Analyse urbanistique du terrain', landServiceCopy:'Commencez par localiser le terrain. Nous croisons les sources territoriales disponibles et vous envoyons une pré-analyse.' });
   Object.assign(translations.de, { heroTitle:'Was ist auf Ihrem Grundstück möglich?', heroText:'Lokalisieren Sie es auf der Karte und erhalten Sie eine städtebauliche Voranalyse mit klaren nächsten Schritten.', heroCta:'Grundstück analysieren →', landService:'🔍 Städtebauliche Grundstücksanalyse', landServiceCopy:'Beginnen Sie mit dem Standort. Wir gleichen die verfügbaren Gebietsdaten ab und senden Ihnen eine Voranalyse.' });
   Object.assign(translations.es, { heroTitle:'¿Qué puede hacer en su terreno?', heroText:'Localícelo en el mapa y reciba un preanálisis urbanístico con próximos pasos claros.', heroCta:'Analizar un terreno →', landService:'🔍 Análisis urbanístico del terreno', landServiceCopy:'Empiece por localizar el terreno. Cruzamos las fuentes territoriales disponibles y le enviamos un preanálisis.' });
@@ -1040,6 +1056,7 @@
     });
     const preference = { value: lang, expiresAt: Date.now() + (365 * 24 * 60 * 60 * 1000) };
     localStorage.setItem('siteLanguage', JSON.stringify(preference));
+    if (typeof selectedLocation !== 'undefined') updateAnalysisJourney();
   }
   function storedLanguage(){
     try {
@@ -1310,7 +1327,7 @@
         : '<li>O enquadramento urbanístico será confirmado no relatório com base nas fontes disponíveis.</li>';
       const details = visibleLayers.filter(item => !keyLayers.includes(item)).slice(0, 7).map(item => `<li><strong>${escapeText(item.camada)}:</strong> ${escapeText(item.valor)}</li>`).join('');
       const municipality = data.municipio?.nome ? `<br><strong>Concelho:</strong> ${escapeText(data.municipio.nome)}${data.municipio.geoportal ? ` — <a href="${encodeURI(data.municipio.geoportal)}" target="_blank" rel="noopener">consultar geoportal municipal</a>` : ''}` : '';
-      resultBox.innerHTML = `<strong>Terreno localizado</strong>${municipality}<br>${escapeText(cadastralId)}<ul>${layers}</ul>${details ? `<details><summary>Ver informação técnica complementar</summary><ul>${details}</ul></details>` : ''}<small>${escapeText(data.avisos.join(' '))}</small>`;
+      resultBox.innerHTML = `<strong>${escapeText(t('mapLocated'))}</strong>${municipality}<br>${escapeText(cadastralId)}<ul>${layers}</ul>${details ? `<details><summary>${escapeText(t('technicalDetails'))}</summary><ul>${details}</ul></details>` : ''}<small>${escapeText(data.avisos.join(' '))}</small>`;
       resultBox.style.display = 'block';
       updateAnalysisJourney();
       mostrarEtapaGuiada('guidedPurpose');
@@ -1329,14 +1346,14 @@
         if (implantationMarker) map.removeLayer(implantationMarker);
         implantationMarker = L.circleMarker([implantation.latitude, implantation.longitude], { radius:8, color:'#A13B2B', weight:3, fillColor:'#FFF', fillOpacity:.95 }).addTo(map).bindTooltip('Implantação indicada', { permanent:false });
         implantationControl.classList.add('ready');
-        document.getElementById('implantationStatus').textContent = 'Implantação indicada. As regras urbanísticas do relatório serão relacionadas com este ponto, sem substituir confirmação municipal.';
-        document.getElementById('implantationButton').textContent = 'Alterar implantação';
-        status.textContent = 'Consulta geográfica concluída com ponto de implantação. Confirme no mapa o limite e o ponto assinalado.';
+        document.getElementById('implantationStatus').textContent = t('implantationSet');
+        document.getElementById('implantationButton').textContent = t('changeImplantation');
+        status.textContent = t('geographicDoneWithPoint');
       } else {
         implantationControl.classList.remove('ready');
-        document.getElementById('implantationStatus').textContent = 'Se pretende construir ou ampliar, marque no mapa o ponto aproximado de implantação. Assim distinguimos a zona aplicável dentro da parcela.';
-        document.getElementById('implantationButton').textContent = 'Marcar implantação no mapa';
-        status.textContent = 'Consulta geográfica concluída. Confirme se o limite destacado corresponde ao terreno pretendido e, se aplicável, marque a implantação aproximada.';
+        document.getElementById('implantationStatus').textContent = t('implantationHelp');
+        document.getElementById('implantationButton').textContent = t('markImplantation');
+        status.textContent = t('geographicDone');
       }
     } catch (error) { status.textContent = error.message; }
   }
@@ -1362,7 +1379,7 @@
     document.getElementById('manualBoundaryActions').style.display = 'inline';
     document.getElementById('manualBoundaryFinish').disabled = true;
     document.getElementById('manualBoundaryStatus').textContent = 'Clique sucessivamente nos vértices do limite do terreno. No fim, carregue em “Concluir polígono”.';
-    document.getElementById('mapStatus').textContent = 'Modo de desenho ativo: assinale pelo menos 3 vértices do limite aproximado do terreno.';
+    document.getElementById('mapStatus').textContent = t('drawingActive');
   }
 
   function adicionarPontoPoligono(latitude, longitude){
@@ -1401,9 +1418,9 @@
   function ativarMarcacaoImplantacao(){
     if (!selectedLocation?.parcela?.geometria || !selectedParcelPoint) return;
     mapSelectionMode = 'implantation';
-    document.getElementById('implantationStatus').textContent = 'Clique agora dentro da parcela destacada, no local aproximado onde pretende implantar a obra.';
-    document.getElementById('implantationButton').textContent = 'A aguardar clique no mapa…';
-    document.getElementById('mapStatus').textContent = 'Modo de implantação ativo: clique no ponto aproximado da construção.';
+    document.getElementById('implantationStatus').textContent = t('implantationClick');
+    document.getElementById('implantationButton').textContent = t('waitingMapClick');
+    document.getElementById('mapStatus').textContent = t('implantationMode');
   }
 
   async function definirImplantacao(latitude, longitude){
@@ -1505,13 +1522,13 @@
     const readiness = document.getElementById('analysisReadiness');
     if (!readiness) return;
     if (located && purpose && contact) {
-      readiness.textContent = 'Tudo pronto. Pode gerar a pré-análise; o relatório será também enviado para o seu e-mail.';
+      readiness.textContent = t('mapReady');
       readiness.classList.add('ready');
     } else if (located) {
-      readiness.textContent = 'Terreno confirmado. Indique a pretensão e o e-mail para receber o relatório.';
+      readiness.textContent = t('mapConfirmed');
       readiness.classList.remove('ready');
     } else {
-      readiness.textContent = 'Comece por selecionar o terreno. Os documentos são opcionais nesta fase.';
+      readiness.textContent = t('mapStartStatus');
       readiness.classList.remove('ready');
     }
   }
@@ -1585,7 +1602,7 @@
     try {
       const resp = await fetch('/.netlify/functions/analisar-planta', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, documentos: documentsForAnalysis, localizacao: locationForReport(), objetivo: document.getElementById('pdmObjetivo').value, descricao: document.getElementById('pdmUserMsg').value.trim(), estimativaCusto: costEstimate, privacyConsent: true, privacyPolicyVersion: '2026-09-10' })
+        body: JSON.stringify({ email, documentos: documentsForAnalysis, localizacao: locationForReport(), objetivo: document.getElementById('pdmObjetivo').value, descricao: document.getElementById('pdmUserMsg').value.trim(), estimativaCusto: costEstimate, language: document.documentElement.lang, privacyConsent: true, privacyPolicyVersion: '2026-09-10' })
       });
       const data = await readJsonResponse(resp, 'A análise não devolveu uma resposta válida');
       if (!resp.ok) throw new Error(data.error || 'Não foi possível concluir a análise neste momento. Tente novamente dentro de alguns minutos.');
@@ -1735,7 +1752,7 @@
     try {
       const response = await fetch('/.netlify/functions/enviar-relatorio', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ to: email, reportText: copy.innerText, reportHtml: copy.innerHTML, location: selectedLocation, documentPlan: orderingPlan ? { base64: orderingPlan.base64, mimeType: orderingPlan.mimeType, source: 'Planta de Localização oficial — PDM / Ordenamento; polígono assinalado pelo requerente' } : null, privacyConsent: true, privacyPolicyVersion: '2026-09-10' }),
+        body: JSON.stringify({ to: email, reportText: copy.innerText, reportHtml: copy.innerHTML, location: selectedLocation, documentPlan: orderingPlan ? { base64: orderingPlan.base64, mimeType: orderingPlan.mimeType, source: 'Planta de Localização oficial — PDM / Ordenamento; polígono assinalado pelo requerente' } : null, language: document.documentElement.lang, privacyConsent: true, privacyPolicyVersion: '2026-09-10' }),
       });
       const data = await readJsonResponse(response, 'O serviço de envio de e-mail não devolveu uma resposta válida');
       if (!response.ok) throw new Error(data.error || 'Não foi possível enviar o relatório.');

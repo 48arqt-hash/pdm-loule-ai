@@ -265,6 +265,16 @@ function immediateAnalysisReport(localizacao = {}, objetivo = '', costEstimate =
   };
 }
 
+function localizeImmediateReport(html, language = 'pt') {
+  const copy = {
+    en: [['Conclusão da pré-análise:', 'Pre-assessment conclusion:'], ['Localização e elementos disponíveis', 'Location and available information'], ['Enquadramento territorial confirmado', 'Confirmed territorial context'], ['Regras aplicáveis à pretensão', 'Rules applicable to the proposal'], ['O que precisa de validação', 'What requires validation'], ['Informação ainda em falta', 'Information still missing'], ['Próximo passo recomendado', 'Recommended next step'], ['Necessita validação técnica', 'Technical validation required'], ['Não identificado', 'Not identified'], ['Não confirmada', 'Not confirmed'], ['Não identificadas', 'Not identified'], ['Este relatório é uma pré-análise documental e não substitui informação prévia, parecer municipal, levantamento topográfico ou validação por técnico habilitado.', 'This report is a document pre-assessment and does not replace prior information, a municipal opinion, a topographic survey or validation by a qualified professional.']],
+    fr: [['Conclusão da pré-análise:', 'Conclusion de la pré-analyse :'], ['Localização e elementos disponíveis', 'Localisation et éléments disponibles'], ['Enquadramento territorial confirmado', 'Contexte territorial confirmé'], ['Regras aplicáveis à pretensão', 'Règles applicables au projet'], ['O que precisa de validação', 'Éléments à valider'], ['Informação ainda em falta', 'Informations encore manquantes'], ['Próximo passo recomendado', 'Prochaine étape recommandée'], ['Necessita validação técnica', 'Validation technique requise'], ['Não identificado', 'Non identifié'], ['Não confirmada', 'Non confirmée'], ['Não identificadas', 'Non identifiées']],
+    de: [['Conclusão da pré-análise:', 'Ergebnis der Voranalyse:'], ['Localização e elementos disponíveis', 'Standort und verfügbare Angaben'], ['Enquadramento territorial confirmado', 'Bestätigte räumliche Einordnung'], ['Regras aplicáveis à pretensão', 'Für das Vorhaben geltende Regeln'], ['O que precisa de validação', 'Was geprüft werden muss'], ['Informação ainda em falta', 'Noch fehlende Angaben'], ['Próximo passo recomendado', 'Empfohlener nächster Schritt'], ['Necessita validação técnica', 'Technische Prüfung erforderlich'], ['Não identificado', 'Nicht identifiziert'], ['Não confirmada', 'Nicht bestätigt'], ['Não identificadas', 'Nicht identifiziert']],
+    es: [['Conclusão da pré-análise:', 'Conclusión del preanálisis:'], ['Localização e elementos disponíveis', 'Ubicación y elementos disponibles'], ['Enquadramento territorial confirmado', 'Encuadre territorial confirmado'], ['Regras aplicáveis à pretensão', 'Reglas aplicables a la propuesta'], ['O que precisa de validação', 'Lo que requiere validación'], ['Informação ainda em falta', 'Información pendiente'], ['Próximo passo recomendado', 'Próximo paso recomendado'], ['Necessita validação técnica', 'Requiere validación técnica'], ['Não identificado', 'No identificado'], ['Não confirmada', 'No confirmada'], ['Não identificadas', 'No identificadas']],
+  };
+  return (copy[language] || []).reduce((text, [from, to]) => text.replaceAll(from, to), html);
+}
+
 function dispatchSecret() { return process.env.DOSSIER_ACCESS_SECRET || process.env.ANALYSIS_SESSION_SECRET || ''; }
 function dispatchSignature(payload) { return createHmac('sha256', dispatchSecret()).update(payload).digest('hex'); }
 
@@ -401,7 +411,7 @@ async function cartographicEvidence(localizacao) {
   ];
 }
 
-function buildPrompt({ objetivo, descricao, documents, localizacao, regulationSources = [], officialRegulations = [], cartographicLayers = [], costEstimate = null }) {
+function buildPrompt({ objetivo, descricao, documents, localizacao, regulationSources = [], officialRegulations = [], cartographicLayers = [], costEstimate = null, language = 'pt' }) {
   const inventory = documents.length ? documents.map((doc) => `- ${doc.tipo}: ${doc.nome}${doc.origem === 'planta_localizacao_compactada' ? ' (imagem preparada localmente a partir da Planta de Localização oficial)' : ''}`).join('\n') : '- Sem documentos PDF anexados.';
   const preexistenceRules = preexistenceRulesFor(localizacao?.municipio?.nome);
   const mapEvidence = localizacao ? JSON.stringify({
@@ -440,7 +450,7 @@ Tarefa:
 6. Quando o cliente declarar uma pretensão, abre a secção "regras_aplicaveis" com a linha "Viabilidade preliminar da pretensão". Responde diretamente à pretensão, mas sem emitir decisão de licenciamento: "Viável em princípio, sujeito a confirmação" quando os usos e regras recebidos forem compatíveis; "Não demonstrada / não viável como apresentada" quando as regras recebidas exigirem condições que os dados da consulta não demonstram; ou "Dados insuficientes" quando não existir classificação aplicável. Se a parcela intersectar mais de uma classe e não existir "implantacao.confirmada", não apresentes uma conclusão única para todo o prédio: escreve "Dados insuficientes - depende da zona de implantação" e explica os cenários separadamente. Se existir "implantacao.confirmada", relaciona as regras apenas com a classe do ponto de implantação indicado; não mistures regras de outras zonas da parcela. Se "parcela.manual" for verdadeiro, chama sempre à geometria "limite aproximado desenhado pelo utilizador", nunca "parcela cadastral"; assinala que o cruzamento territorial é indicativo e que ficam por confirmar estremas, área, titularidade e artigo matricial. Em particular, para "Construir uma moradia" em RAN ou em solo rural agrícola de Loulé, esclarece que uma moradia NOVA comum não é viável apenas pela seleção do terreno: só pode haver enquadramento nas condições cumulativas da habitação do agricultor e, quando haja RAN, no respetivo regime jurídico. Contudo, se os PDFs ou a descrição demonstrarem uma construção pré-existente/ruína com estrutura e volumetria definida, apresenta obrigatoriamente um cenário separado: "Reconstrução, alteração ou ampliação de preexistência". Aplica exclusivamente as regras em "regrasPreexistencia", cita artigo e página, e conclui "Potencialmente admissível, sujeito a prova da preexistência e validação municipal". Nunca trates a ruína como confirmada sem prova documental, fotográfica ou levantamento; explica os elementos em falta. Indica quais as provas em falta e não transformes uma exceção em autorização.
 7. Distingue sempre: confirmado, necessita verificação, não identificado.
 8. Não apresentes aconselhamento jurídico nem uma decisão de licenciamento.
-9. Escreve em português europeu, com tom profissional e direto para um proprietário não técnico. A conclusão deve ter no máximo 3 frases e começar pelo que foi efetivamente confirmado. Não escrevas “a análise não pôde ser concluída” apenas porque não foram anexados PDFs: se existir localização ou PDM, explica antes o que foi possível apurar no mapa e depois o que falta confirmar. Evita repetir a mesma limitação em várias secções. Nas tabelas, usa frases curtas; não juntes palavras nem cabeçalhos, e não devolvas códigos técnicos sem uma designação legível. Em “próximos_passos”, indica no máximo 3 ações concretas e ordenadas.
+9. Escreve na língua escolhida pelo cliente (${language === 'en' ? 'inglês' : language === 'fr' ? 'francês' : language === 'de' ? 'alemão' : language === 'es' ? 'espanhol' : 'português europeu'}), com tom profissional e direto para um proprietário não técnico. Traduz títulos, estados, tabelas, conclusão, próximos passos e avisos; mantém apenas os nomes oficiais dos planos, diplomas, artigos e categorias territoriais na sua designação oficial portuguesa, acrescentando uma tradução explicativa entre parênteses se isso ajudar. A conclusão deve ter no máximo 3 frases e começar pelo que foi efetivamente confirmado. Não escrevas “a análise não pôde ser concluída” apenas porque não foram anexados PDFs: se existir localização ou PDM, explica antes o que foi possível apurar no mapa e depois o que falta confirmar. Evita repetir a mesma limitação em várias secções. Nas tabelas, usa frases curtas; não juntes palavras nem cabeçalhos, e não devolvas códigos técnicos sem uma designação legível. Em “próximos_passos”, indica no máximo 3 ações concretas e ordenadas.
 
 Responde exclusivamente com JSON válido, sem markdown, neste formato:
 {
@@ -524,7 +534,7 @@ export const detailedAnalysisHandler = async (event) => {
         contents: [{
           role: 'user',
           parts: [
-            { text: buildPrompt({ objetivo: body.objetivo, descricao: body.descricao, documents, localizacao: body.localizacao, regulationSources, officialRegulations: regulations, cartographicLayers: visualLayers, costEstimate }) },
+            { text: buildPrompt({ objetivo: body.objetivo, descricao: body.descricao, documents, localizacao: body.localizacao, regulationSources, officialRegulations: regulations, cartographicLayers: visualLayers, costEstimate, language: body.language }) },
             ...visualLayers.flatMap((layer) => [
               { text: layer.tipo },
               { inlineData: { mimeType: layer.mimeType, data: layer.base64 } },
@@ -595,7 +605,7 @@ export const detailedAnalysisHandler = async (event) => {
       const documentPlan = orderingPlan?.base64 && ['image/jpeg', 'image/png'].includes(orderingPlan.mimeType)
         ? { image: Buffer.from(orderingPlan.base64, 'base64'), source: 'Planta de Localização oficial — PDM / Ordenamento; polígono assinalado pelo requerente' }
         : null;
-      await sendReportEmail({ to: body.email, reportText, reportHtml: reply, location: body.localizacao || null, privacyPolicyVersion: body.privacyPolicyVersion || null, documentPlan, dossierLink, reportReference: dossier?.reportReference || null });
+      await sendReportEmail({ to: body.email, reportText, reportHtml: reply, location: body.localizacao || null, privacyPolicyVersion: body.privacyPolicyVersion || null, documentPlan, dossierLink, reportReference: dossier?.reportReference || null, language: body.language });
       emailSent = true;
     } catch (emailFailure) {
       console.error('automatic_report_email_error', emailFailure);
@@ -627,7 +637,7 @@ export const handler = async (event) => {
     if (totalBytes > MAX_TOTAL_DOCUMENT_BYTES) return json(413, { error: 'Os documentos selecionados excedem o limite técnico de 4 MB para envio online.' });
     const costEstimate = calculateRequestedCostEstimate(body.estimativaCusto);
     const immediate = immediateAnalysisReport(body.localizacao || {}, body.objetivo || '', costEstimate);
-    const reply = `${renderReport(immediate)}${renderCostEstimateSection(costEstimate)}`;
+    const reply = localizeImmediateReport(`${renderReport(immediate)}${renderCostEstimateSection(costEstimate)}`, body.language);
     try { await queueDetailedAnalysis(body, event.headers?.cookie || event.headers?.Cookie || ''); } catch (error) { console.error('analysis_background_dispatch_error', error.message); }
     return json(202, { reply, resumo: immediate.conclusao.estado, detailedReportQueued: true, emailSent: false });
   } catch (error) {
