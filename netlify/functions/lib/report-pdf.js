@@ -1,6 +1,14 @@
 import PDFDocument from 'pdfkit';
 
 const COLORS = { navy: '#173D58', teal: '#24565D', gold: '#B9954F', ink: '#17201F', muted: '#64716E', line: '#D8E0DD', wash: '#F2F5F3', paleGold: '#F5F0E5' };
+const PDF_COPY = {
+  pt:{ generated:'Gerado em', location:'Localização analisada', summary:'Síntese para decisão', summaryHelp:'Leitura rápida da pré-análise. Consulte as secções seguintes para evidência, fontes e condições.', place:'LOCALIZAÇÃO', guidance:'ORIENTAÇÃO', confirm:'A CONFIRMAR', noParcel:'Parcela não identificada', noMunicipality:'Concelho não confirmado', implantation:'Ponto de implantação indicado', noImplantation:'Sem ponto de implantação indicado', noRule:'Ainda não há regra urbanística confirmada para a localização.', pending:'Limites, servidões e parâmetros aplicáveis à operação.', page:'PÁGINA', mapOverlay:'Sobreposição com planta territorial aplicável', documentOverlay:'Sobreposição do PDM indicada na Planta de Localização', cartographic:'Enquadramento cartográfico disponível', officialLegend:'Legenda oficial da planta', disclaimer:'Pré-análise assistida por IA. Não constitui parecer municipal nem decisão de licenciamento.'},
+  en:{ generated:'Generated on', location:'Analysed location', summary:'Decision summary', summaryHelp:'A quick reading of the pre-assessment. See the following sections for evidence, sources and conditions.', place:'LOCATION', guidance:'GUIDANCE', confirm:'TO CONFIRM', noParcel:'Parcel not identified', noMunicipality:'Municipality not confirmed', implantation:'Building point indicated', noImplantation:'No building point indicated', noRule:'No planning rule has yet been confirmed for this location.', pending:'Boundaries, constraints and parameters applicable to the proposal.', page:'PAGE', mapOverlay:'Overlay with applicable territorial plan', documentOverlay:'PDM overlay shown on the location plan', cartographic:'Available cartographic context', officialLegend:'Official plan legend', disclaimer:'AI-assisted pre-assessment. It does not constitute a municipal opinion or licensing decision.'},
+  fr:{ generated:'Généré le', location:'Localisation analysée', summary:'Synthèse pour la décision', summaryHelp:'Lecture rapide de la pré-analyse. Consultez les sections suivantes pour les éléments, sources et conditions.', place:'LOCALISATION', guidance:'ORIENTATION', confirm:'À CONFIRMER', noParcel:'Parcelle non identifiée', noMunicipality:'Municipalité non confirmée', implantation:'Point d’implantation indiqué', noImplantation:'Aucun point d’implantation indiqué', noRule:'Aucune règle urbanistique n’est encore confirmée pour cette localisation.', pending:'Limites, servitudes et paramètres applicables au projet.', page:'PAGE', mapOverlay:'Superposition avec le plan territorial applicable', documentOverlay:'Superposition du PDM indiquée dans le plan de localisation', cartographic:'Contexte cartographique disponible', officialLegend:'Légende officielle du plan', disclaimer:'Pré-analyse assistée par IA. Elle ne constitue ni un avis municipal ni une décision d’autorisation.'},
+  de:{ generated:'Erstellt am', location:'Analysierter Standort', summary:'Entscheidungsübersicht', summaryHelp:'Kurzübersicht der Voranalyse. In den folgenden Abschnitten finden Sie Nachweise, Quellen und Bedingungen.', place:'STANDORT', guidance:'EINORDNUNG', confirm:'ZU BESTÄTIGEN', noParcel:'Grundstück nicht identifiziert', noMunicipality:'Gemeinde nicht bestätigt', implantation:'Gebäudepunkt angegeben', noImplantation:'Kein Gebäudepunkt angegeben', noRule:'Für diesen Standort wurde noch keine Planungsregel bestätigt.', pending:'Grenzen, Beschränkungen und für das Vorhaben geltende Parameter.', page:'SEITE', mapOverlay:'Überlagerung mit anwendbarem Raumplan', documentOverlay:'Im Lageplan dargestellte PDM-Überlagerung', cartographic:'Verfügbarer kartografischer Kontext', officialLegend:'Offizielle Planlegende', disclaimer:'KI-gestützte Voranalyse. Sie stellt weder eine kommunale Stellungnahme noch eine Genehmigungsentscheidung dar.'},
+  es:{ generated:'Generado el', location:'Ubicación analizada', summary:'Resumen para la decisión', summaryHelp:'Lectura rápida del preanálisis. Consulte las secciones siguientes para evidencias, fuentes y condiciones.', place:'UBICACIÓN', guidance:'ORIENTACIÓN', confirm:'POR CONFIRMAR', noParcel:'Parcela no identificada', noMunicipality:'Municipio no confirmado', implantation:'Punto de implantación indicado', noImplantation:'Sin punto de implantación indicado', noRule:'Aún no se ha confirmado una regla urbanística para esta ubicación.', pending:'Límites, servidumbres y parámetros aplicables a la actuación.', page:'PÁGINA', mapOverlay:'Superposición con el plan territorial aplicable', documentOverlay:'Superposición del PDM indicada en el plano de localización', cartographic:'Contexto cartográfico disponible', officialLegend:'Leyenda oficial del plano', disclaimer:'Preanálisis asistido por IA. No constituye informe municipal ni decisión de licencia.'},
+};
+function pdfCopy(language = 'pt') { return PDF_COPY[language] || PDF_COPY.pt; }
 const FOOTER_Y = 762;
 // Reserva espaço para o aviso legal imediatamente antes da linha do rodapé.
 const CONTENT_END_Y = 724;
@@ -83,23 +91,23 @@ function firstUsefulRule(report) {
   return direct || rules[0] || null;
 }
 
-function drawExecutiveSummary(doc, report, location) {
-  const reference = location?.parcela?.declaracao || location?.parcela?.referencia || 'Parcela não identificada';
-  const municipality = location?.municipio?.nome || 'Concelho não confirmado';
-  const implantation = location?.implantacao?.confirmada ? 'Ponto de implantação indicado' : 'Sem ponto de implantação indicado';
+function drawExecutiveSummary(doc, report, location, copy = PDF_COPY.pt) {
+  const reference = location?.parcela?.declaracao || location?.parcela?.referencia || copy.noParcel;
+  const municipality = location?.municipio?.nome || copy.noMunicipality;
+  const implantation = location?.implantacao?.confirmada ? copy.implantation : copy.noImplantation;
   const rule = firstUsefulRule(report);
   const verification = report.sections.find((section) => /informa[cç][aã]o n[aã]o confirmada|divergências/i.test(section.title));
   const pending = (verification?.items || []).slice(0, 2);
   ensureSpace(doc, 155);
   const y = doc.y;
   doc.roundedRect(47, y, 501, 142, 8).fill(COLORS.wash);
-  doc.font('Helvetica-Bold').fontSize(11).fillColor(COLORS.navy).text('Síntese para decisão', 61, y + 15);
-  doc.font('Helvetica').fontSize(7.5).fillColor(COLORS.muted).text('Leitura rápida da pré-análise. Consulte as secções seguintes para evidência, fontes e condições.', 61, y + 31, { width: 470 });
+  doc.font('Helvetica-Bold').fontSize(11).fillColor(COLORS.navy).text(copy.summary, 61, y + 15);
+  doc.font('Helvetica').fontSize(7.5).fillColor(COLORS.muted).text(copy.summaryHelp, 61, y + 31, { width: 470 });
   const columns = [61, 224, 387];
   const blocks = [
-    { title: 'LOCALIZAÇÃO', value: `${municipality}\n${reference}\n${implantation}` },
-    { title: 'ORIENTAÇÃO', value: rule ? String(rule[1] || '-').slice(0, 260) : 'Ainda não há regra urbanística confirmada para a localização.' },
-    { title: 'A CONFIRMAR', value: pending.length ? pending.join('\n') : 'Limites, servidões e parâmetros aplicáveis à operação.' },
+    { title: copy.place, value: `${municipality}\n${reference}\n${implantation}` },
+    { title: copy.guidance, value: rule ? String(rule[1] || '-').slice(0, 260) : copy.noRule },
+    { title: copy.confirm, value: pending.length ? pending.join('\n') : copy.pending },
   ];
   blocks.forEach((block, index) => {
     if (index) doc.strokeColor(COLORS.line).lineWidth(.7).moveTo(columns[index] - 13, y + 56).lineTo(columns[index] - 13, y + 126).stroke();
@@ -167,7 +175,7 @@ function drawBullets(doc, items) {
   });
 }
 
-function drawFooter(doc, pageNumber, disclaimer = 'Pré-análise assistida por IA. Não constitui parecer municipal nem decisão de licenciamento.') {
+function drawFooter(doc, pageNumber, disclaimer = PDF_COPY.pt.disclaimer, copy = PDF_COPY.pt) {
   doc.save();
   // O aviso integra o conteúdo do relatório, não o rodapé administrativo.
   doc.font('Helvetica-Oblique').fontSize(6.7).fillColor(COLORS.muted)
@@ -175,7 +183,7 @@ function drawFooter(doc, pageNumber, disclaimer = 'Pré-análise assistida por I
   doc.strokeColor(COLORS.line).lineWidth(0.8).moveTo(47, FOOTER_Y).lineTo(548, FOOTER_Y).stroke();
   doc.font('Helvetica').fontSize(7).fillColor(COLORS.muted)
     .text('Morada: Av. José da Costa Mealha, n.º 133, 8100-500 Loulé - Telefone: 96 0010 870 - E-mail: geral@leonelmendes.com', 47, FOOTER_Y + 9, { width: 501, align: 'center' });
-  doc.font('Helvetica-Bold').fontSize(7).fillColor(COLORS.navy).text(`PÁGINA ${pageNumber}`, 470, FOOTER_Y + 20, { width: 78, align: 'right' });
+  doc.font('Helvetica-Bold').fontSize(7).fillColor(COLORS.navy).text(`${copy.page} ${pageNumber}`, 470, FOOTER_Y + 20, { width: 78, align: 'right' });
   doc.restore();
 }
 
@@ -366,10 +374,10 @@ async function officialPlanContext(location) {
   }
 }
 
-function drawLocationMap(doc, aerial, location, { compact = false } = {}) {
+function drawLocationMap(doc, aerial, location, { compact = false, copy = PDF_COPY.pt } = {}) {
   if (!aerial) return;
   ensureSpace(doc, compact ? 238 : 360);
-  drawSectionTitle(doc, 'Localização analisada');
+  drawSectionTitle(doc, copy.location);
   const x = 47; const y = doc.y; const width = 501; const height = compact ? 180 : 300;
   if (aerial.image) {
     if (!safeImage(doc, aerial.image, x, y, { width, height }, 'vista aérea')) return;
@@ -441,10 +449,10 @@ function relevantCartographicLegend(location) {
     }).slice(0, 6);
 }
 
-function drawOfficialPlanOverlay(doc, plan, location) {
+function drawOfficialPlanOverlay(doc, plan, location, copy = PDF_COPY.pt) {
   if (!plan) return;
   ensureSpace(doc, 320);
-  drawSectionTitle(doc, 'Sobreposição com planta territorial aplicável');
+  drawSectionTitle(doc, copy.mapOverlay);
   const x = 47; const y = doc.y; const width = 501; const height = 278;
   if (!safeImage(doc, plan.image, x, y, { width, height }, 'planta territorial')) return;
   const [minLon, minLat, maxLon, maxLat] = plan.bbox;
@@ -472,7 +480,7 @@ function drawOfficialPlanOverlay(doc, plan, location) {
     doc.moveDown(.45);
     ensureSpace(doc, 150);
     const legendY = doc.y;
-    doc.font('Helvetica-Bold').fontSize(7.4).fillColor(COLORS.navy).text('Legenda oficial da planta', x, legendY, { width: 190 });
+    doc.font('Helvetica-Bold').fontSize(7.4).fillColor(COLORS.navy).text(copy.officialLegend, x, legendY, { width: 190 });
     safeImage(doc, plan.legend, x, legendY + 12, { fit: [230, 130] }, 'legenda territorial');
     doc.y = legendY + 150;
   }
@@ -489,10 +497,10 @@ function drawOfficialPlanOverlay(doc, plan, location) {
   } else doc.moveDown(.7);
 }
 
-function drawDocumentPlanOverlay(doc, documentPlan) {
+function drawDocumentPlanOverlay(doc, documentPlan, copy = PDF_COPY.pt) {
   if (!documentPlan?.image) return false;
   ensureSpace(doc, 390);
-  drawSectionTitle(doc, 'Sobreposição do PDM indicada na Planta de Localização');
+  drawSectionTitle(doc, copy.documentOverlay);
   const x = 47; const y = doc.y; const maxWidth = 501; const maxHeight = 350;
   let dimensions;
   try {
@@ -512,7 +520,7 @@ function drawDocumentPlanOverlay(doc, documentPlan) {
   return true;
 }
 
-function drawCartographicEvidence(doc, location) {
+function drawCartographicEvidence(doc, location, copy = PDF_COPY.pt) {
   const layers = Array.isArray(location?.pdm) ? location.pdm : [];
   const useful = layers
     .map((item) => ({ label: String(item?.camada || '').trim(), value: String(item?.valor || '').trim() }))
@@ -521,7 +529,7 @@ function drawCartographicEvidence(doc, location) {
     .filter((item) => !(/regime de uso do solo \(dgt\)/i.test(item.label) && /^\d+$/.test(item.value)))
     .slice(0, 5);
   if (!useful.length) return;
-  drawSectionTitle(doc, 'Enquadramento cartográfico disponível');
+  drawSectionTitle(doc, copy.cartographic);
   useful.forEach((item) => {
     const line = `${item.label}: ${item.value}`;
     ensureSpace(doc, textHeight(doc, line, 470, 8.5) + 11);
@@ -542,7 +550,10 @@ export async function createProfessionalPdf({
   reportReference = null,
   disclaimer = 'Pré-análise assistida por IA. Não constitui parecer municipal nem decisão de licenciamento.',
   documentPlan = null,
+  language = 'pt',
 }) {
+  const copy = pdfCopy(language);
+  if (!disclaimer || disclaimer === PDF_COPY.pt.disclaimer) disclaimer = copy.disclaimer;
   const [aerial, plan] = await Promise.all([aerialContext(location), officialPlanContext(location)]);
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: 'A4', margin: 47, bufferPages: true, info: { Title: `${documentTitle} - Leonel Mendes` } });
@@ -555,7 +566,7 @@ export async function createProfessionalPdf({
     const report = parseReport(reportHtml, reportText, documentTitle);
     drawHeader(doc, documentLabel, reportReference);
     doc.font('Helvetica-Bold').fontSize(20).fillColor(COLORS.navy).text(report.title, 47, doc.y);
-    doc.font('Helvetica').fontSize(9).fillColor(COLORS.muted).text(`Gerado em ${portugalDateTime()}`, 47, doc.y + 5);
+    doc.font('Helvetica').fontSize(9).fillColor(COLORS.muted).text(`${copy.generated} ${portugalDateTime()}`, 47, doc.y + 5);
     doc.moveDown(1.4);
     const status = report.summary.find((line) => /^Resultado preliminar:/i.test(line))?.replace(/^Resultado preliminar:\s*/i, '');
     drawStatus(doc, status);
@@ -567,14 +578,14 @@ export async function createProfessionalPdf({
 
     // A fotografia aérea é a referência visual mais importante para o cliente:
     // entra logo na capa, em formato compacto, antes das secções técnicas.
-    drawLocationMap(doc, aerial, location, { compact: true });
-    drawExecutiveSummary(doc, report, location);
+    drawLocationMap(doc, aerial, location, { compact: true, copy });
+    drawExecutiveSummary(doc, report, location, copy);
     // A planta entregue pelo cliente tem prioridade: contém a peça emitida
     // pela entidade e o polígono que serviu de base à análise, qualquer que
     // seja o município. Se não existir, usa-se o serviço cartográfico oficial
     // configurado para o município (quando disponível).
-    if (!drawDocumentPlanOverlay(doc, documentPlan)) drawOfficialPlanOverlay(doc, plan, location);
-    drawCartographicEvidence(doc, location);
+    if (!drawDocumentPlanOverlay(doc, documentPlan, copy)) drawOfficialPlanOverlay(doc, plan, location, copy);
+    drawCartographicEvidence(doc, location, copy);
 
     if (!report.sections.length && report.fallback) {
       drawSectionTitle(doc, 'Conteúdo da pré-análise');
@@ -595,7 +606,7 @@ export async function createProfessionalPdf({
     const range = doc.bufferedPageRange();
     for (let index = 0; index < range.count; index += 1) {
       doc.switchToPage(index);
-      drawFooter(doc, index + 1, disclaimer);
+      drawFooter(doc, index + 1, disclaimer, copy);
     }
     doc.end();
   });

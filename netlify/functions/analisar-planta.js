@@ -138,9 +138,10 @@ function itemList(items, empty = 'Não identificado nos documentos analisados.')
   return `<ul>${items.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`;
 }
 
-function table(rows, empty = 'Sem parâmetros confirmados nesta fase.') {
+function table(rows, empty = 'Sem parâmetros confirmados nesta fase.', language = 'pt') {
   if (!Array.isArray(rows) || !rows.length) return `<p>${escapeHtml(empty)}</p>`;
-  return `<table><thead><tr><th>Elemento</th><th>Resultado</th><th>Estado</th><th>Fonte</th></tr></thead><tbody>${rows.map((row) => `<tr><td>${escapeHtml(row.elemento)}</td><td>${escapeHtml(row.resultado)}</td><td>${escapeHtml(row.estado)}</td><td>${escapeHtml(row.fonte)}</td></tr>`).join('')}</tbody></table>`;
+  const headers = { pt:['Elemento','Resultado','Estado','Fonte'], en:['Item','Result','Status','Source'], fr:['Élément','Résultat','Statut','Source'], de:['Element','Ergebnis','Status','Quelle'], es:['Elemento','Resultado','Estado','Fuente'] }[language] || ['Elemento','Resultado','Estado','Fonte'];
+  return `<table><thead><tr>${headers.map((header) => `<th>${header}</th>`).join('')}</tr></thead><tbody>${rows.map((row) => `<tr><td>${escapeHtml(row.elemento)}</td><td>${escapeHtml(row.resultado)}</td><td>${escapeHtml(row.estado)}</td><td>${escapeHtml(row.fonte)}</td></tr>`).join('')}</tbody></table>`;
 }
 
 const COST_RATES = {
@@ -211,30 +212,38 @@ function renderCostEstimateSection(estimate) {
     <p><small>O custo final depende do projeto, medições, condições do local, especialidades, licenças, enquadramento fiscal e propostas de empreiteiros. A viabilidade urbanística indicada nas secções anteriores deve ser confirmada antes de assumir qualquer investimento.</small></p>`;
 }
 
-function renderReport(report) {
+function renderReport(report, language = 'pt') {
+  const chrome = {
+    pt:['Conclusão da pré-análise:','1. Localização e elementos disponíveis','Localização / freguesia','Artigo matricial','Área indicada','Coordenadas','2. Enquadramento territorial confirmado','3. Regras aplicáveis à pretensão','4. O que precisa de validação','5. Informação ainda em falta','6. Próximo passo recomendado','Não confirmada','Não identificado','Não identificadas'],
+    en:['Pre-assessment conclusion:','1. Location and available information','Location / parish','Property tax reference','Stated area','Coordinates','2. Confirmed territorial context','3. Rules applicable to the proposal','4. What requires validation','5. Information still missing','6. Recommended next step','Not confirmed','Not identified','Not identified'],
+    fr:['Conclusion de la pré-analyse :','1. Localisation et éléments disponibles','Localisation / paroisse','Référence fiscale du bien','Surface indiquée','Coordonnées','2. Contexte territorial confirmé','3. Règles applicables au projet','4. Éléments à valider','5. Informations encore manquantes','6. Prochaine étape recommandée','Non confirmée','Non identifiée','Non identifiées'],
+    de:['Ergebnis der Voranalyse:','1. Standort und verfügbare Angaben','Standort / Gemeinde','Steuerliche Grundstücksreferenz','Angegebene Fläche','Koordinaten','2. Bestätigte räumliche Einordnung','3. Für das Vorhaben geltende Regeln','4. Was geprüft werden muss','5. Noch fehlende Angaben','6. Empfohlener nächster Schritt','Nicht bestätigt','Nicht identifiziert','Nicht identifiziert'],
+    es:['Conclusión del preanálisis:','1. Ubicación y elementos disponibles','Ubicación / parroquia','Referencia fiscal del inmueble','Superficie indicada','Coordenadas','2. Encuadre territorial confirmado','3. Reglas aplicables a la propuesta','4. Lo que requiere validación','5. Información pendiente','6. Próximo paso recomendado','No confirmada','No identificado','No identificadas'],
+  }[language] || null;
+  const c = chrome || ['Conclusão da pré-análise:','1. Localização e elementos disponíveis','Localização / freguesia','Artigo matricial','Área indicada','Coordenadas','2. Enquadramento territorial confirmado','3. Regras aplicáveis à pretensão','4. O que precisa de validação','5. Informação ainda em falta','6. Próximo passo recomendado','Não confirmada','Não identificado','Não identificadas'];
   const identificacao = report.identificacao || {};
   const conclusao = report.conclusao || {};
   return `
     <section>
-      <p><strong>Conclusão da pré-análise:</strong> ${escapeHtml(conclusao.estado || 'Necessita validação técnica')}</p>
+      <p><strong>${c[0]}</strong> ${escapeHtml(conclusao.estado || 'Necessita validação técnica')}</p>
       <p>${escapeHtml(conclusao.resumo || 'A análise foi limitada à informação documental fornecida.')}</p>
     </section>
-    <h5>1. Localização e elementos disponíveis</h5>
+    <h5>${c[1]}</h5>
     <table><tbody>
-      <tr><th>Localização / freguesia</th><td>${escapeHtml(identificacao.localizacao || 'Não confirmada')}</td></tr>
-      <tr><th>Artigo matricial</th><td>${escapeHtml(identificacao.artigo_matricial || 'Não identificado')}</td></tr>
-      <tr><th>Área indicada</th><td>${escapeHtml(identificacao.area || 'Não confirmada')}</td></tr>
-      <tr><th>Coordenadas</th><td>${escapeHtml(identificacao.coordenadas || 'Não identificadas')}</td></tr>
+      <tr><th>${c[2]}</th><td>${escapeHtml(identificacao.localizacao || c[11])}</td></tr>
+      <tr><th>${c[3]}</th><td>${escapeHtml(identificacao.artigo_matricial || c[12])}</td></tr>
+      <tr><th>${c[4]}</th><td>${escapeHtml(identificacao.area || c[11])}</td></tr>
+      <tr><th>${c[5]}</th><td>${escapeHtml(identificacao.coordenadas || c[13])}</td></tr>
     </tbody></table>
-    <h5>2. Enquadramento territorial confirmado</h5>
-    ${table(report.parametros)}
-    <h5>3. Regras aplicáveis à pretensão</h5>
-    ${table(report.regras_aplicaveis, 'Não foram confirmadas regras quantitativas no regulamento ou documentos analisados.')}
-    <h5>4. O que precisa de validação</h5>
+    <h5>${c[6]}</h5>
+    ${table(report.parametros, 'Sem parâmetros confirmados nesta fase.', language)}
+    <h5>${c[7]}</h5>
+    ${table(report.regras_aplicaveis, language === 'en' ? 'No quantitative rules were confirmed in the regulations or analysed documents.' : language === 'fr' ? 'Aucune règle quantitative n’a été confirmée dans le règlement ou les documents analysés.' : language === 'de' ? 'In den Regelwerken oder analysierten Unterlagen wurden keine quantitativen Regeln bestätigt.' : language === 'es' ? 'No se confirmaron reglas cuantitativas en la normativa ni en los documentos analizados.' : 'Não foram confirmadas regras quantitativas no regulamento ou documentos analisados.', language)}
+    <h5>${c[8]}</h5>
     ${itemList(report.divergencias, 'Não foram detetadas divergências evidentes nos documentos fornecidos.')}
-    <h5>5. Informação ainda em falta</h5>
+    <h5>${c[9]}</h5>
     ${itemList(report.nao_confirmado)}
-    <h5>6. Próximo passo recomendado</h5>
+    <h5>${c[10]}</h5>
     ${itemList(report.proximos_passos)}
     <p><small>Este relatório é uma pré-análise documental e não substitui informação prévia, parecer municipal, levantamento topográfico ou validação por técnico habilitado.</small></p>`;
 }
@@ -572,9 +581,14 @@ export const detailedAnalysisHandler = async (event) => {
       await finishAnalysis(trackingRequestId, { status: 'invalid_json', model, durationMs: Date.now() - startedAt }).catch(() => {});
       return json(502, { error: 'O agente de análise concluiu a resposta, mas o relatório não ficou num formato válido. Tente novamente.' });
     }
-    report = enrichLouleDispersedBuildingRules(report, body.localizacao);
-    report = clarifyReportForAvailableEvidence(report, body.localizacao, documents);
-    report = prioritizeArchitectMeeting(report);
+    // Estes enriquecimentos foram inicialmente escritos em português. Em
+    // línguas estrangeiras, mantém-se a resposta integralmente na língua
+    // pedida, sem acrescentar frases portuguesas após a geração.
+    if (!body.language || body.language === 'pt') {
+      report = enrichLouleDispersedBuildingRules(report, body.localizacao);
+      report = clarifyReportForAvailableEvidence(report, body.localizacao, documents);
+      report = prioritizeArchitectMeeting(report);
+    }
     const usage = responseBody.usageMetadata || {};
     console.info('analysis_usage', JSON.stringify({
       model,
@@ -584,7 +598,7 @@ export const detailedAnalysisHandler = async (event) => {
     }));
     await finishAnalysis(trackingRequestId, { status: 'completed', model, promptTokens: usage.promptTokenCount || null, outputTokens: usage.candidatesTokenCount || null, durationMs: Date.now() - startedAt }).catch((error) => console.warn('analysis_tracking_finish_unavailable', error.message));
 
-    const reply = `${renderReport(report)}${renderCostEstimateSection(costEstimate)}`;
+    const reply = `${renderReport(report, body.language)}${renderCostEstimateSection(costEstimate)}`;
     const reportText = reply.replace(/<br\s*\/?\s*>/gi, '\n').replace(/<\/p>|<\/li>|<\/tr>/gi, '\n').replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#039;/g, "'").replace(/\n\s*/g, '\n').trim();
     let dossier = null;
     try {
@@ -637,7 +651,7 @@ export const handler = async (event) => {
     if (totalBytes > MAX_TOTAL_DOCUMENT_BYTES) return json(413, { error: 'Os documentos selecionados excedem o limite técnico de 4 MB para envio online.' });
     const costEstimate = calculateRequestedCostEstimate(body.estimativaCusto);
     const immediate = immediateAnalysisReport(body.localizacao || {}, body.objetivo || '', costEstimate);
-    const reply = localizeImmediateReport(`${renderReport(immediate)}${renderCostEstimateSection(costEstimate)}`, body.language);
+    const reply = localizeImmediateReport(`${renderReport(immediate, body.language)}${renderCostEstimateSection(costEstimate)}`, body.language);
     try { await queueDetailedAnalysis(body, event.headers?.cookie || event.headers?.Cookie || ''); } catch (error) { console.error('analysis_background_dispatch_error', error.message); }
     return json(202, { reply, resumo: immediate.conclusao.estado, detailedReportQueued: true, emailSent: false });
   } catch (error) {

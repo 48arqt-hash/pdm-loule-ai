@@ -443,12 +443,32 @@ export const handler = async (event) => {
     const representativePoint = manualGeometry
       ? geometryRepresentativePoint(manualGeometry, { latitude: lat, longitude: lng })
       : { latitude: lat, longitude: lng };
-    const [cadastre, municipalityResult] = await Promise.allSettled([
+    const [cadastre, municipalityResult, reverseMunicipalityResult] = await Promise.allSettled([
       findCollection('cadastro', 'predial').then((id) => featureAt(id, lat, lng)),
       municipalityAt(representativePoint.latitude, representativePoint.longitude),
+      // Verificação independente de salvaguarda. Não classifica o solo: apenas
+      // impede que uma resposta territorial contraditória abra a carta PDM do
+      // município errado.
+      fallbackMunicipalityAt(representativePoint.latitude, representativePoint.longitude),
     ]);
     let municipality = municipalityResult.status === 'fulfilled' ? municipalityResult.value : null;
     const cadastralParcel = cadastre.status === 'fulfilled' ? cadastre.value : null;
+    const reverseMunicipality = reverseMunicipalityResult.status === 'fulfilled' ? reverseMunicipalityResult.value : null;
+    const cadastralMunicipalityName = municipalityName(cadastralParcel?.properties || {});
+    const cadastralMunicipalityProfile = municipalityProfile(cadastralMunicipalityName);
+    let municipalityConflict = false;
+    if (cadastralMunicipalityProfile && (!municipality || cadastralMunicipalityProfile.nome !== municipality.nome)) {
+      municipality = { ...cadastralMunicipalityProfile, crusWfs: crusWfsForMunicipality(cadastralMunicipalityProfile), fonte: 'Direção-Geral do Território - Cadastro Predial', propriedades: cadastralParcel?.properties || {} };
+    }
+    if (municipality && reverseMunicipality && municipality.nome !== reverseMunicipality.nome && !cadastralMunicipalityProfile) {
+      // Quando a CAOP e a verificação territorial independente discordam, é
+      // preferível não atribuir um PDM a um prédio potencialmente noutro
+      // concelho. A consulta mantém cadastro/localização, mas trava a leitura
+      // municipal até nova seleção ou confirmação documental.
+      console.warn('municipality_source_conflict', JSON.stringify({ caop: municipality.nome, reverse: reverseMunicipality.nome, latitude: representativePoint.latitude, longitude: representativePoint.longitude }));
+      municipality = null;
+      municipalityConflict = true;
+    }
     // O desenho manual é alternativa apenas onde a fonte cadastral não devolve
     // parcela. Nunca substitui uma feição DGT existente.
     // Quando o utilizador desenha um limite, essa é deliberadamente a área
@@ -490,12 +510,12 @@ export const handler = async (event) => {
     // A CAOP pode estar temporariamente indisponível. Quando a CRUS devolve a
     // feição que intersecta o limite, aproveita-se o atributo municipal dessa
     // fonte oficial para não deixar uma pré-análise sem concelho nem PDM.
-    if (!municipality) {
+    if (!municipality && !municipalityConflict) {
       const crusMunicipality = municipalityName(useFeatures[0]?.properties || {});
       const profile = municipalityProfile(crusMunicipality);
       if (profile) municipality = { ...profile, crusWfs: crusWfsForMunicipality(profile), fonte: 'Direção-Geral do Território - CRUS', propriedades: useFeatures[0]?.properties || {} };
     }
-    if (!municipality) municipality = await fallbackMunicipalityAt(representativePoint.latitude, representativePoint.longitude);
+    if (!municipality && !municipalityConflict) municipality = reverseMunicipality || await fallbackMunicipalityAt(representativePoint.latitude, representativePoint.longitude);
     // As fontes seguintes são independentes. Fazê-las em paralelo reduz o
     // tempo do clique no mapa de várias esperas consecutivas para uma única
     // janela curta de disponibilidade.
@@ -568,6 +588,7 @@ export const handler = async (event) => {
     return json(200, {
       coordenadas: { latitude: analysisLat, longitude: analysisLng }, implantacao: requestedImplantation ? { ...requestedImplantation, confirmada: true, metodo: `Ponto aproximado indicado pelo utilizador dentro d${parcel?.manual ? 'o limite manual' : 'a parcela cadastral'}` } : null, parcela: parcel ? (parcel.manual ? { id: null, referencia: null, declaracao: null, manual: true, propriedades: { origem: 'Limite aproximado desenhado pelo utilizador' }, geometria: parcel.geometry } : { id: parcel.id || null, ...cadastralIdentification(parcel.properties || {}, parcel.id || null), propriedades: parcel.properties || {}, geometria: parcel.geometry || null }) : null, pdm: results,
       avisos: [
+        ...(municipalityConflict ? ['As fontes territoriais consultadas devolveram municípios diferentes para este ponto. Para evitar aplicar o PDM errado, a análise municipal foi suspensa; confirme a parcela pelo cadastro, morada ou documento oficial antes de gerar o relatório.'] : []),
         ...(cadastre.status === 'rejected' ? ['A fonte do Cadastro Predial da DGT não respondeu nesta tentativa. Tente novamente dentro de alguns segundos; não foi selecionado qualquer polígono por aproximação.'] : []),
         ...(cadastre.status === 'fulfilled' && !cadastralParcel && !manualGeometry ? ['A Carta Cadastral Digital não devolveu uma parcela para este ponto. Pode tratar-se de cobertura incompleta, limite impreciso ou de prédio não representado na fonte pública.'] : []),
         ...(!cadastralParcel && manualGeometry ? ['A Carta Cadastral Digital não devolveu uma parcela neste local. A consulta usa o limite aproximado desenhado pelo utilizador; não confirma estremas, área, titularidade, artigo matricial ou declaração cadastral.'] : []),
