@@ -91,11 +91,28 @@ function firstUsefulRule(report) {
   return direct || rules[0] || null;
 }
 
+function plainPlanningAnswer(report) {
+  const territorial = report.sections.find((section) => /enquadramento territorial|territorial confirmed|contexte territorial/i.test(section.title));
+  const labels = (territorial?.rows || []).slice(1)
+    .filter((row) => /regime de uso|classifica[cç][aã]o do solo|land.use/i.test(row[0] || ''))
+    .map((row) => String(row[1] || '').trim()).filter(Boolean);
+  const uniqueLabels = [...new Set(labels)];
+  const hasRural = uniqueLabels.some((label) => /solo r[uú]stico|rural land/i.test(label));
+  const hasUrban = uniqueLabels.some((label) => /solo urbano|urban land/i.test(label));
+  if (hasRural && hasUrban) {
+    return 'Moradia: ainda não confirmada. O limite analisado cruza solo rústico e solo urbano; só uma implantação dentro da área edificável confirmada poderá ser avaliada.';
+  }
+  if (hasRural) return 'Moradia: não confirmada nesta fase. A classificação rústica exige confirmação da regra aplicável e das condicionantes antes de assumir capacidade construtiva.';
+  if (hasUrban) return 'Moradia: possibilidade a confirmar. Existe enquadramento urbano indicado, mas os índices, afastamentos e a implantação ainda requerem validação técnica.';
+  return 'Capacidade construtiva: ainda não confirmada. É necessário validar o limite do terreno, a classificação aplicável e a implantação pretendida.';
+}
+
 function drawExecutiveSummary(doc, report, location, copy = PDF_COPY.pt) {
   const reference = location?.parcela?.declaracao || location?.parcela?.referencia || copy.noParcel;
   const municipality = location?.municipio?.nome || copy.noMunicipality;
   const implantation = location?.implantacao?.confirmada ? copy.implantation : copy.noImplantation;
   const rule = firstUsefulRule(report);
+  const directAnswer = plainPlanningAnswer(report);
   const verification = report.sections.find((section) => /informa[cç][aã]o n[aã]o confirmada|divergências/i.test(section.title));
   const pending = (verification?.items || []).slice(0, 2);
   ensureSpace(doc, 155);
@@ -105,8 +122,8 @@ function drawExecutiveSummary(doc, report, location, copy = PDF_COPY.pt) {
   doc.font('Helvetica').fontSize(7.5).fillColor(COLORS.muted).text(copy.summaryHelp, 61, y + 31, { width: 470 });
   const columns = [61, 224, 387];
   const blocks = [
-    { title: copy.place, value: `${municipality}\n${reference}\n${implantation}` },
-    { title: copy.guidance, value: rule ? String(rule[1] || '-').slice(0, 260) : copy.noRule },
+    { title: 'RESPOSTA AO PEDIDO', value: directAnswer },
+    { title: copy.guidance, value: rule ? String(rule[1] || '-').slice(0, 260) : `${municipality}\n${reference}\n${implantation}` },
     { title: copy.confirm, value: pending.length ? pending.join('\n') : copy.pending },
   ];
   blocks.forEach((block, index) => {
