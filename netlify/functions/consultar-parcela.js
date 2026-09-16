@@ -178,6 +178,18 @@ async function featureAt(collectionId, lat, lng) {
   return null;
 }
 
+async function cadastralParcelAt(lat, lng) {
+  const collectionId = await findCollection('cadastro', 'predial');
+  try {
+    return await featureAt(collectionId, lat, lng);
+  } catch (firstError) {
+    // A OGC API da DGT tem indisponibilidades breves. Uma repetição única,
+    // sem nunca escolher uma parcela próxima, recupera muitos desses casos.
+    console.warn('cadastre_lookup_retry', firstError.message || 'indisponível');
+    return featureAt(collectionId, lat, lng);
+  }
+}
+
 function insideRing(point, ring) {
   let inside = false;
   for (let index = 0, previous = ring.length - 1; index < ring.length; previous = index++) {
@@ -444,7 +456,7 @@ export const handler = async (event) => {
       ? geometryRepresentativePoint(manualGeometry, { latitude: lat, longitude: lng })
       : { latitude: lat, longitude: lng };
     const [cadastre, municipalityResult, reverseMunicipalityResult] = await Promise.allSettled([
-      findCollection('cadastro', 'predial').then((id) => featureAt(id, lat, lng)),
+      cadastralParcelAt(lat, lng),
       municipalityAt(representativePoint.latitude, representativePoint.longitude),
       // Verificação independente de salvaguarda. Não classifica o solo: apenas
       // impede que uma resposta territorial contraditória abra a carta PDM do
@@ -480,6 +492,27 @@ export const handler = async (event) => {
       : cadastralParcel;
     if (requestedImplantation && (!parcel?.geometry || !containsPoint(parcel, [requestedImplantation.longitude, requestedImplantation.latitude]))) {
       return json(400, { error: `O ponto de implantação deve estar dentro do ${parcel?.manual ? 'limite aproximado' : 'polígono cadastral'} selecionado.` });
+    }
+    // Sem uma parcela DGT ou um limite manual, não existe uma área segura
+    // para cruzar com o PDM. Não se deve atribuir um concelho ou uma classe
+    // urbanística apenas a partir de um clique de mapa aproximado.
+    if (!parcel?.geometry) {
+      return json(200, {
+        coordenadas: { latitude: lat, longitude: lng },
+        implantacao: null,
+        parcela: null,
+        cadastro: { disponivel: cadastre.status === 'fulfilled', parcelaEncontrada: false },
+        pdm: [],
+        municipio: null,
+        fontes: ['Direção-Geral do Território — Cadastro Predial (consulta pontual)'],
+        consultadoEm: new Date().toISOString(),
+        avisos: [
+          ...(cadastre.status === 'rejected'
+            ? ['Não foi possível confirmar o limite cadastral nesta tentativa. Tente novamente dentro de alguns segundos ou desenhe o limite aproximado do terreno no mapa.']
+            : ['Não foi encontrada uma parcela cadastral neste ponto. Pode tratar-se de cobertura incompleta, limite impreciso ou de prédio não representado na fonte pública. Desenhe o limite aproximado para continuar a pré-análise territorial.']),
+          'Sem limite confirmado, o sistema não atribui concelho, PDM ou regras urbanísticas a este pedido.',
+        ],
+      });
     }
     const analysisLat = requestedImplantation?.latitude || representativePoint.latitude;
     const analysisLng = requestedImplantation?.longitude || representativePoint.longitude;
@@ -586,7 +619,7 @@ export const handler = async (event) => {
       ...preventiveAreas.map((area) => ({ camada: `Condicionante territorial municipal (CML) — ${area.nome}`, valor: area.attributes.DESIG || 'Área abrangida', atributos: area.attributes, fonte: area.attributes.REGULAMENTO || 'Camada vetorial municipal' })),
     ];
     return json(200, {
-      coordenadas: { latitude: analysisLat, longitude: analysisLng }, implantacao: requestedImplantation ? { ...requestedImplantation, confirmada: true, metodo: `Ponto aproximado indicado pelo utilizador dentro d${parcel?.manual ? 'o limite manual' : 'a parcela cadastral'}` } : null, parcela: parcel ? (parcel.manual ? { id: null, referencia: null, declaracao: null, manual: true, propriedades: { origem: 'Limite aproximado desenhado pelo utilizador' }, geometria: parcel.geometry } : { id: parcel.id || null, ...cadastralIdentification(parcel.properties || {}, parcel.id || null), propriedades: parcel.properties || {}, geometria: parcel.geometry || null }) : null, pdm: results,
+      coordenadas: { latitude: analysisLat, longitude: analysisLng }, implantacao: requestedImplantation ? { ...requestedImplantation, confirmada: true, metodo: `Ponto aproximado indicado pelo utilizador dentro d${parcel?.manual ? 'o limite manual' : 'a parcela cadastral'}` } : null, parcela: parcel ? (parcel.manual ? { id: null, referencia: null, declaracao: null, manual: true, propriedades: { origem: 'Limite aproximado desenhado pelo utilizador' }, geometria: parcel.geometry } : { id: parcel.id || null, ...cadastralIdentification(parcel.properties || {}, parcel.id || null), propriedades: parcel.properties || {}, geometria: parcel.geometry || null }) : null, cadastro: { disponivel: cadastre.status === 'fulfilled', parcelaEncontrada: Boolean(cadastralParcel), limiteManual: Boolean(parcel.manual) }, pdm: results,
       avisos: [
         ...(municipalityConflict ? ['As fontes territoriais consultadas devolveram municípios diferentes para este ponto. Para evitar aplicar o PDM errado, a análise municipal foi suspensa; confirme a parcela pelo cadastro, morada ou documento oficial antes de gerar o relatório.'] : []),
         ...(cadastre.status === 'rejected' ? ['A fonte do Cadastro Predial da DGT não respondeu nesta tentativa. Tente novamente dentro de alguns segundos; não foi selecionado qualquer polígono por aproximação.'] : []),
