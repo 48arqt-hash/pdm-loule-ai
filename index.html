@@ -3,8 +3,49 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Leonel Mendes — Arquitetura e Engenharia | Algarve</title>
-<meta name="description" content="Atelier de Arquitetura e Engenharia no Algarve. Pré-análise urbanística assistida por IA, consultoria e projetos.">
+<title>Arq. Leonel Mendes | Arquitetura, Engenharia e Licenciamento em Loulé</title>
+<meta name="description" content="Arq. Leonel Mendes - atelier de arquitetura e engenharia em Loulé, Algarve. Projetos, licenciamento, consultoria urbanística e pré-análise de terrenos.">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://leonelmendes.com/">
+<link rel="icon" type="image/png" sizes="360x360" href="/images/logo.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/images/logo.png">
+<link rel="manifest" href="/site.webmanifest">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="pt_PT">
+<meta property="og:site_name" content="Arq. Leonel Mendes">
+<meta property="og:title" content="Arq. Leonel Mendes | Arquitetura e Engenharia em Loulé">
+<meta property="og:description" content="Projetos, licenciamento e consultoria urbanística no Algarve.">
+<meta property="og:url" content="https://leonelmendes.com/">
+<meta property="og:image" content="https://leonelmendes.com/images/logo.png">
+<meta name="twitter:card" content="summary">
+<script type="application/ld+json">
+{
+  "@context":"https://schema.org",
+  "@graph":[
+    {
+      "@type":"Architect",
+      "@id":"https://leonelmendes.com/#atelier",
+      "name":"Arq. Leonel Mendes",
+      "url":"https://leonelmendes.com/",
+      "logo":"https://leonelmendes.com/images/logo.png",
+      "image":"https://leonelmendes.com/images/logo.png",
+      "email":"geral@leonelmendes.com",
+      "telephone":"+351960010870",
+      "address":{"@type":"PostalAddress","streetAddress":"Av. José da Costa Mealha, n.º 133","postalCode":"8100-500","addressLocality":"Loulé","addressCountry":"PT"},
+      "areaServed":{"@type":"AdministrativeArea","name":"Algarve"},
+      "sameAs":["https://www.facebook.com/leonel.mendes.arqt/","https://www.instagram.com/by_arq_leonel_mendes"]
+    },
+    {
+      "@type":"WebSite",
+      "@id":"https://leonelmendes.com/#website",
+      "url":"https://leonelmendes.com/",
+      "name":"Arq. Leonel Mendes",
+      "inLanguage":"pt-PT",
+      "publisher":{"@id":"https://leonelmendes.com/#atelier"}
+    }
+  ]
+}
+</script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1051,7 +1092,7 @@
     document.querySelectorAll('[data-i18n]').forEach((element) => { element.textContent = t(element.dataset.i18n); });
     document.querySelectorAll('[data-i18n-placeholder]').forEach((element) => { element.placeholder = t(element.dataset.i18nPlaceholder); });
     [...document.getElementById('pdmObjetivo').options].forEach((option, index) => { option.textContent = purposeOptions[lang][index]; });
-    document.title = lang === 'pt' ? 'Leonel Mendes — Arquitetura e Engenharia | Algarve' : 'Leonel Mendes — Architecture & Engineering | Algarve';
+    document.title = lang === 'pt' ? 'Arq. Leonel Mendes | Arquitetura, Engenharia e Licenciamento em Loulé' : 'Leonel Mendes | Architecture & Engineering in the Algarve';
     document.querySelector('meta[name="description"]').content = lang === 'pt' ? 'Atelier de Arquitetura e Engenharia no Algarve. Pré-análise urbanística assistida por IA, consultoria e projetos.' : 'Architecture and engineering studio in the Algarve. AI-assisted urban-planning pre-assessment, consultancy and projects.';
     document.querySelectorAll('.language-switcher [data-language]').forEach((button) => {
       const active = button.dataset.language === lang;

@@ -1,0 +1,15 @@
+{
+  "name": "Arq. Leonel Mendes - Arquitetura e Engenharia",
+  "short_name": "Leonel Mendes",
+  "icons": [
+    {
+      "src": "/images/logo.png",
+      "sizes": "360x360",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "theme_color": "#173D58",
+  "background_color": "#F5F3ED",
+  "display": "standalone"
+}
