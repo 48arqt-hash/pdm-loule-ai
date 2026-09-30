@@ -267,6 +267,7 @@
   }
   .service-btn-group{ display:block; margin-bottom:6px; }
   .secondary-services{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-top:10px; }
+  .service-seo-links{display:flex;flex-wrap:wrap;gap:8px 16px;margin:13px 2px 2px;font-size:.76rem}.service-seo-links a{color:var(--teal-deep);font-weight:600;text-decoration:none}.service-seo-links a:hover{text-decoration:underline}
 
   .btn-action{
     background:var(--teal);
@@ -691,7 +692,7 @@
     <div class="project-dots" id="projectDots"></div>
   </div>
 
-  <div class="services-section">
+  <div class="services-section" id="servicos">
     <p class="section-eyebrow" data-i18n="services">Serviços</p>
     <div class="service-btn-group">
       <button class="btn-action primary-service" onclick="togglePanel('pdmPanel', this)" aria-expanded="false">
@@ -719,6 +720,7 @@
           <span class="btn-arrow">▼</span>
         </button>
       </div>
+      <p class="service-seo-links"><a href="/arquiteto-loule.html">Arquiteto em Loulé</a><a href="/projetos-arquitetura.html">Projetos de arquitetura</a><a href="/analise-urbanistica.html">Análise urbanística de terrenos</a><a href="/licenciamento.html">Licenciamento de obras</a></p>
     </div>
 
     <!-- PAINEL 1: PRÉ-ANÁLISE DOCUMENTAL -->
