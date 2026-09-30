@@ -265,9 +265,11 @@
     color:var(--ink-faint);
     margin:0 0 12px;
   }
+  .services-heading{ display:flex; gap:20px; align-items:end; justify-content:space-between; margin-bottom:16px; }
+  .services-heading h3{ margin:0; color:var(--teal-deep); font-family:'Fraunces',serif; font-weight:500; font-size:clamp(1.35rem,2.6vw,1.75rem); }
+  .services-heading p{ margin:0; max-width:510px; color:var(--ink-soft); font-size:.83rem; line-height:1.5; text-align:right; }
   .service-btn-group{ display:block; margin-bottom:6px; }
   .secondary-services{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-top:10px; }
-  .service-seo-links{display:flex;flex-wrap:wrap;gap:8px 16px;margin:13px 2px 2px;font-size:.76rem}.service-seo-links a{color:var(--teal-deep);font-weight:600;text-decoration:none}.service-seo-links a:hover{text-decoration:underline}
 
   .btn-action{
     background:var(--teal);
@@ -308,6 +310,9 @@
   .btn-action.primary-service .service-title{ font-size:1.12rem; }
   .btn-action.primary-service .service-copy{ max-width:620px; font-size:.84rem; }
   .secondary-services .btn-action{ min-height:94px; padding:14px 38px 14px 14px; align-items:flex-start; text-align:left; gap:5px; }
+  .secondary-services .btn-action{ background:#fff; color:var(--teal-deep); border-color:var(--line); box-shadow:0 5px 14px rgba(18,50,83,.05); }
+  .secondary-services .btn-action .service-copy{ color:var(--ink-soft); }
+  .secondary-services .btn-action:hover,.secondary-services .btn-action[aria-expanded="true"]{ background:#eef4f7; border-color:#9db8c9; box-shadow:0 12px 22px rgba(18,50,83,.11); }
   .secondary-services .btn-action .service-title{ font-size:.86rem; }
   .secondary-services .btn-action .service-copy{ max-width:none; font-size:.72rem; }
   .btn-action[aria-expanded="true"] .btn-arrow{ transform:rotate(180deg); }
@@ -641,6 +646,8 @@
     .map-search{ flex-wrap:wrap; }
     .map-search .input-field{ min-width:200px; flex:1; }
     .secondary-services{ grid-template-columns:1fr; }
+    .services-heading{ display:block; }
+    .services-heading p{ text-align:left; margin-top:7px; }
     .btn-action{ min-height:112px; }
     .process-strip{ grid-template-columns:1fr; }
     .cost-estimator{ grid-template-columns:1fr; }
@@ -677,6 +684,7 @@
     <p data-i18n="heroTitle">O que pode fazer no seu terreno?</p>
     <small data-i18n="heroText">Localize-o no mapa e receba uma pré-análise urbanística com os próximos passos claros.</small>
     <div class="hero-actions"><button class="hero-primary-action" type="button" onclick="iniciarPreAnalise()" data-i18n="heroCta">Analisar um terreno →</button></div>
+    <div class="result-steps" aria-label="Como funciona"><span data-i18n="heroStepLocate">Localize o terreno</span><span data-i18n="heroStepAssess">Perceba o enquadramento</span><span data-i18n="heroStepDecide">Decida com apoio técnico</span></div>
   </div>
 
   <div class="divider"></div>
@@ -694,6 +702,10 @@
 
   <div class="services-section" id="servicos">
     <p class="section-eyebrow" data-i18n="services">Serviços</p>
+    <div class="services-heading">
+      <h3 data-i18n="servicesTitle">Escolha o ponto de partida</h3>
+      <p data-i18n="servicesIntro">Da análise de um terreno ao acompanhamento de uma obra: escolha o serviço que melhor corresponde ao momento do seu processo.</p>
+    </div>
     <div class="service-btn-group">
       <button class="btn-action primary-service" onclick="togglePanel('pdmPanel', this)" aria-expanded="false">
         <span class="service-title" data-i18n="landService">🔍 Análise urbanística do terreno</span>
@@ -720,7 +732,6 @@
           <span class="btn-arrow">▼</span>
         </button>
       </div>
-      <p class="service-seo-links"><a href="/arquiteto-loule.html">Arquiteto em Loulé</a><a href="/projetos-arquitetura.html">Projetos de arquitetura</a><a href="/analise-urbanistica.html">Análise urbanística de terrenos</a><a href="/licenciamento.html">Licenciamento de obras</a></p>
     </div>
 
     <!-- PAINEL 1: PRÉ-ANÁLISE DOCUMENTAL -->
@@ -1053,6 +1064,11 @@
     geographicDone:'Consulta geográfica concluída. Confirme se o limite destacado corresponde ao terreno pretendido e, se aplicável, marque a implantação aproximada.', geographicDoneWithPoint:'Consulta geográfica concluída com ponto de implantação. Confirme no mapa o limite e o ponto assinalado.',
     drawingActive:'Modo de desenho ativo: assinale pelo menos 3 vértices do limite aproximado do terreno.', implantationMode:'Modo de implantação ativo: clique no ponto aproximado da construção.', technicalDetails:'Ver informação técnica complementar', implantationSet:'Implantação indicada. As regras urbanísticas do relatório serão relacionadas com este ponto, sem substituir confirmação municipal.', changeImplantation:'Alterar implantação', implantationClick:'Clique agora dentro da parcela destacada, no local aproximado onde pretende implantar a obra.', waitingMapClick:'A aguardar clique no mapa…'
   });
+  Object.assign(ptTranslations, {
+    cadastreLayerUnavailable:'Os limites cadastrais estão temporariamente indisponíveis. Pode continuar a localizar ou desenhar o limite aproximado do terreno.',
+    cadastreZoomIn:'Aproxime o mapa para ver os limites cadastrais.',
+    cadastreDenseArea:'Existem muitos limites nesta zona. Aproxime mais o mapa para uma leitura mais clara.'
+  });
   const purposeOptions = {
     pt:['Selecione a intenção (recomendado)','Construir uma moradia','Construir várias moradias','Alterar ou ampliar construção existente','Loteamento','Turismo / alojamento','Apenas conhecer o potencial do terreno'],
     en:['Select your intention (recommended)','Build one home','Build several homes','Alter or extend an existing building','Subdivision','Tourism / accommodation','Only learn about the land potential'],
@@ -1072,6 +1088,10 @@
   Object.assign(translations.fr, { mapUnconfirmed:'Limite du terrain à confirmer', cadastrePending:'La limite cadastrale n’a pas pu être confirmée. Réessayez ou dessinez la limite approximative du terrain pour continuer.', cadastreLayerUnavailable:'Les limites cadastrales sont temporairement indisponibles dans la source publique. Réessayez dans quelques instants ou dessinez la limite approximative.' });
   Object.assign(translations.de, { mapUnconfirmed:'Grundstücksgrenze muss bestätigt werden', cadastrePending:'Die Katastergrenze konnte nicht bestätigt werden. Versuchen Sie es erneut oder zeichnen Sie die ungefähre Grundstücksgrenze ein.', cadastreLayerUnavailable:'Die Katastergrenzen sind in der öffentlichen Quelle vorübergehend nicht verfügbar. Versuchen Sie es später erneut oder zeichnen Sie die ungefähre Grenze ein.' });
   Object.assign(translations.es, { mapUnconfirmed:'Límite del terreno por confirmar', cadastrePending:'No se pudo confirmar el límite catastral. Inténtelo de nuevo o dibuje el límite aproximado del terreno para continuar.', cadastreLayerUnavailable:'Los límites catastrales no están disponibles temporalmente en la fuente pública. Inténtelo de nuevo más tarde o dibuje el límite aproximado.' });
+  Object.assign(translations.en, { cadastreLayerUnavailable:'Cadastral boundaries are temporarily unavailable. You can continue locating or draw the approximate land boundary.', cadastreZoomIn:'Zoom in to view cadastral boundaries.', cadastreDenseArea:'There are many boundaries in this area. Zoom in for a clearer view.' });
+  Object.assign(translations.fr, { cadastreLayerUnavailable:'Les limites cadastrales sont temporairement indisponibles. Vous pouvez continuer à localiser ou dessiner la limite approximative.', cadastreZoomIn:'Zoomez pour voir les limites cadastrales.', cadastreDenseArea:'Il y a beaucoup de limites dans cette zone. Zoomez pour une lecture plus claire.' });
+  Object.assign(translations.de, { cadastreLayerUnavailable:'Die Katastergrenzen sind vorübergehend nicht verfügbar. Sie können fortfahren oder die ungefähre Grenze einzeichnen.', cadastreZoomIn:'Zoomen Sie heran, um Katastergrenzen anzuzeigen.', cadastreDenseArea:'In diesem Bereich gibt es viele Grenzen. Zoomen Sie für eine klarere Ansicht heran.' });
+  Object.assign(translations.es, { cadastreLayerUnavailable:'Los límites catastrales no están disponibles temporalmente. Puede continuar localizando o dibujar el límite aproximado.', cadastreZoomIn:'Acérquese en el mapa para ver los límites catastrales.', cadastreDenseArea:'Hay muchos límites en esta zona. Acérquese para una lectura más clara.' });
   Object.assign(translations.en, { heroTitle:'What can you do with your land?', heroText:'Locate it on the map and receive an urban-planning pre-assessment with clear next steps.', heroCta:'Analyse a plot →', landService:'🔍 Urban-planning land assessment', landServiceCopy:'Start with the land location. We cross-check the available territorial sources and email you a pre-assessment.' });
   Object.assign(translations.fr, { technicalDetails:'Voir les informations techniques complémentaires', implantationSet:'Implantation indiquée. Les règles du rapport seront liées à ce point, sans remplacer la confirmation municipale.', changeImplantation:'Modifier l’implantation', implantationClick:'Cliquez dans la parcelle mise en évidence, à l’emplacement approximatif de la construction.', waitingMapClick:'En attente d’un clic sur la carte…' });
   Object.assign(translations.de, { technicalDetails:'Ergänzende technische Informationen anzeigen', implantationSet:'Gebäudestandort angegeben. Die Regeln im Bericht werden diesem Punkt zugeordnet, ohne eine kommunale Bestätigung zu ersetzen.', changeImplantation:'Gebäudestandort ändern', implantationClick:'Klicken Sie innerhalb des markierten Grundstücks auf den ungefähren Bauort.', waitingMapClick:'Warte auf einen Klick auf die Karte…' });
@@ -1087,6 +1107,22 @@
   Object.assign(translations.fr, { costFinanceTitle:'Financement des travaux', costOptional:'(facultatif)', costFinanceIntro:'Choisissez une option uniquement pour simuler l’effort financier. Il ne s’agit ni d’une offre de crédit, ni d’une recommandation bancaire, ni d’une confirmation d’accord.', costFinanceType:'Modalité', costFinanceNone:'Sans financement / fonds propres uniquement', costFinanceConstruction:'Crédit immobilier pour construction', costFinanceWorks:'Crédit hypothécaire pour travaux', costFinancePersonal:'Crédit personnel pour travaux', costOwnCapital:'Fonds propres disponibles (€)', costLoanAmount:'Montant à financer (€)', costLoanYears:'Durée (années)', costLoanRate:'Taux annuel indiqué par la banque (%)', costFinanceNote:'Comparez les propositions selon le TAEG, le montant total dû et la fiche d’information normalisée. Pour la construction, le capital peut être libéré par étapes.', costFinanceResultTitle:'Simulation de financement', costFinanceMonthly:'Mensualité estimée', costFinanceInterest:'Intérêts estimés sur la durée', costFinanceResources:'Fonds indiqués', costFinanceGap:'Écart indicatif avec le coût estimé', costYearsShort:'ans' });
   Object.assign(translations.de, { costFinanceTitle:'Baufinanzierung', costOptional:'(optional)', costFinanceIntro:'Wählen Sie eine Option nur zur Simulation der finanziellen Belastung. Dies ist weder ein Kreditangebot noch eine Bankempfehlung oder Zusage.', costFinanceType:'Art', costFinanceNone:'Keine Finanzierung / nur Eigenmittel', costFinanceConstruction:'Baufinanzierung', costFinanceWorks:'Besichertes Darlehen für Arbeiten', costFinancePersonal:'Ratenkredit für Arbeiten', costOwnCapital:'Verfügbare Eigenmittel (€)', costLoanAmount:'Finanzierungsbetrag (€)', costLoanYears:'Laufzeit (Jahre)', costLoanRate:'Von der Bank genannter Jahreszins (%)', costFinanceNote:'Vergleichen Sie Angebote anhand des effektiven Jahreszinses, Gesamtbetrags und Standardinformationsblatts. Bei Baukrediten kann Kapital in Bauphasen ausgezahlt werden.', costFinanceResultTitle:'Finanzierungssimulation', costFinanceMonthly:'Geschätzte Monatsrate', costFinanceInterest:'Geschätzte Zinsen über die Laufzeit', costFinanceResources:'Angegebene Mittel', costFinanceGap:'Indikativer Unterschied zu den geschätzten Kosten', costYearsShort:'Jahre' });
   Object.assign(translations.es, { costFinanceTitle:'Financiación de obra', costOptional:'(opcional)', costFinanceIntro:'Elija una opción solo para simular el esfuerzo financiero. No es una oferta de crédito, recomendación bancaria ni confirmación de aprobación.', costFinanceType:'Modalidad', costFinanceNone:'Sin financiación / solo fondos propios', costFinanceConstruction:'Crédito hipotecario para construcción', costFinanceWorks:'Crédito con garantía para obras', costFinancePersonal:'Crédito personal para obras', costOwnCapital:'Fondos propios disponibles (€)', costLoanAmount:'Importe a financiar (€)', costLoanYears:'Plazo (años)', costLoanRate:'Tipo anual indicado por el banco (%)', costFinanceNote:'Compare propuestas por TAEG, importe total adeudado y ficha europea de información normalizada. En construcción, el capital puede liberarse por fases.', costFinanceResultTitle:'Simulación de financiación', costFinanceMonthly:'Cuota mensual estimada', costFinanceInterest:'Intereses estimados en el plazo', costFinanceResources:'Fondos indicados', costFinanceGap:'Diferencia indicativa frente al coste estimado', costYearsShort:'años' });
+  Object.assign(translations.en, {
+    heroStepLocate:'Locate the land', heroStepAssess:'Understand the planning context', heroStepDecide:'Decide with technical support',
+    servicesTitle:'Choose where to begin', servicesIntro:'From land assessment to project and construction support: choose the service that matches your current stage.'
+  });
+  Object.assign(translations.fr, {
+    heroStepLocate:'Localisez le terrain', heroStepAssess:'Comprenez le contexte urbanistique', heroStepDecide:'Décidez avec un appui technique',
+    servicesTitle:'Choisissez votre point de départ', servicesIntro:'De l’analyse du terrain au projet et au suivi des travaux : choisissez le service adapté à votre étape actuelle.'
+  });
+  Object.assign(translations.de, {
+    heroStepLocate:'Grundstück lokalisieren', heroStepAssess:'Planungsrahmen verstehen', heroStepDecide:'Mit technischer Begleitung entscheiden',
+    servicesTitle:'Wählen Sie Ihren Ausgangspunkt', servicesIntro:'Von der Grundstücksanalyse bis zur Projekt- und Baubegleitung: Wählen Sie den passenden Service für Ihre aktuelle Phase.'
+  });
+  Object.assign(translations.es, {
+    heroStepLocate:'Localice el terreno', heroStepAssess:'Comprenda el encuadre urbanístico', heroStepDecide:'Decida con apoyo técnico',
+    servicesTitle:'Elija su punto de partida', servicesIntro:'Desde el análisis del terreno hasta el proyecto y el seguimiento de obra: elija el servicio que mejor encaje con su fase actual.'
+  });
   function t(key){ return (translations[document.documentElement.lang] || ptTranslations)[key] || ptTranslations[key] || key; }
   function setLanguage(language){
     const lang = translations[language] ? language : 'pt';
@@ -1286,25 +1322,51 @@
       }).fitBounds(louleBounds, { padding: [12, 12] });
       const streetMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 20, attribution: '&copy; OpenStreetMap contributors' });
       const aerialMap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: 'Tiles &copy; Esri' });
-      const cadastreLayer = L.tileLayer.wms('https://snicws.dgterritorio.gov.pt/geoserver/inspire/ows', {
-        layers: 'cadastralparcel', format: 'image/png', transparent: true, version: '1.3.0', opacity: .6,
+      // Os limites deixam de depender diretamente do WMS da DGT no browser.
+      // A função do site pede feições vetoriais apenas na área visível, o que
+      // evita as falhas frequentes de tiles e preserva a navegação do mapa.
+      const cadastreLayer = L.geoJSON(null, {
+        style: { color:'#25736b', weight:1.35, opacity:.9, fill:false, interactive:false },
         attribution: 'Carta Cadastral Digital — DGT',
       });
-      let cadastreWarningShown = false;
-      cadastreLayer.on('tileerror', () => {
-        // A camada WMS é mantida desligada por defeito, mas quando o utilizador
-        // a ativa deve saber que a indisponibilidade vem da fonte pública — e
-        // não interpretar a ausência de linhas como ausência de cadastro.
-        if (cadastreWarningShown) return;
-        cadastreWarningShown = true;
-        const status = document.getElementById('mapStatus');
-        if (status && !selectedLocation?.parcela?.geometria) {
-          status.textContent = t('cadastreLayerUnavailable');
+      let cadastreLoadTimer = null;
+      let cadastreRequestId = 0;
+      async function loadCadastreViewport(){
+        if (!map.hasLayer(cadastreLayer)) return;
+        if (map.getZoom() < 15) {
+          cadastreLayer.clearLayers();
+          if (!selectedLocation?.parcela?.geometria) document.getElementById('mapStatus').textContent = t('cadastreZoomIn');
+          return;
         }
-      });
-      cadastreLayer.on('load', () => { cadastreWarningShown = false; });
+        const bounds = map.getBounds();
+        const requestId = ++cadastreRequestId;
+        try {
+          const response = await fetch('/.netlify/functions/cadastro-visivel', {
+            method:'POST', headers:{ 'Content-Type':'application/json' },
+            body:JSON.stringify({ bounds:{ south:bounds.getSouth(), west:bounds.getWest(), north:bounds.getNorth(), east:bounds.getEast() } }),
+          });
+          const data = await readJsonResponse(response, t('cadastreLayerUnavailable'));
+          if (!response.ok) throw new Error(data.error || t('cadastreLayerUnavailable'));
+          if (requestId !== cadastreRequestId) return;
+          cadastreLayer.clearLayers();
+          cadastreLayer.addData(data);
+          if (data.truncated && !selectedLocation?.parcela?.geometria) document.getElementById('mapStatus').textContent = t('cadastreDenseArea');
+        } catch (error) {
+          if (requestId !== cadastreRequestId) return;
+          cadastreLayer.clearLayers();
+          if (!selectedLocation?.parcela?.geometria) document.getElementById('mapStatus').textContent = t('cadastreLayerUnavailable');
+        }
+      }
+      function scheduleCadastreViewport(){
+        if (!map.hasLayer(cadastreLayer)) return;
+        clearTimeout(cadastreLoadTimer);
+        cadastreLoadTimer = setTimeout(loadCadastreViewport, 220);
+      }
       aerialMap.addTo(map);
       L.control.layers({ 'Mapa': streetMap, 'Vista aérea': aerialMap }, { 'Limites cadastrais DGT': cadastreLayer }, { collapsed:false, position:'topright' }).addTo(map);
+      map.on('overlayadd', event => { if (event.layer === cadastreLayer) scheduleCadastreViewport(); });
+      map.on('overlayremove', event => { if (event.layer === cadastreLayer) { cadastreRequestId += 1; cadastreLayer.clearLayers(); } });
+      map.on('moveend', scheduleCadastreViewport);
       // Um arrasto serve apenas para explorar o mapa. Durante uma pequena
       // janela após PAN, nenhum clique é interpretado como seleção de terreno.
       map.on('dragstart', () => { mapDragUntil = Date.now() + 450; });
