@@ -50,7 +50,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfQp1eCJZQ0TtD/miZyoHS5obTRR9BMY=" crossorigin="">
 
 <style>
   :root{
@@ -593,6 +592,8 @@
   .journey-step.ready b{ color:var(--teal-deep); }
   .analysis-readiness{ margin:0 0 14px; padding:10px 12px; border-radius:7px; background:var(--sand-soft); color:var(--ink-soft); font-size:.78rem; line-height:1.45; }
   .analysis-readiness.ready{ background:#eef5f3; color:var(--teal-deep); }
+  .analysis-expectation{ margin:-3px 0 16px; color:var(--ink-soft); font-size:.76rem; line-height:1.45; }
+  .analysis-expectation strong{ color:var(--teal-deep); }
   .guided-step{ display:none; margin:14px 0; padding:18px; border:1px solid var(--line); border-radius:10px; background:#fff; }
   .guided-step.active{ display:block; animation:stepIn .24s ease both; }
   .guided-step h4{ margin-top:0; color:var(--teal-deep); }
@@ -746,6 +747,7 @@
         <div class="journey-step" id="journeyResult"><b>4 · RESULTADO</b>Análise e próximos passos</div>
       </div>
       <p class="analysis-readiness" id="analysisReadiness">Comece por selecionar o terreno. Os documentos são opcionais nesta fase.</p>
+      <p class="analysis-expectation" data-i18n="analysisExpectation"><strong>Resposta em duas etapas:</strong> recebe já o enquadramento territorial disponível; a leitura técnica aprofundada segue depois por e-mail.</p>
 
       <div id="pdmStep1">
       <section id="guidedLocation" class="guided-step active">
@@ -1034,8 +1036,6 @@
 
 </main>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-<script src="https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
 <script>
   const translations = {
     en: {
@@ -1109,19 +1109,23 @@
   Object.assign(translations.es, { costFinanceTitle:'Financiación de obra', costOptional:'(opcional)', costFinanceIntro:'Elija una opción solo para simular el esfuerzo financiero. No es una oferta de crédito, recomendación bancaria ni confirmación de aprobación.', costFinanceType:'Modalidad', costFinanceNone:'Sin financiación / solo fondos propios', costFinanceConstruction:'Crédito hipotecario para construcción', costFinanceWorks:'Crédito con garantía para obras', costFinancePersonal:'Crédito personal para obras', costOwnCapital:'Fondos propios disponibles (€)', costLoanAmount:'Importe a financiar (€)', costLoanYears:'Plazo (años)', costLoanRate:'Tipo anual indicado por el banco (%)', costFinanceNote:'Compare propuestas por TAEG, importe total adeudado y ficha europea de información normalizada. En construcción, el capital puede liberarse por fases.', costFinanceResultTitle:'Simulación de financiación', costFinanceMonthly:'Cuota mensual estimada', costFinanceInterest:'Intereses estimados en el plazo', costFinanceResources:'Fondos indicados', costFinanceGap:'Diferencia indicativa frente al coste estimado', costYearsShort:'años' });
   Object.assign(translations.en, {
     heroStepLocate:'Locate the land', heroStepAssess:'Understand the planning context', heroStepDecide:'Decide with technical support',
-    servicesTitle:'Choose where to begin', servicesIntro:'From land assessment to project and construction support: choose the service that matches your current stage.'
+    servicesTitle:'Choose where to begin', servicesIntro:'From land assessment to project and construction support: choose the service that matches your current stage.',
+    analysisExpectation:'Two-stage response: receive the available territorial context immediately; the detailed technical reading follows by email.'
   });
   Object.assign(translations.fr, {
     heroStepLocate:'Localisez le terrain', heroStepAssess:'Comprenez le contexte urbanistique', heroStepDecide:'Décidez avec un appui technique',
-    servicesTitle:'Choisissez votre point de départ', servicesIntro:'De l’analyse du terrain au projet et au suivi des travaux : choisissez le service adapté à votre étape actuelle.'
+    servicesTitle:'Choisissez votre point de départ', servicesIntro:'De l’analyse du terrain au projet et au suivi des travaux : choisissez le service adapté à votre étape actuelle.',
+    analysisExpectation:'Réponse en deux étapes : recevez immédiatement le contexte territorial disponible ; la lecture technique détaillée suit par e-mail.'
   });
   Object.assign(translations.de, {
     heroStepLocate:'Grundstück lokalisieren', heroStepAssess:'Planungsrahmen verstehen', heroStepDecide:'Mit technischer Begleitung entscheiden',
-    servicesTitle:'Wählen Sie Ihren Ausgangspunkt', servicesIntro:'Von der Grundstücksanalyse bis zur Projekt- und Baubegleitung: Wählen Sie den passenden Service für Ihre aktuelle Phase.'
+    servicesTitle:'Wählen Sie Ihren Ausgangspunkt', servicesIntro:'Von der Grundstücksanalyse bis zur Projekt- und Baubegleitung: Wählen Sie den passenden Service für Ihre aktuelle Phase.',
+    analysisExpectation:'Antwort in zwei Stufen: Sie erhalten sofort den verfügbaren räumlichen Rahmen; die vertiefte technische Auswertung folgt per E-Mail.'
   });
   Object.assign(translations.es, {
     heroStepLocate:'Localice el terreno', heroStepAssess:'Comprenda el encuadre urbanístico', heroStepDecide:'Decida con apoyo técnico',
-    servicesTitle:'Elija su punto de partida', servicesIntro:'Desde el análisis del terreno hasta el proyecto y el seguimiento de obra: elija el servicio que mejor encaje con su fase actual.'
+    servicesTitle:'Elija su punto de partida', servicesIntro:'Desde el análisis del terreno hasta el proyecto y el seguimiento de obra: elija el servicio que mejor encaje con su fase actual.',
+    analysisExpectation:'Respuesta en dos etapas: reciba de inmediato el encuadre territorial disponible; la lectura técnica detallada llegará por correo electrónico.'
   });
   function t(key){ return (translations[document.documentElement.lang] || ptTranslations)[key] || ptTranslations[key] || key; }
   function setLanguage(language){
@@ -1184,6 +1188,77 @@
     document.body.style.overflow = '';
   }
   document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && document.getElementById('privacyModal')?.style.display === 'block') closePrivacyPolicy(); });
+  // As bibliotecas pesadas só são pedidas quando o visitante abre a
+  // pré-análise ou anexa uma planta. A página institucional mantém-se leve.
+  const LEAFLET_CSS_URL = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+  const LEAFLET_JS_URL = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+  const PDFJS_URL = 'https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.min.js';
+  let leafletLoadPromise = null;
+  let pdfJsLoadPromise = null;
+
+  function loadExternalScript(id, src, integrity = null){
+    const existing = document.getElementById(id);
+    if (existing?.dataset.loaded === 'true') return Promise.resolve();
+    if (existing?.dataset.loading === 'true') return new Promise((resolve, reject) => {
+      existing.addEventListener('load', resolve, { once:true });
+      existing.addEventListener('error', () => reject(new Error('Não foi possível carregar uma ferramenta necessária.')), { once:true });
+    });
+    return new Promise((resolve, reject) => {
+      const script = existing || document.createElement('script');
+      script.id = id;
+      script.src = src;
+      script.async = true;
+      script.dataset.loading = 'true';
+      script.crossOrigin = 'anonymous';
+      if (integrity) script.integrity = integrity;
+      script.onload = () => { script.dataset.loading = 'false'; script.dataset.loaded = 'true'; resolve(); };
+      script.onerror = () => { script.remove(); reject(new Error('Não foi possível carregar uma ferramenta necessária. Tente novamente.')); };
+      if (!existing) document.head.appendChild(script);
+    });
+  }
+
+  function loadExternalStyle(id, href, integrity = null){
+    const existing = document.getElementById(id);
+    if (existing?.dataset.loaded === 'true') return Promise.resolve();
+    if (existing?.dataset.loading === 'true') return new Promise((resolve, reject) => {
+      existing.addEventListener('load', resolve, { once:true });
+      existing.addEventListener('error', () => reject(new Error('Não foi possível preparar o mapa.')), { once:true });
+    });
+    return new Promise((resolve, reject) => {
+      const link = existing || document.createElement('link');
+      link.id = id;
+      link.rel = 'stylesheet';
+      link.href = href;
+      link.dataset.loading = 'true';
+      link.crossOrigin = 'anonymous';
+      if (integrity) link.integrity = integrity;
+      link.onload = () => { link.dataset.loading = 'false'; link.dataset.loaded = 'true'; resolve(); };
+      link.onerror = () => { link.remove(); reject(new Error('Não foi possível preparar o mapa. Tente novamente.')); };
+      if (!existing) document.head.appendChild(link);
+    });
+  }
+
+  async function ensureLeaflet(){
+    if (window.L) return window.L;
+    if (!leafletLoadPromise) {
+      leafletLoadPromise = Promise.all([
+        loadExternalStyle('leaflet-css', LEAFLET_CSS_URL, 'sha256-p4NxAoJBhIINfQp1eCJZQ0TtD/miZyoHS5obTRR9BMY='),
+        loadExternalScript('leaflet-js', LEAFLET_JS_URL, 'sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo='),
+      ]).then(() => window.L).catch((error) => { leafletLoadPromise = null; throw error; });
+    }
+    return leafletLoadPromise;
+  }
+
+  async function ensurePdfJs(){
+    if (window.pdfjsLib) return window.pdfjsLib;
+    if (!pdfJsLoadPromise) {
+      pdfJsLoadPromise = loadExternalScript('pdfjs-lib', PDFJS_URL)
+        .then(() => window.pdfjsLib)
+        .catch((error) => { pdfJsLoadPromise = null; throw error; });
+    }
+    return pdfJsLoadPromise;
+  }
+
   let pdmDocuments = [];
   let map;
   let selectedMarker;
@@ -1300,7 +1375,17 @@
     }
   }
 
-  function initParcelMap(){
+  async function initParcelMap(){
+    if (!map) {
+      const status = document.getElementById('mapStatus');
+      if (status) status.textContent = 'A preparar o mapa…';
+      try {
+        await ensureLeaflet();
+      } catch (error) {
+        if (status) status.textContent = 'Não foi possível preparar o mapa neste momento. Tente novamente dentro de alguns minutos.';
+        return;
+      }
+    }
     if (!map){
       // Estado de acolhimento: o mapa abre no concelho-base do atelier, com
       // ortofoto e sem cadastro visualmente intrusivo. Os limites só são
@@ -1584,6 +1669,11 @@
   }
 
   async function compactarPlantaMunicipal(file){
+    try {
+      await ensurePdfJs();
+    } catch {
+      throw new Error('Não foi possível preparar a Planta de Localização neste momento. Tente novamente.');
+    }
     if (!window.pdfjsLib) throw new Error('Não foi possível preparar a Planta de Localização. Atualize a página e tente novamente.');
     window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
     const pdf = await window.pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
@@ -1724,8 +1814,8 @@
     if (!consent) { erroEl.textContent = 'Confirme a autorização para tratar os documentos nesta análise.'; erroEl.style.display = 'block'; return; }
     if (costEstimate && costEstimate.habitable < 30) { erroEl.textContent = 'Para incluir a estimativa de custo, indique uma área interior prevista de pelo menos 30 m².'; erroEl.style.display = 'block'; return; }
 
-    btn.disabled = true; btn.textContent = costEstimate ? 'A preparar relatório integrado…' : (documentsSkipped ? 'A analisar mapa e cadastro…' : 'A analisar documentação…');
-    const loading = addMsg(costEstimate ? '<span class="spinner"></span> A cruzar o terreno, verificar a pretensão e calcular a estimativa de obra…' : '<span class="spinner"></span> A ler os documentos, cruzar os dados e preparar a pré-análise…', 'system processing');
+    btn.disabled = true; btn.textContent = costEstimate ? 'A preparar enquadramento e estimativa…' : 'A preparar enquadramento imediato…';
+    const loading = addMsg(costEstimate ? '<span class="spinner"></span> A cruzar o terreno e a calcular a estimativa indicativa…' : '<span class="spinner"></span> A preparar o enquadramento territorial disponível…', 'system processing');
     try {
       const resp = await fetch('/.netlify/functions/analisar-planta', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
