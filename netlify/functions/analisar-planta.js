@@ -214,13 +214,13 @@ function renderCostEstimateSection(estimate) {
 
 function renderReport(report, language = 'pt') {
   const chrome = {
-    pt:['Conclusão da pré-análise:','1. Localização e elementos disponíveis','Localização / freguesia','Artigo matricial','Área indicada','Coordenadas','2. Enquadramento territorial confirmado','3. Regras aplicáveis à pretensão','4. O que precisa de validação','5. Informação ainda em falta','6. Próximo passo recomendado','Não confirmada','Não identificado','Não identificadas'],
-    en:['Pre-assessment conclusion:','1. Location and available information','Location / parish','Property tax reference','Stated area','Coordinates','2. Confirmed territorial context','3. Rules applicable to the proposal','4. What requires validation','5. Information still missing','6. Recommended next step','Not confirmed','Not identified','Not identified'],
-    fr:['Conclusion de la pré-analyse :','1. Localisation et éléments disponibles','Localisation / paroisse','Référence fiscale du bien','Surface indiquée','Coordonnées','2. Contexte territorial confirmé','3. Règles applicables au projet','4. Éléments à valider','5. Informations encore manquantes','6. Prochaine étape recommandée','Non confirmée','Non identifiée','Non identifiées'],
-    de:['Ergebnis der Voranalyse:','1. Standort und verfügbare Angaben','Standort / Gemeinde','Steuerliche Grundstücksreferenz','Angegebene Fläche','Koordinaten','2. Bestätigte räumliche Einordnung','3. Für das Vorhaben geltende Regeln','4. Was geprüft werden muss','5. Noch fehlende Angaben','6. Empfohlener nächster Schritt','Nicht bestätigt','Nicht identifiziert','Nicht identifiziert'],
-    es:['Conclusión del preanálisis:','1. Ubicación y elementos disponibles','Ubicación / parroquia','Referencia fiscal del inmueble','Superficie indicada','Coordenadas','2. Encuadre territorial confirmado','3. Reglas aplicables a la propuesta','4. Lo que requiere validación','5. Información pendiente','6. Próximo paso recomendado','No confirmada','No identificado','No identificadas'],
+    pt:['Conclusão da pré-análise:','1. Localização e elementos disponíveis','Localização / freguesia','Artigo matricial','Área indicada','Coordenadas','2. Zona e enquadramento territorial identificado','3. Regras aplicáveis à pretensão','4. O que precisa de validação','5. Informação ainda em falta','6. Próximo passo recomendado','Não confirmada','Não identificado','Não identificadas'],
+    en:['Pre-assessment conclusion:','1. Location and available information','Location / parish','Property tax reference','Stated area','Coordinates','2. Identified territorial zone and context','3. Rules applicable to the proposal','4. What requires validation','5. Information still missing','6. Recommended next step','Not confirmed','Not identified','Not identified'],
+    fr:['Conclusion de la pré-analyse :','1. Localisation et éléments disponibles','Localisation / paroisse','Référence fiscale du bien','Surface indiquée','Coordonnées','2. Zone et contexte territorial identifiés','3. Règles applicables au projet','4. Éléments à valider','5. Informations encore manquantes','6. Prochaine étape recommandée','Non confirmée','Non identifiée','Non identifiées'],
+    de:['Ergebnis der Voranalyse:','1. Standort und verfügbare Angaben','Standort / Gemeinde','Steuerliche Grundstücksreferenz','Angegebene Fläche','Koordinaten','2. Identifizierte Gebietskategorie und Einordnung','3. Für das Vorhaben geltende Regeln','4. Was geprüft werden muss','5. Noch fehlende Angaben','6. Empfohlener nächster Schritt','Nicht bestätigt','Nicht identifiziert','Nicht identifiziert'],
+    es:['Conclusión del preanálisis:','1. Ubicación y elementos disponibles','Ubicación / parroquia','Referencia fiscal del inmueble','Superficie indicada','Coordenadas','2. Zona y encuadre territorial identificados','3. Reglas aplicables a la propuesta','4. Lo que requiere validación','5. Información pendiente','6. Próximo paso recomendado','No confirmada','No identificado','No identificadas'],
   }[language] || null;
-  const c = chrome || ['Conclusão da pré-análise:','1. Localização e elementos disponíveis','Localização / freguesia','Artigo matricial','Área indicada','Coordenadas','2. Enquadramento territorial confirmado','3. Regras aplicáveis à pretensão','4. O que precisa de validação','5. Informação ainda em falta','6. Próximo passo recomendado','Não confirmada','Não identificado','Não identificadas'];
+  const c = chrome || ['Conclusão da pré-análise:','1. Localização e elementos disponíveis','Localização / freguesia','Artigo matricial','Área indicada','Coordenadas','2. Zona e enquadramento territorial identificado','3. Regras aplicáveis à pretensão','4. O que precisa de validação','5. Informação ainda em falta','6. Próximo passo recomendado','Não confirmada','Não identificado','Não identificadas'];
   const identificacao = report.identificacao || {};
   const conclusao = report.conclusao || {};
   return `
@@ -258,7 +258,14 @@ function immediateAnalysisReport(localizacao = {}, objetivo = '', costEstimate =
     .slice(0, 7).map((item) => ({ elemento: item.camada, resultado: item.valor, estado: /classificação do solo|plano municipal|concelho identificado/i.test(item.camada) ? 'Confirmado' : 'Necessita verificação', fonte: item.fonte || 'Consulta geográfica oficial disponível' }));
   const rules = spatial.filter((item) => /^Regra urbanística/i.test(item?.camada || '') && item?.valor)
     .slice(0, 8).map((item) => ({ elemento: String(item.camada).replace(/^Regra urbanística\s*[—-]\s*/i, ''), resultado: item.valor, estado: 'Necessita verificação', fonte: [item.fonte || 'Regulamento municipal', item.artigo, item.pagina ? `p. ${item.pagina}` : ''].filter(Boolean).join(' · ') }));
-  const primary = parameters.find((item) => /classificação do solo|regime de uso/i.test(item.elemento));
+  // Quando existe uma classificação municipal/PDM, ela prevalece sobre a
+  // designação genérica de uso do solo da DGT. Isto evita uma conclusão
+  // baseada numa condicionante quando já existe uma classe de plano mais
+  // específica para a localização.
+  const primary = parameters.find((item) => /classificação do solo\s*[—-]\s*pdm|classificação.*pdm/i.test(item.elemento))
+    || parameters.find((item) => /classificação do solo|regime de uso/i.test(item.elemento));
+  const territorialClasses = parameters.filter((item) => /classificação do solo|regime de uso/i.test(item.elemento)).map((item) => item.resultado);
+  const multipleClasses = new Set(territorialClasses).size > 1 && !localizacao?.implantacao?.confirmada;
   const normalizedObjective = String(objetivo || '').toLowerCase();
   const normalizedClass = String(primary?.resultado || '').toLowerCase();
   const isNewHome = /moradia|habita[cç][aã]o|construir|nova constru[cç][aã]o/.test(normalizedObjective);
@@ -267,7 +274,14 @@ function immediateAnalysisReport(localizacao = {}, objetivo = '', costEstimate =
   const urban = /solo urbano|espa[cç]o urbano|urbaniz[aá]vel|habitacional/.test(normalizedClass);
   let viability = null;
   if (primary && objetivo) {
-    if (ruralOrRan && isNewHome && !mentionsPreexistence) {
+    if (multipleClasses) {
+      viability = {
+        elemento: 'Viabilidade preliminar da pretensão',
+        resultado: 'Dados insuficientes para uma conclusão única: o limite analisado intersecta mais do que uma classe territorial e não foi indicado ponto de implantação. A viabilidade depende da zona exata onde se pretende construir ou intervir.',
+        estado: 'Necessita verificação',
+        fonte: 'Interseção territorial da parcela - implantação ainda não indicada',
+      };
+    } else if (ruralOrRan && isNewHome && !mentionsPreexistence) {
       viability = {
         elemento: 'Viabilidade preliminar da pretensão',
         resultado: 'Nova moradia não demonstrada nesta fase. A integração em Reserva Agrícola Nacional/solo agrícola não confere, por si só, direito a construir; só poderá ser apreciada nas exceções legais e regulamentares aplicáveis, incluindo as condições de habitação do agricultor quando relevantes.',

@@ -64,7 +64,10 @@ const MUNICIPALITY_CODE_BY_SLUG = Object.fromEntries(Object.entries(MUNICIPALITY
 // A consulta do mapa deve responder mesmo quando um geoportal público está
 // lento. Informação indisponível é devolvida como aviso; não pode provocar um
 // timeout 504 ao utilizador.
-const SOURCE_TIMEOUT_MS = 1_800;
+// 1,8 s estava a cortar várias respostas válidas do Cadastro Predial DGT.
+// Mantém-se uma janela curta para preservar fluidez, mas suficientemente
+// realista para fontes públicas com picos de latência.
+const SOURCE_TIMEOUT_MS = 3_200;
 
 const json = (statusCode, payload) => ({ statusCode, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }, body: JSON.stringify(payload) });
 async function fetchJson(url) {
@@ -610,12 +613,12 @@ export const handler = async (event) => {
     const results = [
       ...(municipality ? [{ camada: 'Concelho identificado (CAOP)', valor: municipality.nome, atributos: municipality.propriedades || {} }] : []),
       ...(municipality ? [{ camada: 'Cobertura da pré-análise', valor: municipality.estado }] : []),
-      ...(landUseLabels.length === 1 ? [{ camada: parcel ? `Regime de uso do solo (DGT) — interseção com ${parcel.manual ? 'o limite manual' : 'a parcela'}` : 'Regime de uso do solo (DGT) — ponto selecionado', valor: landUseLabel, atributos: labelledUses[0].feature.properties || {} }] : []),
-      ...(landUseLabels.length > 1 ? landUseLabels.map((label) => ({ camada: `Regime de uso do solo (DGT) — classe que intersecta ${parcel?.manual ? 'o limite manual' : 'a parcela'}`, valor: label, atributos: labelledUses.find((item) => item.label === label)?.feature.properties || {} })) : []),
-      ...(implantationUseLabel ? [{ camada: 'Regime de uso do solo (DGT) — ponto de implantação indicado', valor: implantationUseLabel, atributos: implantationUse.properties || {} }] : []),
-      ...(faroClassification ? [{ camada: `Classificação do solo — PDM de Faro (${faroClassificationMethod})`, valor: faroClassification, atributos: faroVectorFeature?.attributes || faroVectorFeature?.properties || faroVisualOrdering?.properties || {} }] : []),
-      ...(albufeiraClassification ? [{ camada: 'Classificação do solo — PDM de Albufeira (CRUS oficial DGT)', valor: albufeiraClassification, atributos: albufeiraOrdering?.properties || {} }] : []),
-      ...(usesGenericCrusClassification && municipalCrusClassification ? [{ camada: `Classificação do solo — PDM de ${municipality.nome} (CRUS oficial DGT)`, valor: municipalCrusClassification, atributos: municipalCrusOrdering?.properties || {} }] : []),
+      ...(landUseLabels.length === 1 ? [{ camada: parcel ? `Regime de uso do solo (DGT) — interseção com ${parcel.manual ? 'o limite manual' : 'a parcela'}` : 'Regime de uso do solo (DGT) — ponto selecionado', valor: landUseLabel, atributos: labelledUses[0].feature.properties || {}, fonte: 'Direção-Geral do Território — CRUS oficial' }] : []),
+      ...(landUseLabels.length > 1 ? landUseLabels.map((label) => ({ camada: `Regime de uso do solo (DGT) — classe que intersecta ${parcel?.manual ? 'o limite manual' : 'a parcela'}`, valor: label, atributos: labelledUses.find((item) => item.label === label)?.feature.properties || {}, fonte: 'Direção-Geral do Território — CRUS oficial' })) : []),
+      ...(implantationUseLabel ? [{ camada: 'Regime de uso do solo (DGT) — ponto de implantação indicado', valor: implantationUseLabel, atributos: implantationUse.properties || {}, fonte: 'Direção-Geral do Território — CRUS oficial' }] : []),
+      ...(faroClassification ? [{ camada: `Classificação do solo — PDM de Faro (${faroClassificationMethod})`, valor: faroClassification, atributos: faroVectorFeature?.attributes || faroVectorFeature?.properties || faroVisualOrdering?.properties || {}, fonte: 'Município de Faro — Planta 1.1 do PDM' }] : []),
+      ...(albufeiraClassification ? [{ camada: 'Classificação do solo — PDM de Albufeira (CRUS oficial DGT)', valor: albufeiraClassification, atributos: albufeiraOrdering?.properties || {}, fonte: 'Direção-Geral do Território — CRUS oficial de Albufeira' }] : []),
+      ...(usesGenericCrusClassification && municipalCrusClassification ? [{ camada: `Classificação do solo — PDM de ${municipality.nome} (CRUS oficial DGT)`, valor: municipalCrusClassification, atributos: municipalCrusOrdering?.properties || {}, fonte: `Direção-Geral do Território — CRUS oficial de ${municipality.nome}` }] : []),
       ...regulatoryRules.map((rule) => ({ camada: rule.camada, valor: rule.valor, artigo: rule.artigo, pagina: rule.pagina, fonte: rule.fonte?.documento || 'Regulamento municipal' })),
       ...planFeatures.map((feature) => ({ camada: 'Plano municipal em vigor (CML)', valor: feature.attributes?.NOME || feature.attributes?.TIPO || null, atributos: feature.attributes || {} })),
       ...zoning.flatMap(zoningResult),
