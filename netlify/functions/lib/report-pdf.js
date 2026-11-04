@@ -368,7 +368,17 @@ async function officialPlanContext(location) {
     const url = new URL('https://geoloule.cm-loule.pt/arcgisnprot/rest/services/Siteadmin/Base_PDM/MapServer/export');
     url.search = new URLSearchParams({ bbox: `${bounds.minLon},${bounds.minLat},${bounds.maxLon},${bounds.maxLat}`, bboxSR: '4326', imageSR: '4326', size: '1500,832', dpi: '150', format: 'png32', transparent: 'false', layers: 'show:0', f: 'image' }).toString();
     try {
-      const response = await fetch(url, { signal: AbortSignal.timeout(8_000) });
+      let response = await fetch(url, { signal: AbortSignal.timeout(8_000) });
+      // Alguns gateways ArcGIS devolvem JSON com uma ligação temporária em vez
+      // dos bytes PNG. Seguimos essa ligação para que uma resposta 200 JSON
+      // não faça desaparecer silenciosamente a sobreposição PDM do relatório.
+      const contentType = response.headers.get('content-type') || '';
+      if (/application\/json|text\/plain/i.test(contentType)) {
+        const exported = await response.json();
+        const href = exported?.href || exported?.imageUrl || exported?.url;
+        if (!href) throw new Error('planta PDM Loulé: exportação sem imagem');
+        response = await fetch(href, { signal: AbortSignal.timeout(8_000) });
+      }
       const image = await imageBufferFromResponse(response, 'planta PDM Loulé');
       return { image, bbox: [bounds.minLon, bounds.minLat, bounds.maxLon, bounds.maxLat], source: 'Carta de Ordenamento do PDM de Loulé, serviço cartográfico municipal (vista vertical; polígono assinalado a vermelho)' };
     } catch (error) { console.warn('loule_official_plan_context_unavailable', error.message); return null; }

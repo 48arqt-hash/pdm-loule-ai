@@ -259,9 +259,41 @@ function immediateAnalysisReport(localizacao = {}, objetivo = '', costEstimate =
   const rules = spatial.filter((item) => /^Regra urbanística/i.test(item?.camada || '') && item?.valor)
     .slice(0, 8).map((item) => ({ elemento: String(item.camada).replace(/^Regra urbanística\s*[—-]\s*/i, ''), resultado: item.valor, estado: 'Necessita verificação', fonte: [item.fonte || 'Regulamento municipal', item.artigo, item.pagina ? `p. ${item.pagina}` : ''].filter(Boolean).join(' · ') }));
   const primary = parameters.find((item) => /classificação do solo|regime de uso/i.test(item.elemento));
+  const normalizedObjective = String(objetivo || '').toLowerCase();
+  const normalizedClass = String(primary?.resultado || '').toLowerCase();
+  const isNewHome = /moradia|habita[cç][aã]o|construir|nova constru[cç][aã]o/.test(normalizedObjective);
+  const mentionsPreexistence = /ru[ií]na|preexist|reconstru[cç][aã]o|amplia[cç][aã]o|altera[cç][aã]o/.test(normalizedObjective);
+  const ruralOrRan = /reserva agr[ií]cola|\bran\b|solo r[uú]stico|espa[cç]o agr[ií]cola|agr[ií]cola/.test(normalizedClass);
+  const urban = /solo urbano|espa[cç]o urbano|urbaniz[aá]vel|habitacional/.test(normalizedClass);
+  let viability = null;
+  if (primary && objetivo) {
+    if (ruralOrRan && isNewHome && !mentionsPreexistence) {
+      viability = {
+        elemento: 'Viabilidade preliminar da pretensão',
+        resultado: 'Nova moradia não demonstrada nesta fase. A integração em Reserva Agrícola Nacional/solo agrícola não confere, por si só, direito a construir; só poderá ser apreciada nas exceções legais e regulamentares aplicáveis, incluindo as condições de habitação do agricultor quando relevantes.',
+        estado: 'Necessita verificação',
+        fonte: 'Classificação territorial oficial disponível e regulamento municipal aplicável',
+      };
+    } else if (ruralOrRan && mentionsPreexistence) {
+      viability = {
+        elemento: 'Viabilidade preliminar da pretensão',
+        resultado: 'Reconstrução, alteração ou ampliação de preexistência: potencialmente admissível apenas se a construção existente e a sua legalidade forem comprovadas. A área, a volumetria, a implantação e as condicionantes territoriais têm de ser validadas.',
+        estado: 'Necessita verificação',
+        fonte: 'Classificação territorial oficial disponível e regulamento municipal aplicável',
+      };
+    } else if (urban) {
+      viability = {
+        elemento: 'Viabilidade preliminar da pretensão',
+        resultado: 'Possibilidade em princípio, sujeita à confirmação da implantação, dos parâmetros da categoria de solo, das servidões e de eventual loteamento ou plano territorial mais detalhado.',
+        estado: 'Necessita verificação',
+        fonte: 'Classificação territorial oficial disponível e regulamento municipal aplicável',
+      };
+    }
+  }
+  if (viability) rules.unshift(viability);
   const conclusion = primary
-    ? `Foi identificado o enquadramento territorial disponível para ${municipality}: ${primary.resultado}. ${rules.length ? 'Foram encontradas referências regulamentares para confirmação técnica.' : 'A regra quantitativa aplicável será confirmada no relatório técnico aprofundado.'}`
-    : `A localização foi registada em ${municipality}. A classificação detalhada do plano será confirmada no relatório técnico aprofundado.`;
+    ? `Zona territorial identificada em ${municipality}: ${primary.resultado}. ${viability ? viability.resultado : rules.length ? 'As regras regulamentares aplicáveis estão identificadas abaixo e exigem confirmação técnica.' : 'Ainda não foi possível associar parâmetros urbanísticos quantitativos a esta zona.'}`
+    : `A localização foi registada em ${municipality}, mas ainda não foi confirmada a categoria de solo do PDM. Por esse motivo, não são apresentados índices nem capacidade construtiva.`;
   return {
     identificacao: { localizacao: location, artigo_matricial: parcel.declaracao || 'Não identificado', area: parcel.propriedades?.area || parcel.propriedades?.area_m2 || 'Não confirmada', coordenadas: Number.isFinite(Number(coordinates.latitude)) ? `${coordinates.latitude}, ${coordinates.longitude}` : 'Não identificadas' },
     parametros: parameters,
@@ -269,7 +301,7 @@ function immediateAnalysisReport(localizacao = {}, objetivo = '', costEstimate =
     divergencias: localizacao.avisos?.slice(0, 2) || ['A delimitação e os parâmetros concretos carecem de validação técnica.'],
     nao_confirmado: [objetivo ? `Viabilidade concreta da pretensão: ${objetivo}.` : 'Pretensão urbanística concreta.', 'Delimitação rigorosa, titularidade e artigo matricial, quando não constem de documentos oficiais.'],
     proximos_passos: ['O relatório técnico aprofundado será preparado e enviado por e-mail.', 'Agendar uma reunião de consultoria com o Arq. Leonel Mendes para confirmar a estratégia do processo.'],
-    conclusao: { estado: 'Enquadramento imediato disponível', resumo: conclusion },
+    conclusao: { estado: primary ? 'Necessita validação técnica' : 'Dados territoriais insuficientes', resumo: conclusion },
     costEstimate,
   };
 }
