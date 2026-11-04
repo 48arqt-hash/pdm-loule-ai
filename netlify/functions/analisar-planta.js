@@ -190,22 +190,25 @@ function renderCostEstimateSection(estimate, language = 'pt') {
     es: { input:'7. Estimación indicativa del coste de obra - datos del cliente', inputIntro:'Programa indicado por el cliente para esta simulación. No confirma la viabilidad urbanística, las superficies autorizables ni el presupuesto final.', intervention:'Intervención / nivel', programme:'Programa de superficies', conditions:'Condiciones seleccionadas', calculation:'7.1 Estimación indicativa del coste de obra - cálculo del estudio', calculationIntro:'Intervalo calculado por el estudio a partir del programa anterior, sin IVA.', works:'Ejecución de la obra', fees:'Proyectos y dirección de obra', minimum:'(mínimo 8.000 €)', contingency:'Reserva para imprevistos', total:'Coste global estimado sin IVA', item:'Elemento', clientInput:'Indicación del cliente', component:'Componente', range:'Intervalo indicativo', note:'El coste final depende del proyecto, las mediciones, las condiciones del terreno, las especialidades, las licencias, el tratamiento fiscal y las ofertas de los contratistas. La viabilidad urbanística debe confirmarse antes de asumir cualquier inversión.' },
   }[language] || null;
   const c = copy || { input:'7. Estimativa indicativa de custo de obra - dados indicados', inputIntro:'Programa introduzido pelo cliente para esta simulação.', intervention:'Intervenção / padrão', programme:'Programa de áreas', conditions:'Condições assinaladas', calculation:'7.1 Estimativa indicativa de custo de obra - cálculo do atelier', calculationIntro:'Intervalo calculado pelo atelier a partir do programa acima, sem IVA.', works:'Execução da obra', fees:'Projetos e acompanhamento', minimum:'(mínimo de 8.000 €)', contingency:'Reserva para imprevistos', total:'Custo global estimado sem IVA', item:'Elemento', clientInput:'Indicação do cliente', component:'Componente', range:'Intervalo indicativo', note:'' };
+  const programmeCopy = {
+    pt: { interior:'Área interior prevista', floors:'Pisos', terraces:'Terraços e alpendres', garage:'Garagem coberta', basement:'Cave', technical:'Áreas técnicas e arrumos', pool:'Piscina', exterior:'Arranjos exteriores', walls:'Muros e vedações', slope:'terreno inclinado', difficultAccess:'acesso difícil', none:'sem condicionantes adicionais indicadas', work:{ nova:'Construção nova', ampliacao:'Ampliação', reabilitacao:'Reabilitação' }, quality:{ economica:'Económico', media:'Médio', media_alta:'Médio-alto', superior:'Superior', luxo:'Luxo' } },
+    en: { interior:'Planned internal area', floors:'Storeys', terraces:'Terraces and covered porches', garage:'Covered garage', basement:'Basement', technical:'Technical and storage areas', pool:'Swimming pool', exterior:'External works', walls:'Walls and fencing', slope:'sloping site', difficultAccess:'difficult access', none:'no additional conditions indicated', work:{ nova:'New construction', ampliacao:'Extension', reabilitacao:'Refurbishment' }, quality:{ economica:'Economy', media:'Medium', media_alta:'Medium-high', superior:'Superior', luxo:'Luxury' } },
+    fr: { interior:'Surface intérieure prévue', floors:'Niveaux', terraces:'Terrasses et porches couverts', garage:'Garage couvert', basement:'Sous-sol', technical:'Locaux techniques et rangements', pool:'Piscine', exterior:'Aménagements extérieurs', walls:'Murs et clôtures', slope:'terrain en pente', difficultAccess:'accès difficile', none:'aucune condition supplémentaire indiquée', work:{ nova:'Construction neuve', ampliacao:'Extension', reabilitacao:'Réhabilitation' }, quality:{ economica:'Économique', media:'Moyen', media_alta:'Moyen-haut', superior:'Supérieur', luxo:'Luxe' } },
+    de: { interior:'Geplante Innenfläche', floors:'Geschosse', terraces:'Terrassen und überdachte Veranden', garage:'Überdachte Garage', basement:'Kellergeschoss', technical:'Technik- und Abstellflächen', pool:'Schwimmbad', exterior:'Außenanlagen', walls:'Mauern und Einfriedungen', slope:'Hanggrundstück', difficultAccess:'schwierige Zufahrt', none:'keine zusätzlichen Bedingungen angegeben', work:{ nova:'Neubau', ampliacao:'Erweiterung', reabilitacao:'Sanierung' }, quality:{ economica:'Einfach', media:'Mittel', media_alta:'Mittel-gehoben', superior:'Hochwertig', luxo:'Luxus' } },
+    es: { interior:'Superficie interior prevista', floors:'Plantas', terraces:'Terrazas y porches cubiertos', garage:'Garaje cubierto', basement:'Sótano', technical:'Áreas técnicas y almacenes', pool:'Piscina', exterior:'Urbanización exterior', walls:'Muros y cerramientos', slope:'terreno inclinado', difficultAccess:'acceso difícil', none:'sin condiciones adicionales indicadas', work:{ nova:'Construcción nueva', ampliacao:'Ampliación', reabilitacao:'Rehabilitación' }, quality:{ economica:'Económico', media:'Medio', media_alta:'Medio-alto', superior:'Superior', luxo:'Lujo' } },
+  }[language] || null;
+  const pc = programmeCopy || programmeCopy?.pt || { interior:'Área interior prevista', floors:'Pisos', terraces:'Terraços e alpendres', garage:'Garagem coberta', basement:'Cave', technical:'Áreas técnicas e arrumos', pool:'Piscina', exterior:'Arranjos exteriores', walls:'Muros e vedações', slope:'terreno inclinado', difficultAccess:'acesso difícil', none:'sem condicionantes adicionais indicadas', work:COST_WORK_LABELS, quality:COST_QUALITY_LABELS };
   const programme = [
-    `Área interior prevista: ${estimate.habitable} m²`,
-    `Pisos: ${estimate.floors}`,
-    estimate.terraces ? `Terraços e alpendres: ${estimate.terraces} m²` : '',
-    estimate.garage ? `Garagem coberta: ${estimate.garage} m²` : '',
-    estimate.basement ? `Cave: ${estimate.basement} m²` : '',
-    estimate.technical ? `Áreas técnicas e arrumos: ${estimate.technical} m²` : '',
-    estimate.pool ? `Piscina: ${estimate.pool} m²` : '',
-    estimate.exterior ? `Arranjos exteriores: ${estimate.exterior} m²` : '',
-    estimate.walls ? `Muros e vedações: ${estimate.walls} ml` : '',
+    `${pc.interior}: ${estimate.habitable} m²`, `${pc.floors}: ${estimate.floors}`,
+    estimate.terraces ? `${pc.terraces}: ${estimate.terraces} m²` : '', estimate.garage ? `${pc.garage}: ${estimate.garage} m²` : '',
+    estimate.basement ? `${pc.basement}: ${estimate.basement} m²` : '', estimate.technical ? `${pc.technical}: ${estimate.technical} m²` : '',
+    estimate.pool ? `${pc.pool}: ${estimate.pool} m²` : '', estimate.exterior ? `${pc.exterior}: ${estimate.exterior} m²` : '', estimate.walls ? `${pc.walls}: ${estimate.walls} ml` : '',
   ].filter(Boolean).join(' · ');
-  const conditions = [estimate.slope ? 'terreno inclinado' : '', estimate.difficultAccess ? 'acesso difícil' : ''].filter(Boolean).join(' · ') || 'sem condicionantes adicionais indicadas';
+  const conditions = [estimate.slope ? pc.slope : '', estimate.difficultAccess ? pc.difficultAccess : ''].filter(Boolean).join(' · ') || pc.none;
   return `<h5>${c.input}</h5>
     <p>${c.inputIntro}</p>
     <table><thead><tr><th>${c.item}</th><th>${c.clientInput}</th></tr></thead><tbody>
-      <tr><td>${c.intervention}</td><td>${escapeHtml(COST_WORK_LABELS[estimate.workType])} / ${escapeHtml(COST_QUALITY_LABELS[estimate.quality])}</td></tr>
+      <tr><td>${c.intervention}</td><td>${escapeHtml(pc.work[estimate.workType])} / ${escapeHtml(pc.quality[estimate.quality])}</td></tr>
       <tr><td>${c.programme}</td><td>${escapeHtml(programme)}</td></tr>
       <tr><td>${c.conditions}</td><td>${escapeHtml(conditions)}</td></tr>
     </tbody></table>
@@ -233,8 +236,8 @@ function renderReport(report, language = 'pt') {
   const conclusao = report.conclusao || {};
   return `
     <section>
-      <p><strong>${c[0]}</strong> ${escapeHtml(conclusao.estado || 'Necessita validação técnica')}</p>
-      <p>${escapeHtml(conclusao.resumo || 'A análise foi limitada à informação documental fornecida.')}</p>
+      <p><strong>${c[0]}</strong> ${escapeHtml(conclusao.estado || (language === 'en' ? 'Technical validation required' : language === 'fr' ? 'Validation technique requise' : language === 'de' ? 'Technische Prüfung erforderlich' : language === 'es' ? 'Requiere validación técnica' : 'Necessita validação técnica'))}</p>
+      <p>${escapeHtml(conclusao.resumo || (language === 'en' ? 'The assessment was limited to the documents and geographic information available.' : language === 'fr' ? 'L’analyse a été limitée aux documents et informations géographiques disponibles.' : language === 'de' ? 'Die Bewertung war auf die verfügbaren Unterlagen und geografischen Informationen beschränkt.' : language === 'es' ? 'El análisis se limitó a los documentos y la información geográfica disponibles.' : 'A análise foi limitada à informação documental fornecida.'))}</p>
     </section>
     <h5>${c[1]}</h5>
     <table><tbody>
@@ -248,24 +251,76 @@ function renderReport(report, language = 'pt') {
     <h5>${c[7]}</h5>
     ${table(report.regras_aplicaveis, language === 'en' ? 'No quantitative rules were confirmed in the regulations or analysed documents.' : language === 'fr' ? 'Aucune règle quantitative n’a été confirmée dans le règlement ou les documents analysés.' : language === 'de' ? 'In den Regelwerken oder analysierten Unterlagen wurden keine quantitativen Regeln bestätigt.' : language === 'es' ? 'No se confirmaron reglas cuantitativas en la normativa ni en los documentos analizados.' : 'Não foram confirmadas regras quantitativas no regulamento ou documentos analisados.', language)}
     <h5>${c[8]}</h5>
-    ${itemList(report.divergencias, 'Não foram detetadas divergências evidentes nos documentos fornecidos.')}
+    ${itemList(report.divergencias, language === 'en' ? 'No clear discrepancies were identified in the information provided.' : language === 'fr' ? 'Aucune divergence évidente n’a été détectée dans les informations fournies.' : language === 'de' ? 'In den bereitgestellten Informationen wurden keine eindeutigen Abweichungen festgestellt.' : language === 'es' ? 'No se detectaron discrepancias evidentes en la información proporcionada.' : 'Não foram detetadas divergências evidentes nos documentos fornecidos.')}
     <h5>${c[9]}</h5>
-    ${itemList(report.nao_confirmado)}
+    ${itemList(report.nao_confirmado, language === 'en' ? 'Not identified in the information analysed.' : language === 'fr' ? 'Non identifié dans les informations analysées.' : language === 'de' ? 'In den analysierten Informationen nicht identifiziert.' : language === 'es' ? 'No identificado en la información analizada.' : 'Não identificado nos documentos analisados.')}
     <h5>${c[10]}</h5>
-    ${itemList(report.proximos_passos)}
-    <p><small>Este relatório é uma pré-análise documental e não substitui informação prévia, parecer municipal, levantamento topográfico ou validação por técnico habilitado.</small></p>`;
+    ${itemList(report.proximos_passos, language === 'en' ? 'No further action has been defined at this stage.' : language === 'fr' ? 'Aucune autre action n’a été définie à ce stade.' : language === 'de' ? 'In dieser Phase wurde kein weiterer Schritt festgelegt.' : language === 'es' ? 'No se ha definido ninguna otra actuación en esta fase.' : 'Não foi definido outro passo nesta fase.')}
+    <p><small>${language === 'en' ? 'This report is a document pre-assessment and does not replace prior information, a municipal opinion, a topographic survey or validation by a qualified professional.' : language === 'fr' ? 'Ce rapport constitue une pré-analyse documentaire et ne remplace ni une information préalable, ni un avis municipal, ni un relevé topographique, ni une validation par un professionnel qualifié.' : language === 'de' ? 'Dieser Bericht ist eine dokumentarische Voranalyse und ersetzt weder eine Vorabinformation noch eine kommunale Stellungnahme, eine topografische Vermessung oder die Prüfung durch eine qualifizierte Fachperson.' : language === 'es' ? 'Este informe es un preanálisis documental y no sustituye información previa, un informe municipal, un levantamiento topográfico ni la validación de un profesional cualificado.' : 'Este relatório é uma pré-análise documental e não substitui informação prévia, parecer municipal, levantamento topográfico ou validação por técnico habilitado.'}</small></p>`;
 }
 
-function immediateAnalysisReport(localizacao = {}, objetivo = '', costEstimate = null) {
+const IMMEDIATE_REPORT_COPY = {
+  pt: {
+    municipalityPending: 'Concelho a confirmar', cadastralReference: 'referência cadastral', manualBoundary: 'limite aproximado desenhado pelo utilizador', mapLocation: 'localização selecionada no mapa',
+    confirmed: 'Confirmado', verification: 'Necessita verificação', technicalValidation: 'Necessita validação técnica', insufficientData: 'Dados territoriais insuficientes',
+    officialQuery: 'Consulta geográfica oficial disponível', municipalRegulation: 'Regulamento municipal', page: 'p.', preliminaryFeasibility: 'Viabilidade preliminar da pretensão',
+    multipleZones: 'Dados insuficientes para uma conclusão única: o limite analisado intersecta mais do que uma classe territorial e não foi indicado ponto de implantação. A viabilidade depende da zona exata onde se pretende construir ou intervir.',
+    multipleZonesSource: 'Interseção territorial da parcela - implantação ainda não indicada',
+    newHomeRural: 'Nova moradia não demonstrada nesta fase. A integração em Reserva Agrícola Nacional/solo agrícola não confere, por si só, direito a construir; só poderá ser apreciada nas exceções legais e regulamentares aplicáveis, incluindo as condições de habitação do agricultor quando relevantes.',
+    preexistenceRural: 'Reconstrução, alteração ou ampliação de preexistência: potencialmente admissível apenas se a construção existente e a sua legalidade forem comprovadas. A área, a volumetria, a implantação e as condicionantes territoriais têm de ser validadas.',
+    urban: 'Possibilidade em princípio, sujeita à confirmação da implantação, dos parâmetros da categoria de solo, das servidões e de eventual loteamento ou plano territorial mais detalhado.',
+    officialRegulation: 'Classificação territorial oficial disponível e regulamento municipal aplicável',
+    conclusionZone: 'Zona territorial identificada em', rulesBelow: 'As regras regulamentares aplicáveis estão identificadas abaixo e exigem confirmação técnica.', noQuantitativeRules: 'Ainda não foi possível associar parâmetros urbanísticos quantitativos a esta zona.',
+    noZone: 'A localização foi registada em {municipality}, mas ainda não foi confirmada a categoria de solo do PDM. Por esse motivo, não são apresentados índices nem capacidade construtiva.',
+    notIdentified: 'Não identificado', notConfirmed: 'Não confirmada', coordinatesMissing: 'Não identificadas',
+    boundaryValidation: 'A delimitação e os parâmetros concretos carecem de validação técnica.', proposalFeasibility: 'Viabilidade concreta da pretensão:', proposal: 'Pretensão urbanística concreta.', ownership: 'Delimitação rigorosa, titularidade e artigo matricial, quando não constem de documentos oficiais.',
+    detailedByEmail: 'O relatório técnico aprofundado será preparado e enviado por e-mail.', meeting: 'Agendar uma reunião de consultoria com o Arq. Leonel Mendes para confirmar a estratégia do processo.',
+  },
+  en: {
+    municipalityPending: 'Municipality to be confirmed', cadastralReference: 'cadastral reference', manualBoundary: 'approximate boundary drawn by the user', mapLocation: 'location selected on the map',
+    confirmed: 'Confirmed', verification: 'Requires verification', technicalValidation: 'Technical validation required', insufficientData: 'Insufficient territorial data',
+    officialQuery: 'Official geographic query available', municipalRegulation: 'Municipal regulations', page: 'p.', preliminaryFeasibility: 'Preliminary feasibility of the proposal',
+    multipleZones: 'There is insufficient information for one overall conclusion: the analysed boundary intersects more than one territorial class and no building location was provided. Feasibility depends on the exact area where construction or other work is intended.',
+    multipleZonesSource: 'Parcel territorial intersection - building location not yet provided',
+    newHomeRural: 'A new dwelling is not demonstrated at this stage. Inclusion in the National Agricultural Reserve or agricultural land does not, by itself, create a right to build; it can only be assessed under the applicable legal and planning exceptions, including farmer housing conditions where relevant.',
+    preexistenceRural: 'Reconstruction, alteration or extension of an existing building: potentially admissible only if the existing construction and its legality are evidenced. Area, volume, siting and territorial constraints must be validated.',
+    urban: 'Possible in principle, subject to confirmation of the building location, the parameters of the land-use category, easements and any subdivision or more detailed territorial plan.',
+    officialRegulation: 'Official territorial classification available and applicable municipal regulations',
+    conclusionZone: 'Territorial zone identified in', rulesBelow: 'The applicable regulatory rules are set out below and require technical confirmation.', noQuantitativeRules: 'Quantitative planning parameters could not yet be associated with this zone.',
+    noZone: 'The location was recorded in {municipality}, but the PDM land-use category has not yet been confirmed. For that reason, no indices or building capacity are stated.',
+    notIdentified: 'Not identified', notConfirmed: 'Not confirmed', coordinatesMissing: 'Not identified',
+    boundaryValidation: 'The boundary and the specific parameters require technical validation.', proposalFeasibility: 'Specific feasibility of the proposal:', proposal: 'Specific planning proposal.', ownership: 'Exact boundary, ownership and property tax reference, where these do not appear in official documents.',
+    detailedByEmail: 'A detailed technical report will be prepared and sent by email.', meeting: 'Book a consultation with Architect Leonel Mendes to confirm the process strategy.',
+  },
+  fr: { municipalityPending:'Municipalité à confirmer', cadastralReference:'référence cadastrale', manualBoundary:'limite approximative dessinée par l’utilisateur', mapLocation:'localisation sélectionnée sur la carte', confirmed:'Confirmé', verification:'À vérifier', technicalValidation:'Validation technique requise', insufficientData:'Données territoriales insuffisantes', officialQuery:'Consultation géographique officielle disponible', municipalRegulation:'Règlement municipal', page:'p.', preliminaryFeasibility:'Faisabilité préliminaire du projet', multipleZones:'Les données sont insuffisantes pour une conclusion unique : la limite analysée recoupe plusieurs catégories territoriales et aucun point d’implantation n’a été indiqué. La faisabilité dépend de la zone exacte de l’intervention.', multipleZonesSource:'Intersection territoriale de la parcelle - implantation non indiquée', newHomeRural:'Une nouvelle habitation n’est pas établie à ce stade. L’inclusion dans la Réserve agricole nationale ou un sol agricole ne crée pas, à elle seule, un droit à construire ; elle ne peut être appréciée que dans le cadre des exceptions légales et réglementaires applicables.', preexistenceRural:'Reconstruction, modification ou extension d’une construction existante : potentiellement admissible uniquement si la construction existante et sa légalité sont prouvées. La surface, le volume, l’implantation et les contraintes territoriales doivent être validés.', urban:'Possible en principe, sous réserve de confirmer l’implantation, les paramètres de la catégorie de sol, les servitudes et tout lotissement ou plan territorial plus détaillé.', officialRegulation:'Classification territoriale officielle disponible et règlement municipal applicable', conclusionZone:'Zone territoriale identifiée à', rulesBelow:'Les règles réglementaires applicables figurent ci-dessous et nécessitent une validation technique.', noQuantitativeRules:'Il n’a pas encore été possible d’associer des paramètres urbanistiques quantitatifs à cette zone.', noZone:'La localisation a été enregistrée à {municipality}, mais la catégorie de sol du PDM n’a pas encore été confirmée. Aucun indice ni capacité constructive n’est donc indiqué.', notIdentified:'Non identifié', notConfirmed:'Non confirmée', coordinatesMissing:'Non identifiées', boundaryValidation:'La délimitation et les paramètres précis nécessitent une validation technique.', proposalFeasibility:'Faisabilité concrète du projet :', proposal:'Projet urbanistique concret.', ownership:'Délimitation exacte, titularité et référence fiscale, lorsqu’elles ne figurent pas dans les documents officiels.', detailedByEmail:'Un rapport technique détaillé sera préparé et envoyé par e-mail.', meeting:'Planifier une consultation avec l’architecte Leonel Mendes afin de confirmer la stratégie du dossier.' },
+  de: { municipalityPending:'Gemeinde noch zu bestätigen', cadastralReference:'Katasterreferenz', manualBoundary:'vom Nutzer gezeichnete ungefähre Grenze', mapLocation:'auf der Karte ausgewählter Standort', confirmed:'Bestätigt', verification:'Prüfung erforderlich', technicalValidation:'Technische Prüfung erforderlich', insufficientData:'Unzureichende Gebietsdaten', officialQuery:'Amtliche geografische Abfrage verfügbar', municipalRegulation:'Kommunale Vorschriften', page:'S.', preliminaryFeasibility:'Vorläufige Zulässigkeit des Vorhabens', multipleZones:'Für eine eindeutige Schlussfolgerung reichen die Daten nicht aus: Die analysierte Grenze schneidet mehrere Gebietskategorien und es wurde kein Baupunkt angegeben. Die Zulässigkeit hängt vom genauen Ort der Maßnahme ab.', multipleZonesSource:'Gebietsüberschneidung des Grundstücks - Baupunkt noch nicht angegeben', newHomeRural:'Ein neues Wohnhaus ist in dieser Phase nicht nachgewiesen. Die Einbeziehung in die Nationale Landwirtschaftsreserve oder in landwirtschaftliche Flächen begründet für sich allein kein Baurecht; eine Prüfung ist nur nach den anwendbaren gesetzlichen und planungsrechtlichen Ausnahmen möglich.', preexistenceRural:'Wiederaufbau, Änderung oder Erweiterung eines Bestandsgebäudes: potenziell zulässig nur, wenn das Bestandsgebäude und seine Rechtmäßigkeit nachgewiesen werden. Fläche, Volumen, Standort und Gebietsbeschränkungen müssen geprüft werden.', urban:'Grundsätzlich möglich, vorbehaltlich der Bestätigung des Baupunkts, der Parameter der Flächenkategorie, von Dienstbarkeiten und einer möglichen Parzellierung oder eines detaillierteren Raumplans.', officialRegulation:'Amtliche Gebietsklassifizierung verfügbar und anwendbare kommunale Vorschriften', conclusionZone:'Gebietskategorie identifiziert in', rulesBelow:'Die anwendbaren Regelungen sind unten aufgeführt und müssen technisch geprüft werden.', noQuantitativeRules:'Für diese Gebietskategorie konnten noch keine quantitativen Planungsparameter zugeordnet werden.', noZone:'Der Standort wurde in {municipality} erfasst, aber die PDM-Flächenkategorie wurde noch nicht bestätigt. Deshalb werden keine Kennwerte oder Bebauungsmöglichkeiten angegeben.', notIdentified:'Nicht identifiziert', notConfirmed:'Nicht bestätigt', coordinatesMissing:'Nicht identifiziert', boundaryValidation:'Grenze und konkrete Parameter müssen technisch geprüft werden.', proposalFeasibility:'Konkrete Zulässigkeit des Vorhabens:', proposal:'Konkretes Planungsvorhaben.', ownership:'Genaue Grenze, Eigentümerschaft und steuerliche Grundstücksreferenz, soweit diese nicht aus amtlichen Dokumenten hervorgehen.', detailedByEmail:'Ein ausführlicher technischer Bericht wird vorbereitet und per E-Mail versandt.', meeting:'Vereinbaren Sie ein Beratungsgespräch mit Architekt Leonel Mendes, um die Vorgehensweise zu bestätigen.' },
+  es: { municipalityPending:'Municipio por confirmar', cadastralReference:'referencia catastral', manualBoundary:'límite aproximado dibujado por el usuario', mapLocation:'ubicación seleccionada en el mapa', confirmed:'Confirmado', verification:'Requiere verificación', technicalValidation:'Requiere validación técnica', insufficientData:'Datos territoriales insuficientes', officialQuery:'Consulta geográfica oficial disponible', municipalRegulation:'Normativa municipal', page:'p.', preliminaryFeasibility:'Viabilidad preliminar de la propuesta', multipleZones:'Los datos son insuficientes para una conclusión única: el límite analizado intersecta más de una categoría territorial y no se indicó un punto de implantación. La viabilidad depende de la zona exacta donde se pretende intervenir.', multipleZonesSource:'Intersección territorial de la parcela - implantación aún no indicada', newHomeRural:'Una vivienda nueva no queda demostrada en esta fase. La inclusión en la Reserva Agrícola Nacional o en suelo agrícola no otorga por sí sola derecho a construir; solo podrá valorarse dentro de las excepciones legales y normativas aplicables.', preexistenceRural:'Reconstrucción, modificación o ampliación de una construcción existente: potencialmente admisible solo si se acredita la construcción existente y su legalidad. Deben validarse la superficie, el volumen, la implantación y las restricciones territoriales.', urban:'Posible en principio, sujeto a la confirmación de la implantación, los parámetros de la categoría de suelo, las servidumbres y cualquier parcelación o plan territorial más detallado.', officialRegulation:'Clasificación territorial oficial disponible y normativa municipal aplicable', conclusionZone:'Zona territorial identificada en', rulesBelow:'Las reglas aplicables se exponen a continuación y requieren validación técnica.', noQuantitativeRules:'Todavía no ha sido posible asociar parámetros urbanísticos cuantitativos a esta zona.', noZone:'La ubicación se registró en {municipality}, pero aún no se ha confirmado la categoría de suelo del PDM. Por ello no se indican índices ni capacidad edificatoria.', notIdentified:'No identificado', notConfirmed:'No confirmada', coordinatesMissing:'No identificadas', boundaryValidation:'La delimitación y los parámetros concretos requieren validación técnica.', proposalFeasibility:'Viabilidad concreta de la propuesta:', proposal:'Propuesta urbanística concreta.', ownership:'Delimitación exacta, titularidad y referencia fiscal, cuando no consten en documentos oficiales.', detailedByEmail:'Se preparará y enviará por correo electrónico un informe técnico detallado.', meeting:'Solicite una reunión de consultoría con el arquitecto Leonel Mendes para confirmar la estrategia del proceso.' },
+};
+
+function immediateCopy(language = 'pt') { return IMMEDIATE_REPORT_COPY[language] || IMMEDIATE_REPORT_COPY.pt; }
+
+function translateImmediateLabel(value, language = 'pt') {
+  if (language === 'pt') return value;
+  const labels = {
+    en: [['Classificação do solo — PDM', 'Land-use classification - PDM'], ['Classificação do solo', 'Land-use classification'], ['Regime de uso do solo', 'Land-use regime'], ['Plano municipal em vigor', 'Municipal plan in force'], ['Concelho identificado', 'Municipality identified'], ['Condicionante RAN', 'National Agricultural Reserve (RAN) constraint'], ['Condicionante territorial', 'Territorial constraint'], ['Cobertura da pré-análise', 'Pre-assessment coverage']],
+    fr: [['Classificação do solo — PDM', 'Classification du sol - PDM'], ['Classificação do solo', 'Classification du sol'], ['Regime de uso do solo', 'Régime d’utilisation du sol'], ['Plano municipal em vigor', 'Plan municipal en vigueur'], ['Concelho identificado', 'Municipalité identifiée'], ['Condicionante RAN', 'Contrainte de Réserve agricole nationale (RAN)'], ['Condicionante territorial', 'Contrainte territoriale'], ['Cobertura da pré-análise', 'Couverture de la pré-analyse']],
+    de: [['Classificação do solo — PDM', 'Flächenklassifizierung - PDM'], ['Classificação do solo', 'Flächenklassifizierung'], ['Regime de uso do solo', 'Flächennutzungsregime'], ['Plano municipal em vigor', 'Geltender kommunaler Plan'], ['Concelho identificado', 'Identifizierte Gemeinde'], ['Condicionante RAN', 'Beschränkung Nationale Landwirtschaftsreserve (RAN)'], ['Condicionante territorial', 'Gebietsbeschränkung'], ['Cobertura da pré-análise', 'Abdeckung der Voranalyse']],
+    es: [['Classificação do solo — PDM', 'Clasificación del suelo - PDM'], ['Classificação do solo', 'Clasificación del suelo'], ['Regime de uso do solo', 'Régimen de uso del suelo'], ['Plano municipal em vigor', 'Plan municipal vigente'], ['Concelho identificado', 'Municipio identificado'], ['Condicionante RAN', 'Limitación de Reserva Agrícola Nacional (RAN)'], ['Condicionante territorial', 'Limitación territorial'], ['Cobertura da pré-análise', 'Cobertura del preanálisis']],
+  };
+  return (labels[language] || []).reduce((text, [from, to]) => String(text).replaceAll(from, to), value);
+}
+
+function immediateAnalysisReport(localizacao = {}, objetivo = '', costEstimate = null, language = 'pt') {
+  const c = immediateCopy(language);
   const parcel = localizacao.parcela || {};
-  const municipality = localizacao.municipio?.nome || 'Concelho a confirmar';
+  const municipality = localizacao.municipio?.nome || c.municipalityPending;
   const coordinates = localizacao.coordenadas || {};
-  const location = [municipality, parcel.referencia ? `referência cadastral ${parcel.referencia}` : parcel.manual ? 'limite aproximado desenhado pelo utilizador' : 'localização selecionada no mapa'].filter(Boolean).join(' · ');
+  const location = [municipality, parcel.referencia ? `${c.cadastralReference} ${parcel.referencia}` : parcel.manual ? c.manualBoundary : c.mapLocation].filter(Boolean).join(' · ');
   const spatial = Array.isArray(localizacao.pdm) ? localizacao.pdm : [];
   const parameters = spatial.filter((item) => /regime de uso|classificação do solo|plano municipal|condicionante territorial|concelho identificado/i.test(item?.camada || '') && item?.valor)
-    .slice(0, 7).map((item) => ({ elemento: item.camada, resultado: item.valor, estado: /classificação do solo|plano municipal|concelho identificado/i.test(item.camada) ? 'Confirmado' : 'Necessita verificação', fonte: item.fonte || 'Consulta geográfica oficial disponível' }));
+    .slice(0, 7).map((item) => ({ elemento: translateImmediateLabel(item.camada, language), resultado: item.valor, estado: /classificação do solo|plano municipal|concelho identificado/i.test(item.camada) ? c.confirmed : c.verification, fonte: item.fonte || c.officialQuery }));
   const rules = spatial.filter((item) => /^Regra urbanística/i.test(item?.camada || '') && item?.valor)
-    .slice(0, 8).map((item) => ({ elemento: String(item.camada).replace(/^Regra urbanística\s*[—-]\s*/i, ''), resultado: item.valor, estado: 'Necessita verificação', fonte: [item.fonte || 'Regulamento municipal', item.artigo, item.pagina ? `p. ${item.pagina}` : ''].filter(Boolean).join(' · ') }));
+    .slice(0, 8).map((item) => ({ elemento: translateImmediateLabel(String(item.camada).replace(/^Regra urbanística\s*[—-]\s*/i, ''), language), resultado: item.valor, estado: c.verification, fonte: [item.fonte || c.municipalRegulation, item.artigo, item.pagina ? `${c.page} ${item.pagina}` : ''].filter(Boolean).join(' · ') }));
   // Quando existe uma classificação municipal/PDM, ela prevalece sobre a
   // designação genérica de uso do solo da DGT. Isto evita uma conclusão
   // baseada numa condicionante quando já existe uma classe de plano mais
@@ -284,46 +339,34 @@ function immediateAnalysisReport(localizacao = {}, objetivo = '', costEstimate =
   if (primary && objetivo) {
     if (multipleClasses) {
       viability = {
-        elemento: 'Viabilidade preliminar da pretensão',
-        resultado: 'Dados insuficientes para uma conclusão única: o limite analisado intersecta mais do que uma classe territorial e não foi indicado ponto de implantação. A viabilidade depende da zona exata onde se pretende construir ou intervir.',
-        estado: 'Necessita verificação',
-        fonte: 'Interseção territorial da parcela - implantação ainda não indicada',
+        elemento: c.preliminaryFeasibility, resultado: c.multipleZones, estado: c.verification, fonte: c.multipleZonesSource,
       };
     } else if (ruralOrRan && isNewHome && !mentionsPreexistence) {
       viability = {
-        elemento: 'Viabilidade preliminar da pretensão',
-        resultado: 'Nova moradia não demonstrada nesta fase. A integração em Reserva Agrícola Nacional/solo agrícola não confere, por si só, direito a construir; só poderá ser apreciada nas exceções legais e regulamentares aplicáveis, incluindo as condições de habitação do agricultor quando relevantes.',
-        estado: 'Necessita verificação',
-        fonte: 'Classificação territorial oficial disponível e regulamento municipal aplicável',
+        elemento: c.preliminaryFeasibility, resultado: c.newHomeRural, estado: c.verification, fonte: c.officialRegulation,
       };
     } else if (ruralOrRan && mentionsPreexistence) {
       viability = {
-        elemento: 'Viabilidade preliminar da pretensão',
-        resultado: 'Reconstrução, alteração ou ampliação de preexistência: potencialmente admissível apenas se a construção existente e a sua legalidade forem comprovadas. A área, a volumetria, a implantação e as condicionantes territoriais têm de ser validadas.',
-        estado: 'Necessita verificação',
-        fonte: 'Classificação territorial oficial disponível e regulamento municipal aplicável',
+        elemento: c.preliminaryFeasibility, resultado: c.preexistenceRural, estado: c.verification, fonte: c.officialRegulation,
       };
     } else if (urban) {
       viability = {
-        elemento: 'Viabilidade preliminar da pretensão',
-        resultado: 'Possibilidade em princípio, sujeita à confirmação da implantação, dos parâmetros da categoria de solo, das servidões e de eventual loteamento ou plano territorial mais detalhado.',
-        estado: 'Necessita verificação',
-        fonte: 'Classificação territorial oficial disponível e regulamento municipal aplicável',
+        elemento: c.preliminaryFeasibility, resultado: c.urban, estado: c.verification, fonte: c.officialRegulation,
       };
     }
   }
   if (viability) rules.unshift(viability);
   const conclusion = primary
-    ? `Zona territorial identificada em ${municipality}: ${primary.resultado}. ${viability ? viability.resultado : rules.length ? 'As regras regulamentares aplicáveis estão identificadas abaixo e exigem confirmação técnica.' : 'Ainda não foi possível associar parâmetros urbanísticos quantitativos a esta zona.'}`
-    : `A localização foi registada em ${municipality}, mas ainda não foi confirmada a categoria de solo do PDM. Por esse motivo, não são apresentados índices nem capacidade construtiva.`;
+    ? `${c.conclusionZone} ${municipality}: ${primary.resultado}. ${viability ? viability.resultado : rules.length ? c.rulesBelow : c.noQuantitativeRules}`
+    : c.noZone.replace('{municipality}', municipality);
   return {
-    identificacao: { localizacao: location, artigo_matricial: parcel.declaracao || 'Não identificado', area: parcel.propriedades?.area || parcel.propriedades?.area_m2 || 'Não confirmada', coordenadas: Number.isFinite(Number(coordinates.latitude)) ? `${coordinates.latitude}, ${coordinates.longitude}` : 'Não identificadas' },
+    identificacao: { localizacao: location, artigo_matricial: parcel.declaracao || c.notIdentified, area: parcel.propriedades?.area || parcel.propriedades?.area_m2 || c.notConfirmed, coordenadas: Number.isFinite(Number(coordinates.latitude)) ? `${coordinates.latitude}, ${coordinates.longitude}` : c.coordinatesMissing },
     parametros: parameters,
     regras_aplicaveis: rules,
-    divergencias: localizacao.avisos?.slice(0, 2) || ['A delimitação e os parâmetros concretos carecem de validação técnica.'],
-    nao_confirmado: [objetivo ? `Viabilidade concreta da pretensão: ${objetivo}.` : 'Pretensão urbanística concreta.', 'Delimitação rigorosa, titularidade e artigo matricial, quando não constem de documentos oficiais.'],
-    proximos_passos: ['O relatório técnico aprofundado será preparado e enviado por e-mail.', 'Agendar uma reunião de consultoria com o Arq. Leonel Mendes para confirmar a estratégia do processo.'],
-    conclusao: { estado: primary ? 'Necessita validação técnica' : 'Dados territoriais insuficientes', resumo: conclusion },
+    divergencias: localizacao.avisos?.slice(0, 2) || [c.boundaryValidation],
+    nao_confirmado: [objetivo ? `${c.proposalFeasibility} ${objetivo}.` : c.proposal, c.ownership],
+    proximos_passos: [c.detailedByEmail, c.meeting],
+    conclusao: { estado: primary ? c.technicalValidation : c.insufficientData, resumo: conclusion },
     costEstimate,
   };
 }
