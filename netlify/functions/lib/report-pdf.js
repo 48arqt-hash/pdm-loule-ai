@@ -8,7 +8,14 @@ const PDF_COPY = {
   de:{ generated:'Erstellt am', location:'Analysierter Standort', summary:'Entscheidungsübersicht', summaryHelp:'Kurzübersicht der Voranalyse. In den folgenden Abschnitten finden Sie Nachweise, Quellen und Bedingungen.', place:'STANDORT', guidance:'EINORDNUNG', confirm:'ZU BESTÄTIGEN', noParcel:'Grundstück nicht identifiziert', noMunicipality:'Gemeinde nicht bestätigt', implantation:'Gebäudepunkt angegeben', noImplantation:'Kein Gebäudepunkt angegeben', noRule:'Für diesen Standort wurde noch keine Planungsregel bestätigt.', pending:'Grenzen, Beschränkungen und für das Vorhaben geltende Parameter.', page:'SEITE', mapOverlay:'Überlagerung mit anwendbarem Raumplan', documentOverlay:'Im Lageplan dargestellte PDM-Überlagerung', cartographic:'Verfügbarer kartografischer Kontext', officialLegend:'Offizielle Planlegende', disclaimer:'KI-gestützte Voranalyse. Sie stellt weder eine kommunale Stellungnahme noch eine Genehmigungsentscheidung dar.'},
   es:{ generated:'Generado el', location:'Ubicación analizada', summary:'Resumen para la decisión', summaryHelp:'Lectura rápida del preanálisis. Consulte las secciones siguientes para evidencias, fuentes y condiciones.', place:'UBICACIÓN', guidance:'ORIENTACIÓN', confirm:'POR CONFIRMAR', noParcel:'Parcela no identificada', noMunicipality:'Municipio no confirmado', implantation:'Punto de implantación indicado', noImplantation:'Sin punto de implantación indicado', noRule:'Aún no se ha confirmado una regla urbanística para esta ubicación.', pending:'Límites, servidumbres y parámetros aplicables a la actuación.', page:'PÁGINA', mapOverlay:'Superposición con el plan territorial aplicable', documentOverlay:'Superposición del PDM indicada en el plano de localización', cartographic:'Contexto cartográfico disponible', officialLegend:'Leyenda oficial del plano', disclaimer:'Preanálisis asistido por IA. No constituye informe municipal ni decisión de licencia.'},
 };
-function pdfCopy(language = 'pt') { return PDF_COPY[language] || PDF_COPY.pt; }
+const PDF_EXTRA_COPY = {
+  pt: { brandTagline:'ARQUITETURA + INTELIGÊNCIA', requestAnswer:'RESPOSTA AO PEDIDO', boundaryManual:'limite aproximado desenhado pelo utilizador, sem confirmação cadastral', boundaryCadastre:'limite/seleção cadastral DGT, de caráter preliminar', noBuildingPoint:' Sem ponto de implantação indicado.', buildingPoint:' Ponto vermelho: implantação aproximada indicada pelo utilizador.', mapBase:'Base cartográfica', contextImage:'imagem de enquadramento', redBoundaryManual:'Limite aproximado desenhado pelo utilizador', redBoundaryCadastre:'Limite cadastral/seleção DGT', redBoundaryNote:'assinalado a vermelho. Fonte da planta:', mapPreliminary:'Leitura cartográfica preliminar; confirme pelas peças oficiais em vigor.', interactions:'Interações identificadas na consulta', documentNote:'Esta é a carta utilizada para a leitura gráfica; o polígono/limite já assinalado na peça é a base da pré-análise. Confirme a delimitação e a implantação junto da entidade competente.', cartographicNote:'Informação cartográfica de apoio; os parâmetros urbanísticos concretos constam da secção seguinte e exigem confirmação pelo regulamento e pelas plantas oficiais em vigor.' },
+  en: { brandTagline:'ARCHITECTURE + INTELLIGENCE', requestAnswer:'RESPONSE TO THE REQUEST', boundaryManual:'approximate boundary drawn by the user, without cadastral confirmation', boundaryCadastre:'DGT cadastral boundary/selection, preliminary in nature', noBuildingPoint:' No approximate building point was provided.', buildingPoint:' Red point: approximate building location provided by the user.', mapBase:'Cartographic base', contextImage:'context image', redBoundaryManual:'Approximate boundary drawn by the user', redBoundaryCadastre:'DGT cadastral boundary/selection', redBoundaryNote:'shown in red. Plan source:', mapPreliminary:'Preliminary cartographic reading; confirm against the official documents in force.', interactions:'Interactions identified in this query', documentNote:'This is the plan used for the graphic reading; the polygon/boundary already marked on the document is the basis of this pre-assessment. Confirm the boundary and building location with the competent authority.', cartographicNote:'Supporting cartographic information; the specific planning parameters appear in the following section and require confirmation against the regulations and official plans in force.' },
+  fr: { brandTagline:'ARCHITECTURE + INTELLIGENCE', requestAnswer:'RÉPONSE À LA DEMANDE', boundaryManual:'limite approximative dessinée par l’utilisateur, sans confirmation cadastrale', boundaryCadastre:'limite/sélection cadastrale DGT, à caractère préliminaire', noBuildingPoint:' Aucun point d’implantation approximatif n’a été indiqué.', buildingPoint:' Point rouge : implantation approximative indiquée par l’utilisateur.', mapBase:'Fond cartographique', contextImage:'image de contexte', redBoundaryManual:'Limite approximative dessinée par l’utilisateur', redBoundaryCadastre:'Limite/sélection cadastrale DGT', redBoundaryNote:'indiquée en rouge. Source du plan :', mapPreliminary:'Lecture cartographique préliminaire ; à confirmer par les pièces officielles en vigueur.', interactions:'Interactions identifiées dans cette consultation', documentNote:'Ce plan sert de base à la lecture graphique ; le polygone/la limite déjà indiqué(e) sur le document est la base de cette pré-analyse. Confirmez la délimitation et l’implantation auprès de l’entité compétente.', cartographicNote:'Information cartographique d’appui ; les paramètres urbanistiques précis figurent dans la section suivante et exigent une confirmation par le règlement et les plans officiels en vigueur.' },
+  de: { brandTagline:'ARCHITEKTUR + INTELLIGENZ', requestAnswer:'ANTWORT AUF DIE ANFRAGE', boundaryManual:'vom Nutzer gezeichnete ungefähre Grenze ohne Katasterbestätigung', boundaryCadastre:'DGT-Katastergrenze/-auswahl mit vorläufigem Charakter', noBuildingPoint:' Es wurde kein ungefährer Baupunkt angegeben.', buildingPoint:' Roter Punkt: vom Nutzer angegebener ungefährer Baupunkt.', mapBase:'Kartografische Grundlage', contextImage:'Übersichtskarte', redBoundaryManual:'Vom Nutzer gezeichnete ungefähre Grenze', redBoundaryCadastre:'DGT-Katastergrenze/-auswahl', redBoundaryNote:'rot markiert. Planquelle:', mapPreliminary:'Vorläufige kartografische Auslegung; bitte anhand der gültigen amtlichen Unterlagen bestätigen.', interactions:'In dieser Abfrage ermittelte Bezüge', documentNote:'Dieser Plan ist die Grundlage der grafischen Auslegung; das bereits darin markierte Polygon bzw. die Grenze bildet die Basis dieser Voranalyse. Grenze und Baupunkt sind bei der zuständigen Stelle zu bestätigen.', cartographicNote:'Unterstützende kartografische Information; die konkreten Planungsparameter stehen im folgenden Abschnitt und müssen anhand der geltenden Vorschriften und amtlichen Pläne bestätigt werden.' },
+  es: { brandTagline:'ARQUITECTURA + INTELIGENCIA', requestAnswer:'RESPUESTA A LA SOLICITUD', boundaryManual:'límite aproximado dibujado por el usuario, sin confirmación catastral', boundaryCadastre:'límite/selección catastral DGT, de carácter preliminar', noBuildingPoint:' No se indicó un punto aproximado de implantación.', buildingPoint:' Punto rojo: implantación aproximada indicada por el usuario.', mapBase:'Base cartográfica', contextImage:'imagen de contexto', redBoundaryManual:'Límite aproximado dibujado por el usuario', redBoundaryCadastre:'Límite/selección catastral DGT', redBoundaryNote:'marcado en rojo. Fuente del plano:', mapPreliminary:'Lectura cartográfica preliminar; confírmela con los documentos oficiales vigentes.', interactions:'Interacciones identificadas en esta consulta', documentNote:'Este plano es la base de la lectura gráfica; el polígono/límite ya señalado en el documento sirve de base para este preanálisis. Confirme la delimitación y la implantación con la entidad competente.', cartographicNote:'Información cartográfica de apoyo; los parámetros urbanísticos concretos figuran en la sección siguiente y requieren confirmación mediante la normativa y los planos oficiales vigentes.' },
+};
+function pdfCopy(language = 'pt') { return { ...(PDF_COPY[language] || PDF_COPY.pt), ...(PDF_EXTRA_COPY[language] || PDF_EXTRA_COPY.pt) }; }
 const FOOTER_Y = 762;
 // Reserva espaço para o aviso legal imediatamente antes da linha do rodapé.
 const CONTENT_END_Y = 724;
@@ -54,10 +61,10 @@ function parseReport(reportHtml = '', reportText = '', title = 'Relatório de Pr
   };
 }
 
-function drawHeader(doc, documentLabel = 'PRÉ-ANÁLISE URBANÍSTICA', reportReference = null) {
+function drawHeader(doc, documentLabel = 'PRÉ-ANÁLISE URBANÍSTICA', reportReference = null, copy = pdfCopy('pt')) {
   doc.image(Buffer.from(LOGO_PNG, 'base64'), 22, 16, { fit: [72, 72] });
   doc.font('Helvetica-Bold').fontSize(10).fillColor(COLORS.navy).text('Arq. Leonel Mendes', 97, 45);
-  doc.font('Helvetica').fontSize(7.5).fillColor(COLORS.muted).text('ARQUITETURA + INTELIGÊNCIA', 97, 59);
+  doc.font('Helvetica').fontSize(7.5).fillColor(COLORS.muted).text(copy.brandTagline, 97, 59);
   doc.font('Helvetica-Bold').fontSize(7.5).fillColor(COLORS.gold).text(documentLabel, 360, 48, { width: 188, align: 'right' });
   if (reportReference) doc.font('Helvetica').fontSize(6.8).fillColor(COLORS.muted).text(`RELATÓRIO N.º ${reportReference}`, 360, 61, { width: 188, align: 'right' });
   doc.strokeColor(COLORS.line).lineWidth(1).moveTo(47, 82).lineTo(548, 82).stroke();
@@ -91,28 +98,15 @@ function firstUsefulRule(report) {
   return direct || rules[0] || null;
 }
 
-function plainPlanningAnswer(report) {
-  const territorial = report.sections.find((section) => /enquadramento territorial|territorial confirmed|contexte territorial/i.test(section.title));
-  const labels = (territorial?.rows || []).slice(1)
-    .filter((row) => /regime de uso|classifica[cç][aã]o do solo|land.use/i.test(row[0] || ''))
-    .map((row) => String(row[1] || '').trim()).filter(Boolean);
-  const uniqueLabels = [...new Set(labels)];
-  const hasRural = uniqueLabels.some((label) => /solo r[uú]stico|rural land/i.test(label));
-  const hasUrban = uniqueLabels.some((label) => /solo urbano|urban land/i.test(label));
-  if (hasRural && hasUrban) {
-    return 'Moradia: ainda não confirmada. O limite analisado cruza solo rústico e solo urbano; só uma implantação dentro da área edificável confirmada poderá ser avaliada.';
-  }
-  if (hasRural) return 'Moradia: não confirmada nesta fase. A classificação rústica exige confirmação da regra aplicável e das condicionantes antes de assumir capacidade construtiva.';
-  if (hasUrban) return 'Moradia: possibilidade a confirmar. Existe enquadramento urbano indicado, mas os índices, afastamentos e a implantação ainda requerem validação técnica.';
-  return 'Capacidade construtiva: ainda não confirmada. É necessário validar o limite do terreno, a classificação aplicável e a implantação pretendida.';
-}
-
 function drawExecutiveSummary(doc, report, location, copy = PDF_COPY.pt) {
   const reference = location?.parcela?.declaracao || location?.parcela?.referencia || copy.noParcel;
   const municipality = location?.municipio?.nome || copy.noMunicipality;
   const implantation = location?.implantacao?.confirmada ? copy.implantation : copy.noImplantation;
   const rule = firstUsefulRule(report);
-  const directAnswer = plainPlanningAnswer(report);
+  // A primeira regra é a conclusão direta preparada para a pretensão. Assim,
+  // a síntese mantém a língua do relatório, em vez de introduzir uma frase
+  // fixa em português num documento estrangeiro.
+  const directAnswer = rule ? String(rule[1] || copy.noRule) : copy.noRule;
   const verification = report.sections.find((section) => /informa[cç][aã]o n[aã]o confirmada|divergências/i.test(section.title));
   const pending = (verification?.items || []).slice(0, 2);
   ensureSpace(doc, 155);
@@ -122,7 +116,7 @@ function drawExecutiveSummary(doc, report, location, copy = PDF_COPY.pt) {
   doc.font('Helvetica').fontSize(7.5).fillColor(COLORS.muted).text(copy.summaryHelp, 61, y + 31, { width: 470 });
   const columns = [61, 224, 387];
   const blocks = [
-    { title: 'RESPOSTA AO PEDIDO', value: directAnswer },
+    { title: copy.requestAnswer, value: directAnswer },
     { title: copy.guidance, value: rule ? String(rule[1] || '-').slice(0, 260) : `${municipality}\n${reference}\n${implantation}` },
     { title: copy.confirm, value: pending.length ? pending.join('\n') : copy.pending },
   ];
@@ -455,11 +449,11 @@ function drawLocationMap(doc, aerial, location, { compact = false, copy = PDF_CO
   doc.rect(x, y, width, height).lineWidth(0.8).strokeColor(COLORS.line).stroke();
   doc.y = y + height + 7;
   const reference = location?.parcela?.declaracao || location?.parcela?.referencia || 'localização selecionada';
-  const implantationNote = implementation ? ' Ponto vermelho: implantação aproximada indicada pelo utilizador.' : ' Sem ponto de implantação indicado.';
+  const implantationNote = implementation ? copy.buildingPoint : copy.noBuildingPoint;
   const boundaryNote = location?.parcela?.manual
-    ? 'limite aproximado desenhado pelo utilizador, sem confirmação cadastral'
-    : 'limite/seleção cadastral DGT, de caráter preliminar';
-  doc.font('Helvetica').fontSize(7.2).fillColor(COLORS.muted).text(`Delimitação analisada: ${reference}. Base cartográfica: ${aerial.source || 'imagem de enquadramento'}; ${boundaryNote}.${implantationNote}`, x, doc.y, { width });
+    ? copy.boundaryManual
+    : copy.boundaryCadastre;
+  doc.font('Helvetica').fontSize(7.2).fillColor(COLORS.muted).text(`${copy.location}: ${reference}. ${copy.mapBase}: ${aerial.source || copy.contextImage}; ${boundaryNote}.${implantationNote}`, x, doc.y, { width });
   doc.moveDown(1.15);
 }
 
@@ -501,8 +495,8 @@ function drawOfficialPlanOverlay(doc, plan, location, copy = PDF_COPY.pt) {
   if (implementation) { const [px, py] = toPoint(implementation); doc.save().circle(px, py, 6).fillAndStroke('#A13B2B', '#FFFFFF').restore(); }
   doc.rect(x, y, width, height).lineWidth(.8).strokeColor(COLORS.line).stroke();
   doc.y = y + height + 7;
-  const boundary = location?.parcela?.manual ? 'Limite aproximado desenhado pelo utilizador' : 'Limite cadastral/seleção DGT';
-  doc.font('Helvetica').fontSize(7.2).fillColor(COLORS.muted).text(`${boundary} assinalado a vermelho. Fonte da planta: ${plan.source}. Leitura cartográfica preliminar; confirme pelas peças oficiais em vigor.`, x, doc.y, { width });
+  const boundary = location?.parcela?.manual ? copy.redBoundaryManual : copy.redBoundaryCadastre;
+  doc.font('Helvetica').fontSize(7.2).fillColor(COLORS.muted).text(`${boundary} ${copy.redBoundaryNote} ${plan.source}. ${copy.mapPreliminary}`, x, doc.y, { width });
   if (plan.legend) {
     doc.moveDown(.45);
     ensureSpace(doc, 150);
@@ -514,7 +508,7 @@ function drawOfficialPlanOverlay(doc, plan, location, copy = PDF_COPY.pt) {
   const legend = relevantCartographicLegend(location);
   if (legend.length) {
     doc.moveDown(.45);
-    doc.font('Helvetica-Bold').fontSize(7.4).fillColor(COLORS.navy).text('Interações identificadas na consulta', x, doc.y, { width });
+    doc.font('Helvetica-Bold').fontSize(7.4).fillColor(COLORS.navy).text(copy.interactions, x, doc.y, { width });
     legend.forEach((item) => {
       ensureSpace(doc, 15);
       doc.circle(x + 4, doc.y + 4, 1.5).fill(COLORS.gold);
@@ -542,7 +536,7 @@ function drawDocumentPlanOverlay(doc, documentPlan, copy = PDF_COPY.pt) {
   if (!safeImage(doc, documentPlan.image, dimensions.x, y, { width: dimensions.width, height: dimensions.height }, 'planta de ordenamento anexa')) return false;
   doc.rect(dimensions.x, y, dimensions.width, dimensions.height).lineWidth(.8).strokeColor(COLORS.line).stroke();
   doc.y = y + dimensions.height + 7;
-  doc.font('Helvetica').fontSize(7.2).fillColor(COLORS.muted).text(`${documentPlan.source || 'Planta de Localização oficial'} Esta é a carta utilizada para a leitura gráfica; o polígono/limite já assinalado na peça é a base da pré-análise. Confirme a delimitação e a implantação junto da entidade competente.`, x, doc.y, { width: maxWidth, lineGap: 1.4 });
+  doc.font('Helvetica').fontSize(7.2).fillColor(COLORS.muted).text(`${documentPlan.source || copy.documentOverlay}. ${copy.documentNote}`, x, doc.y, { width: maxWidth, lineGap: 1.4 });
   doc.moveDown(1);
   return true;
 }
@@ -564,7 +558,7 @@ function drawCartographicEvidence(doc, location, copy = PDF_COPY.pt) {
     doc.font('Helvetica').fontSize(8.5).fillColor(COLORS.ink).text(line, 63, doc.y - 2, { width: 470, lineGap: 1.7 });
     doc.moveDown(0.5);
   });
-  doc.font('Helvetica-Oblique').fontSize(7.2).fillColor(COLORS.muted).text('Informação cartográfica de apoio; os parâmetros urbanísticos concretos constam da secção seguinte e exigem confirmação pelo regulamento e pelas plantas oficiais em vigor.', 47, doc.y + 1, { width: 501, lineGap: 1.5 });
+  doc.font('Helvetica-Oblique').fontSize(7.2).fillColor(COLORS.muted).text(copy.cartographicNote, 47, doc.y + 1, { width: 501, lineGap: 1.5 });
   doc.moveDown(1.1);
 }
 
@@ -588,10 +582,10 @@ export async function createProfessionalPdf({
     doc.on('data', (chunk) => chunks.push(chunk));
     doc.on('error', reject);
     doc.on('end', () => resolve(Buffer.concat(chunks)));
-    doc.on('pageAdded', () => drawHeader(doc, documentLabel, reportReference));
+    doc.on('pageAdded', () => drawHeader(doc, documentLabel, reportReference, copy));
 
     const report = parseReport(reportHtml, reportText, documentTitle);
-    drawHeader(doc, documentLabel, reportReference);
+    drawHeader(doc, documentLabel, reportReference, copy);
     doc.font('Helvetica-Bold').fontSize(20).fillColor(COLORS.navy).text(report.title, 47, doc.y);
     doc.font('Helvetica').fontSize(9).fillColor(COLORS.muted).text(`${copy.generated} ${portugalDateTime()}`, 47, doc.y + 5);
     doc.moveDown(1.4);
