@@ -1943,7 +1943,7 @@
     try {
       const response = await fetch('/.netlify/functions/gerar-relatorio-pdf', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reportText: copy.innerText, reportHtml: copy.innerHTML, location: locationForReport(), documentPlan: orderingPlan ? { base64: orderingPlan.base64, mimeType: orderingPlan.mimeType, source: 'Planta de Localização oficial — PDM / Ordenamento; polígono assinalado pelo requerente' } : null }),
+        body: JSON.stringify({ reportText: copy.innerText, reportHtml: copy.innerHTML, location: locationForReport(), documentPlan: orderingPlan ? { base64: orderingPlan.base64, mimeType: orderingPlan.mimeType, source: 'Planta de Localização oficial — PDM / Ordenamento; polígono assinalado pelo requerente' } : null, language: document.documentElement.lang }),
       });
       if (!response.ok) throw new Error(await response.text() || 'Não foi possível gerar o PDF.');
       const blob = await response.blob();
